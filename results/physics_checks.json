@@ -1,0 +1,269 @@
+{
+  "environment": {
+    "timestamp_utc": "2026-10-05T21:38:10+00:00",
+    "git_commit": "51480b79339f1aab2cd3b2d059d528cd49c63af0",
+    "git_dirty": false,
+    "device": "cpu",
+    "gpu_name": null,
+    "cuda_version": null,
+    "python_version": "3.12.2",
+    "torch_version": "2.14.1",
+    "physicsnemo": {
+      "version": "2.3.0a0",
+      "commit": "b45a5c810c741e6b41f8515be24c51121f8fc21f",
+      "url": "https://github.com/nvidia/physicsnemo"
+    },
+    "torch_geometric_version": "2.8.0.post1",
+    "torch_scatter_version": "2.1.2",
+    "pyvista_version": "0.49.0",
+    "sympy_version": "1.14.0",
+    "numpy_version": "2.5.3",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "processor": "arm"
+  },
+  "nu_in_code": 0.01,
+  "u_max_in_code": 0.3,
+  "test_numbers": [
+    1,
+    14,
+    41,
+    63,
+    64,
+    75,
+    82,
+    93,
+    95,
+    97,
+    101,
+    103,
+    142,
+    143,
+    145,
+    150,
+    195,
+    209,
+    223,
+    227
+  ],
+  "domain": {
+    "x_min": 0.0,
+    "x_max": 1.5,
+    "y_min": 0.0,
+    "y_max": 0.4,
+    "nodes": {
+      "mean": 3309.9,
+      "min": 3233.0,
+      "max": 3393.0
+    }
+  },
+  "viscosity_fit_p1_weak_form": {
+    "mean": 0.010046637700960944,
+    "min": 0.009957417503662651,
+    "max": 0.010206688002190387
+  },
+  "inlet_pressure_gradient": {
+    "mean": -0.15358293445465723,
+    "min": -0.15860165696314413,
+    "max": -0.1487809968453248,
+    "poiseuille_value": -0.15
+  },
+  "reference_boundary_rms": {
+    "inflow": {
+      "mean": 3.9992330157885626e-17,
+      "min": 3.042513912833979e-17,
+      "max": 5.015694453100181e-17
+    },
+    "noslip": {
+      "mean": 9.610893980779228e-17,
+      "min": 5.75952652107945e-17,
+      "max": 1.7317386043591848e-16
+    },
+    "boundary": {
+      "mean": 9.227888517981857e-17,
+      "min": 5.661732643053365e-17,
+      "max": 1.6561177498027618e-16
+    },
+    "outflow_pressure": {
+      "mean": 4.731583751003298e-07,
+      "min": 4.2328424087358217e-08,
+      "max": 1.4006254671843145e-06
+    }
+  },
+  "autodiff_residual": {
+    "poiseuille_max_abs_residual": {
+      "continuity": 0.0,
+      "momentum_x": 0.0,
+      "momentum_y": 0.0
+    },
+    "manufactured_max_abs_deviation_from_analytic": {
+      "continuity": 3.104716457258405e-07,
+      "momentum_x": 3.284596233887882e-08,
+      "momentum_y": 1.486830703001374e-07
+    },
+    "manufactured_max_abs_analytic": {
+      "continuity": 2.0,
+      "momentum_x": 0.2071065025684249,
+      "momentum_y": 1.1920000000000002
+    }
+  },
+  "least_squares_operator": {
+    "poiseuille_u": {
+      "first_derivative_rms_error_interior": 0.009593063195227307,
+      "first_derivative_rms_error_boundary": 0.01720547030818623,
+      "first_derivative_rms_scale": null,
+      "laplacian_relative_error_interior": 0.10925412058961496,
+      "laplacian_relative_error_boundary": 0.5038573117103823
+    },
+    "sin4x_cos5y": {
+      "first_derivative_rms_error_interior": 0.02080663344284051,
+      "first_derivative_rms_error_boundary": 0.030168832787848533,
+      "first_derivative_rms_scale": 1.822353217573738,
+      "laplacian_relative_error_interior": 0.11569497471568627,
+      "laplacian_relative_error_boundary": 0.4237021117204382
+    }
+  },
+  "reference_residual_floor_rms": {
+    "continuity": {
+      "mean": 0.10189667130105214,
+      "min": 0.05038402659443417,
+      "max": 0.19946679318194074
+    },
+    "momentum_x": {
+      "mean": 0.24864336289774291,
+      "min": 0.12965796765366278,
+      "max": 0.4750151798214116
+    },
+    "momentum_y": {
+      "mean": 0.1659439451061154,
+      "min": 0.07446987357854094,
+      "max": 0.2957946780362143
+    },
+    "momentum": {
+      "mean": 0.2993749222254195,
+      "min": 0.14952240851083873,
+      "max": 0.5595836958090503
+    }
+  },
+  "per_sample": [
+    {
+      "number": 1,
+      "nodes": 3254,
+      "nu_fit": 0.010124595812485373,
+      "inlet_pressure_gradient": -0.15515804053862384
+    },
+    {
+      "number": 14,
+      "nodes": 3332,
+      "nu_fit": 0.009957417503662651,
+      "inlet_pressure_gradient": -0.15538812387186754
+    },
+    {
+      "number": 41,
+      "nodes": 3309,
+      "nu_fit": 0.009975898770297344,
+      "inlet_pressure_gradient": -0.1521395114552158
+    },
+    {
+      "number": 63,
+      "nodes": 3329,
+      "nu_fit": 0.010047737073007545,
+      "inlet_pressure_gradient": -0.15173510116471875
+    },
+    {
+      "number": 64,
+      "nodes": 3289,
+      "nu_fit": 0.010076383019405987,
+      "inlet_pressure_gradient": -0.15831377113313097
+    },
+    {
+      "number": 75,
+      "nodes": 3332,
+      "nu_fit": 0.010086976801807025,
+      "inlet_pressure_gradient": -0.1524735768213861
+    },
+    {
+      "number": 82,
+      "nodes": 3233,
+      "nu_fit": 0.010206688002190387,
+      "inlet_pressure_gradient": -0.15860165696314413
+    },
+    {
+      "number": 93,
+      "nodes": 3298,
+      "nu_fit": 0.010029657612218818,
+      "inlet_pressure_gradient": -0.15490650257941524
+    },
+    {
+      "number": 95,
+      "nodes": 3263,
+      "nu_fit": 0.010031487845958538,
+      "inlet_pressure_gradient": -0.1540077936431369
+    },
+    {
+      "number": 97,
+      "nodes": 3318,
+      "nu_fit": 0.010052994647446953,
+      "inlet_pressure_gradient": -0.1515014737829433
+    },
+    {
+      "number": 101,
+      "nodes": 3256,
+      "nu_fit": 0.010040622974278685,
+      "inlet_pressure_gradient": -0.1487809968453248
+    },
+    {
+      "number": 103,
+      "nodes": 3340,
+      "nu_fit": 0.010084021418864239,
+      "inlet_pressure_gradient": -0.151410235392725
+    },
+    {
+      "number": 142,
+      "nodes": 3301,
+      "nu_fit": 0.010034421540364687,
+      "inlet_pressure_gradient": -0.151520149549224
+    },
+    {
+      "number": 143,
+      "nodes": 3335,
+      "nu_fit": 0.009976664480551296,
+      "inlet_pressure_gradient": -0.15673088039580513
+    },
+    {
+      "number": 145,
+      "nodes": 3322,
+      "nu_fit": 0.009991573507284777,
+      "inlet_pressure_gradient": -0.15374014800026742
+    },
+    {
+      "number": 150,
+      "nodes": 3297,
+      "nu_fit": 0.010072043546049009,
+      "inlet_pressure_gradient": -0.15197053598140542
+    },
+    {
+      "number": 195,
+      "nodes": 3331,
+      "nu_fit": 0.010042382659943946,
+      "inlet_pressure_gradient": -0.15245086079214523
+    },
+    {
+      "number": 209,
+      "nodes": 3330,
+      "nu_fit": 0.010041729771953811,
+      "inlet_pressure_gradient": -0.15770374651701527
+    },
+    {
+      "number": 223,
+      "nodes": 3393,
+      "nu_fit": 0.010054187253085559,
+      "inlet_pressure_gradient": -0.15237978872289196
+    },
+    {
+      "number": 227,
+      "nodes": 3336,
+      "nu_fit": 0.010005269778362259,
+      "inlet_pressure_gradient": -0.1507457949427577
+    }
+  ]
+}
