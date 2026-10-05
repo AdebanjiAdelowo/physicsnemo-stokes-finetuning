@@ -1,0 +1,17 @@
+# PhysicsNeMo is pinned to the commit of the main branch whose Stokes example this repository
+# adapts. It requires torch>=2.13.
+nvidia-physicsnemo @ git+https://github.com/NVIDIA/physicsnemo.git@b45a5c810c741e6b41f8515be24c51121f8fc21f
+torch_geometric>=2.6.1
+pyvista>=0.40.1
+vtk>=9.2.6
+sympy>=1.14.0
+hydra-core>=1.3.2
+scipy>=1.15.0
+matplotlib>=3.8
+pytest>=8.0
+setuptools
+wheel
+# torch_scatter is also required. It has no prebuilt wheel for torch>=2.13 and is built from
+# source against the installed torch, after the packages above:
+#   FORCE_ONLY_CPU=1 pip install --no-build-isolation --no-binary torch-scatter torch-scatter==2.1.2
+# The sum aggregation used by MeshGraphNet runs through torch.Tensor.scatter_add_ on any device.

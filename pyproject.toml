@@ -1,0 +1,12 @@
+[project]
+name = "physicsnemo-stokes-finetuning"
+version = "0.1.0"
+description = "Before/after study of the physics-informed fine-tuning step of the NVIDIA PhysicsNeMo Stokes-flow example"
+requires-python = ">=3.11,<3.15"
+license = "Apache-2.0"
+authors = [{ name = "Adebanji Adelowo" }]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+filterwarnings = ["ignore::DeprecationWarning", "ignore::UserWarning", "ignore::FutureWarning"]

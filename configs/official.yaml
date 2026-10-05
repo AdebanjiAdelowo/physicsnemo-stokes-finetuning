@@ -1,0 +1,91 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2026 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Adapted from examples/cfd/stokes_mgn/conf/config.yaml of NVIDIA PhysicsNeMo, commit
+# b45a5c810c741e6b41f8515be24c51121f8fc21f. Modified by Adebanji Adelowo (2026):
+# the keys above the marker are the upstream keys with the upstream values, except
+# that the `hydra` block and the path keys (`ckpt_path`, `ckpt_name`, `data_dir`,
+# `results_dir`) are replaced by the run-directory layout of this repository; the
+# keys below the marker were added.
+
+input_dim_nodes: 7
+input_dim_edges: 3
+output_dim: 3
+hidden_dim_node_encoder: 256
+hidden_dim_edge_encoder: 256
+hidden_dim_node_decoder: 256
+
+aggregation: "sum"
+batch_size: 1
+epochs: 500
+
+num_training_samples: 500
+num_validation_samples: 10
+num_test_samples: 10
+
+lr: 1e-4
+# If not set, will be calculated based on the number of epochs.
+lr_decay_rate: null
+
+amp: False
+jit: False
+wandb_mode: "disabled"
+
+# Physics-informed constants
+graph_path: "graph_7.vtp"
+
+# The four mlp_* keys are not read by upstream pi_fine_tuning.py, which hard-codes
+# layers [2, 128, 128, 128, 128, 3] and 64 Fourier features. They are kept for fidelity.
+mlp_hidden_dim: 256
+mlp_num_layers: 6
+mlp_input_dim: 2
+mlp_output_dim: 3
+
+pi_iters: 10000
+# Read by pi_fine_tuning_gnn.py only; pi_fine_tuning.py hard-codes the same value.
+pi_lr: 0.001
+
+# ---------------------------------------------------------------------------
+# Keys added by this repository
+# ---------------------------------------------------------------------------
+name: official
+device: cuda
+# Upstream sets no seed. Here it fixes the MeshGraphNet initialisation, the sample order
+# and, with the test index added, the Fourier matrix and weights of each fine-tuning network.
+seed: 0
+
+data:
+  raw_dir: data/raw/results    # the 1000 .vtp files of results_polygon.zip
+  split_dir: data/dataset
+  split_seed: 0                # upstream preprocess.py shuffles without a seed
+  train_fraction: 0.8          # upstream preprocess.py
+  validation_fraction: 0.1
+
+physics:
+  nu: 0.01                     # hard-coded in upstream utils.get_dataset
+  u_max: 0.3                   # hard-coded in upstream parabolic_inflow
+
+training:
+  checkpoint_every: 25         # upstream writes a checkpoint every epoch and keeps all of them
+
+finetune:
+  # Test indices to fine-tune. Upstream processes one file, `graph_path`.
+  samples: [7]
+  log_every: 100               # upstream prints losses and errors every 100 iterations
+
+evaluation:
+  plot_samples: [7]
+  timing_repeats: 20

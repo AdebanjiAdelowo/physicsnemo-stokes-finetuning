@@ -1,0 +1,29 @@
+# Pipeline check. Finishes in about a minute on a laptop CPU.
+# The numbers it produces are not results.
+defaults:
+  - official
+  - _self_
+
+name: smoke
+device: cpu
+
+hidden_dim_node_encoder: 32
+hidden_dim_edge_encoder: 32
+hidden_dim_node_decoder: 32
+
+epochs: 2
+num_training_samples: 6
+num_validation_samples: 2
+num_test_samples: 2
+pi_iters: 20
+
+training:
+  checkpoint_every: 1
+
+finetune:
+  samples: [0, 1]
+  log_every: 10
+
+evaluation:
+  plot_samples: [0]
+  timing_repeats: 2

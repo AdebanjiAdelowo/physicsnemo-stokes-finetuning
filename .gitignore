@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+.venv/
+*.egg-info/
+
+# generated datasets, run directories and checkpoints (tracked summaries live in results/)
+data/
+runs/
+outputs/
+checkpoints/
+*.pt
+*.mdlus
+*.zip
+*.vtp
+node_stats.json
+edge_stats.json

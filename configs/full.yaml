@@ -1,0 +1,14 @@
+# Single-GPU study. Both stages use the upstream settings of configs/official.yaml.
+# The one difference: the physics-informed stage is applied to each of the 10 test
+# samples, not only to test index 7, so that the comparison is a 10-sample mean.
+defaults:
+  - official
+  - _self_
+
+name: full
+
+finetune:
+  samples: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+evaluation:
+  plot_samples: [7, 0]

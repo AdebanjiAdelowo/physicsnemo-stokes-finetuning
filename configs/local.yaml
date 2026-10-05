@@ -1,0 +1,22 @@
+# Reduced study for a laptop. The data-driven stage is shortened (100 training meshes,
+# 40 epochs, against 500 and 500 upstream); the architecture, the learning-rate rule,
+# the test set and the physics-informed stage (10000 iterations) are the upstream ones.
+# Its numbers describe a weakly trained MeshGraphNet and do not reproduce NVIDIA's setup.
+defaults:
+  - official
+  - _self_
+
+name: local
+device: mps
+
+epochs: 40
+num_training_samples: 100
+
+training:
+  checkpoint_every: 10
+
+finetune:
+  samples: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+evaluation:
+  plot_samples: [7, 0]
