@@ -15,5 +15,3 @@ checkpoints/
 *.mdlus
 *.zip
 *.vtp
-node_stats.json
-edge_stats.json

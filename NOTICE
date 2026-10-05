@@ -1,0 +1,23 @@
+physicsnemo-stokes-finetuning
+Copyright 2026 Adebanji Adelowo
+
+This repository contains material adapted from NVIDIA PhysicsNeMo
+(https://github.com/NVIDIA/physicsnemo), Copyright (c) 2023 - 2026 NVIDIA
+CORPORATION & AFFILIATES, licensed under the Apache License, Version 2.0.
+
+Adapted from examples/cfd/stokes_mgn at commit
+b45a5c810c741e6b41f8515be24c51121f8fc21f:
+
+  configs/official.yaml       from conf/config.yaml (keys and values kept, path keys replaced; keys added below a marker)
+  src/stokes_ft/model.py      MeshGraphNet construction from train.py
+  src/stokes_ft/engine.py     training loop from train.py, test prediction from inference.py
+  src/stokes_ft/finetune.py   Stokes, DNN, FourierDNN (unchanged) and PhysicsInformedFineTuner from pi_fine_tuning.py
+  src/stokes_ft/data.py       train/validation/test split from preprocess.py, .vtp reader from utils.py
+
+Each of these files carries the original NVIDIA copyright and licence header and
+a statement of the changes. MeshGraphNet, StokesDataset, PhysicsInformer, the
+derivative operators and the checkpoint utilities are imported from the
+PhysicsNeMo package and are not copied.
+
+The dataset (PhysicsNeMo Datasets: Stokes Flow, NVIDIA NGC) is downloaded by
+scripts/prepare_data.py and is not redistributed here.

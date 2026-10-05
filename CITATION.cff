@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: >-
+  If you use this repository, please cite it and the NVIDIA PhysicsNeMo framework
+  it is built on (see the references section).
+title: "Before/after study of the physics-informed fine-tuning step of the PhysicsNeMo Stokes-flow example"
+type: software
+authors:
+  - family-names: Adelowo
+    given-names: Adebanji
+license: Apache-2.0
+references:
+  - type: software
+    title: "NVIDIA PhysicsNeMo: An open-source framework for physics-based deep learning in science and engineering"
+    authors:
+      - name: "PhysicsNeMo Contributors"
+    url: "https://github.com/NVIDIA/physicsnemo"
+  - type: article
+    title: "Learning Mesh-Based Simulation with Graph Networks"
+    authors:
+      - family-names: Pfaff
+        given-names: Tobias
+      - family-names: Fortunato
+        given-names: Meire
+      - family-names: Sanchez-Gonzalez
+        given-names: Alvaro
+      - family-names: Battaglia
+        given-names: Peter W.
+    year: 2021
+    url: "https://arxiv.org/abs/2010.03409"
