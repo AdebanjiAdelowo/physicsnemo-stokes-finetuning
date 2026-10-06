@@ -1,0 +1,18 @@
+{
+  "stage": "data_driven",
+  "checkpoint_epoch": 40,
+  "test_files": [
+    "res_1.vtp",
+    "res_14.vtp",
+    "res_41.vtp",
+    "res_63.vtp",
+    "res_64.vtp",
+    "res_75.vtp",
+    "res_82.vtp",
+    "res_93.vtp",
+    "res_95.vtp",
+    "res_97.vtp"
+  ],
+  "inference_seconds_per_mesh": 0.1928512748796493,
+  "timing_repeats": 20
+}
