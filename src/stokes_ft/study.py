@@ -19,8 +19,12 @@ def log(message: str) -> None:
     print(message, flush=True)
 
 
-def run_study(cfg, stages=ALL_STAGES, resume: bool = False, runs_root: Path | None = None) -> Path:
-    """Run the requested stages of one configuration in ``runs/<cfg.name>``."""
+def run_study(cfg, stages=ALL_STAGES, resume: bool = False, runs_root: Path | None = None,
+              evaluate_samples: list[int] | None = None) -> Path:
+    """Run the requested stages of one configuration in ``runs/<cfg.name>``.
+
+    ``evaluate_samples`` evaluates a subset of the configured test samples (a partial result).
+    """
     unknown = set(stages) - set(ALL_STAGES)
     if unknown:
         raise ValueError(f"unknown stages: {sorted(unknown)}")
@@ -32,6 +36,7 @@ def run_study(cfg, stages=ALL_STAGES, resume: bool = False, runs_root: Path | No
     archive = (REPO_ROOT / cfg.data.raw_dir).parent / DATASET_ARCHIVE
     session = collect_metadata(device)
     session["stages"] = list(stages)
+    session["evaluate_samples"] = evaluate_samples
     meta_path = run_dir / "study_metadata.json"
     meta = json.loads(meta_path.read_text()) if resume and meta_path.exists() else {"sessions": []}
     config = OmegaConf.to_container(cfg, resolve=True)
@@ -77,5 +82,5 @@ def run_study(cfg, stages=ALL_STAGES, resume: bool = False, runs_root: Path | No
             record = finetune_sample(cfg, run_dir / "predictions" / f"graph_{index}.vtp", index, device, out_dir, log=log)
             write_json(record_path, record)
     if "evaluate" in stages:
-        evaluate_study(cfg, run_dir, log=log)
+        evaluate_study(cfg, run_dir, samples=evaluate_samples, log=log)
     return run_dir

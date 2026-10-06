@@ -76,6 +76,21 @@ def test_result_files(study):
     assert int(ft[-1]["iteration"]) == cfg.pi_iters
 
 
+def test_partial_evaluation_is_labelled(study, tiny_root):
+    from stokes_ft.evaluate import evaluate_study
+
+    cfg, run_dir, root = study
+    full = (run_dir / "summary.json").read_text()
+    try:
+        partial = evaluate_study(cfg, run_dir, samples=[cfg.finetune.samples[0]], log=lambda _: None)
+        assert partial["partial"] and partial["samples"] == 1 and partial["samples_configured"] == 2
+        with pytest.raises(ValueError):
+            evaluate_study(cfg, run_dir, samples=[99], log=lambda _: None)
+    finally:
+        restored = evaluate_study(cfg, run_dir, log=lambda _: None)
+    assert not restored["partial"] and json.loads(full)["comparison"] == restored["comparison"]
+
+
 def test_metadata(study):
     cfg, run_dir, _ = study
     meta = json.loads((run_dir / "study_metadata.json").read_text())

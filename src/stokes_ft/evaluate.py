@@ -55,12 +55,19 @@ def evaluate_fields(sample: dict, fields: dict, nu: float, u_max: float, referen
     return row, residuals
 
 
-def evaluate_study(cfg, run_dir: Path, log=print) -> dict:
-    """Evaluate every fine-tuned test sample of a run directory and write the result files."""
+def evaluate_study(cfg, run_dir: Path, samples: list[int] | None = None, log=print) -> dict:
+    """Evaluate the fine-tuned test samples of a run directory and write the result files.
+
+    ``samples`` restricts the evaluation to a subset of ``cfg.finetune.samples``, for a run whose
+    physics-informed stage is incomplete; the summary then records it as partial.
+    """
     run_dir = Path(run_dir)
+    samples = list(cfg.finetune.samples) if samples is None else list(samples)
+    if not set(samples) <= set(cfg.finetune.samples):
+        raise ValueError(f"samples {samples} are not all in finetune.samples of the configuration")
     nu, u_max = cfg.physics.nu, cfg.physics.u_max
     rows, plot_fields = [], {}
-    for index in cfg.finetune.samples:
+    for index in samples:
         path = run_dir / "predictions" / f"graph_{index}.vtp"
         sample = read_sample(path)
         reference = stage_fields(sample, "ref")
@@ -139,7 +146,8 @@ def summarise(cfg, run_dir: Path, rows: list[dict]) -> dict:
         return json.loads(path.read_text()) if path.exists() else None
 
     finetune = [json.loads(p.read_text()) for p in sorted((run_dir / "finetune").glob("finetune_*.json"))]
-    finetune = [r for r in finetune if r["index"] in list(cfg.finetune.samples)]
+    evaluated = [row["index"] for row in by_stage["data_driven"]]
+    finetune = [r for r in finetune if r["index"] in evaluated]
     train, predict = load("train_metrics.json"), load("predict_metrics.json")
     compute = {
         "data_driven_parameters": train and train["parameter_count"],
@@ -154,8 +162,10 @@ def summarise(cfg, run_dir: Path, rows: list[dict]) -> dict:
     return {
         "study": cfg.name,
         "result_status": STATUS.get(cfg.name, "UNLABELLED"),
-        "samples": len(by_stage["data_driven"]),
-        "sample_indices": [row["index"] for row in by_stage["data_driven"]],
+        "samples": len(evaluated),
+        "sample_indices": evaluated,
+        "samples_configured": len(cfg.finetune.samples),
+        "partial": len(evaluated) < len(cfg.finetune.samples),
         "comparison": comparison,
         "stages": stages,
         "compute": compute,
@@ -164,7 +174,8 @@ def summarise(cfg, run_dir: Path, rows: list[dict]) -> dict:
 
 def format_table(summary: dict) -> str:
     lines = [
-        f"study '{summary['study']}' [{summary['result_status']}], {summary['samples']} test sample(s)",
+        f"study '{summary['study']}' [{summary['result_status']}], {summary['samples']} of "
+        f"{summary['samples_configured']} configured test sample(s)",
         f"{'metric':<46}{'reference':>11}{'data-driven':>13}{'fine-tuned':>13}{'change':>9}{'improved':>10}",
     ]
     for key, label, _ in TABLE:
