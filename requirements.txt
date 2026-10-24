@@ -8,6 +8,7 @@ sympy>=1.14.0
 hydra-core>=1.3.2
 scipy>=1.15.0
 matplotlib>=3.8
+scikit-fem==11.0.0   # Taylor-Hood reference solver of the audit (src/stokes_ft/fem.py)
 pytest>=8.0
 setuptools
 wheel

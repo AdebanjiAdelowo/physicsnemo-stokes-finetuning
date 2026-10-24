@@ -38,7 +38,7 @@ def test_order_of_steps():
     text = "\n".join(_code())
     order = ['"checkout", "--quiet", REF', "assert head == REF", "pip install -q -r requirements.txt", "prepare_data.py",
              "pytest", "--config smoke device=cuda", "name=full_probe", "--config full --resume",
-             "results.py package", "results.py bundle"]
+             "results.py package runs/full", "results.py bundle runs/full"]
     positions = [text.index(item) for item in order]
     assert positions == sorted(positions)
     assert text.count("tree_is_clean()") >= 3
