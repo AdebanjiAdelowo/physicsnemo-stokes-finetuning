@@ -41,7 +41,7 @@ Residuals are nodal, with least-squares mesh derivatives; "reference floor" is t
 What these two meshes show, for a weak data-driven baseline:
 
 * **Velocity improves.** The velocity error falls on both meshes, most for the transverse component $v$, which the undertrained MeshGraphNet predicts worst. The fine-tuned field ends closer to the reference than the prediction it was fitted to: the PDE and boundary terms move it away from its data target in the right direction. The recorded histories show further reduction toward the end of the 10,000 iterations.
-* **Pressure changes little.** The mean pressure error falls by 3.3 %, with opposite changes on the two meshes (0.217 to 0.203 on mesh 0, 0.100 to 0.104 on mesh 1). The momentum equation constrains only $\nabla p$. The pressure data term anchors the pressure level to the MeshGraphNet prediction, while no outlet term enforces the reference pressure level; the error map shows a nearly uniform offset upstream of the polygon in both fields.
+* **Pressure changes little.** The mean pressure error falls by 3.3 %, with opposite changes on the two meshes (0.217 to 0.203 on mesh 0, 0.100 to 0.104 on mesh 1). The error is a level shift upstream of the polygon: downstream of it and at the outlet both fields agree with the reference. The MeshGraphNet cannot predict that level. Its 15 message-passing layers do not reach from the polygon to the inlet (18 to 23 mesh edges away), so it predicts the same inlet pressure, 0.694 to 0.696, for all ten test geometries, while the reference ranges from 0.41 to 1.60. The momentum equation constrains only $\nabla p$, and the pressure data term then holds the fine-tuned level at the MeshGraphNet value; it moves by less than 0.02. See [`docs/SCIENTIFIC_AUDIT.md`](docs/SCIENTIFIC_AUDIT.md), section 3.1.
 * **PDE residuals drop to the resolution of the metric.** The nodal momentum residual falls from 2.5 times the reference floor to about the floor (0.21 and 0.38 against 0.39 and 0.34 on the two meshes), and the divergence residual to half its floor. Values near or below the reference residual are limited by mesh differentiation error. They show a reduction under this discrete operator, but do not establish that the fine-tuned field satisfies the continuous PDE more accurately than the reference.
 * **No-slip gets worse.** The MeshGraphNet receives the boundary marker as an input and reproduces the wall values to 0.003; the coordinate network enforces them only through a penalty and ends at 0.016, about 5 % of the inlet velocity scale. The inlet profile, which has the same penalty weight on far fewer nodes, improves.
 
@@ -57,6 +57,8 @@ This is a trade: lower interior residuals and velocity error against a looser no
 | CUDA time and peak memory | Not measured | Not measured |
 
 The local timings include contention from other jobs on the same machine and should not be treated as isolated hardware benchmarks. At these rates the physics-informed step on one test mesh takes about three quarters of the time of the whole reduced MeshGraphNet training, and it has to be repeated for every new geometry.
+
+**Classical baseline.** The physics-informed step uses the same inputs as a finite-element solver: the mesh, the equations and the boundary data. A Taylor-Hood P2-P1 solve on the same mesh (`src/stokes_ft/fem.py`) takes 0.5 to 0.65 s on the CPU and reproduces the reference to a relative error of $3 \times 10^{-10}$ or less on all ten test meshes ([`results/audit_checks.json`](results/audit_checks.json)). On this problem neither learned stage is competitive with the solver, and the study measures the effect of the physics-informed step on a learned prediction, not an alternative to solving the PDE.
 
 ## The Stokes problem
 
@@ -153,10 +155,13 @@ For a common evaluation of fields defined on mesh nodes, the residuals of nodal 
 | Automatic-differentiation residual on a manufactured field against the analytic residual | maximum deviation $3 \times 10^{-7}$ |
 | Least-squares operator on analytic fields, dataset mesh: Laplacian | relative error 11 % at interior nodes, 42 to 50 % at boundary nodes |
 | Least-squares operator: residual of the **reference solution** | momentum 0.30 (0.15 to 0.56), divergence 0.10 (0.05 to 0.20) |
+| Taylor-Hood P2-P1 solve with outlet condition $\nu\, \partial_n \mathbf{u} - p\, \mathbf{n} = 0$ against the reference, 10 test meshes (`scripts/audit_checks.py`) | relative $L^2$ error $3 \times 10^{-10}$ or less; with the symmetric-stress outlet form, 0.010 to 0.024 |
 
 The equations, the sign convention, the viscosity factor and the inlet profile in the NVIDIA code agree with the data, and coordinates are used unnormalised in both stages, so no rescaling of derivatives is involved. The analytic checks support the tested residual signs, factors and derivatives.
 
 The last two rows set the resolution of the nodal residual metrics. On these meshes ($h \approx 0.014$) the twice-applied least-squares gradient reproduces the Laplacian of smooth analytic fields only to about 11 % in the interior and worse next to boundaries, and the finite-element reference itself has a nodal momentum residual of about 0.30, concentrated at the polygon corners and the walls. A nodal residual near or below that floor does not show that a field is closer to a Stokes solution than the reference is; a smooth field can score below the floor.
+
+The Taylor-Hood row identifies the reference: the files hold the vertex values of a P2-P1 solution with the do-nothing outflow condition. Its velocity is quadratic on each triangle, so every operator that sees only vertex values, as both metrics here do, assigns it a nonzero residual. This is the origin of the floor.
 
 ## Reproduction
 
@@ -171,6 +176,7 @@ FORCE_ONLY_CPU=1 pip install --no-build-isolation --no-binary torch-scatter torc
 python scripts/prepare_data.py                  # 172 MB download, SHA-256 check, seeded split
 python -m pytest -q                             # tests use a small synthetic dataset
 python scripts/verify_physics.py                # results/physics_checks.json
+python scripts/audit_checks.py                  # results/audit_checks.json (reads runs/local when present)
 python scripts/run_study.py --config smoke      # pipeline check on the CPU, about a minute
 python scripts/run_study.py --config local      # reduced study (Apple MPS); add --resume to continue it
 python scripts/results.py publish runs/local    # copy the small result files to results/local
@@ -217,8 +223,10 @@ The launcher stops before full training if the measured projection exceeds the s
 configs/            official (upstream values), full, local, smoke
 src/stokes_ft/      data.py  model.py  engine.py  finetune.py      adapted from the NVIDIA example
                     physics.py  metrics.py  evaluate.py  plotting.py  study.py  provenance.py  config.py
-scripts/            prepare_data.py  run_study.py  verify_physics.py  plot_results.py  results.py
-tests/              configuration, data, model, residuals, fine-tuning, pipeline, launcher
+                    fem.py  audit.py                                       Taylor-Hood solver, audit quantities
+scripts/            prepare_data.py  run_study.py  verify_physics.py  audit_checks.py  plot_results.py  results.py
+tests/              configuration, data, model, residuals, fine-tuning, pipeline, launcher, audit
+docs/               SCIENTIFIC_AUDIT.md  UPSTREAM_COMPARISON.md  EXPERIMENT_GAPS.md
 kaggle/             run_cuda.ipynb
 results/            physics_checks.json and one directory per study (see results/README.md)
 figures/            figures drawn from results/
@@ -236,7 +244,9 @@ Every study directory records the timestamp, repository commit and dirty state, 
 * **Runs are seeded but not bit-for-bit reproducible**, and the pinned PhysicsNeMo commit is a development snapshot (2.3.0a0) of the main branch.
 * **Dataset provenance.** The reference solver settings (element type, mesh generation) are not documented upstream beyond "FEniCS", and the NGC entry states no licence.
 
-Possible extensions: the full CUDA study; several fine-tuning seeds; an outlet term in the loss to test the pressure explanation; hard enforcement of the wall condition; the mesh-based upstream variant, which keeps the boundary marker as an input.
+* **The MeshGraphNet's receptive field is smaller than the domain.** With 15 message-passing layers, 60 to 69 % of the nodes, including the whole inlet, are beyond the reach of the polygon. Perturbing the polygon inputs of the trained model changes its output there by exactly zero. This limits the pressure level for any training schedule, not only the reduced one.
+
+Possible extensions, with commands and costs in [`docs/EXPERIMENT_GAPS.md`](docs/EXPERIMENT_GAPS.md): the remaining eight local fine-tunings; the full CUDA study; several fine-tuning seeds; a data-only refit of the coordinate network as a control for the physics terms; a lower pressure data weight or an outlet term (the MeshGraphNet outlet pressure is already within 0.006 of the reference, so an outlet term alone is expected to change little); hard enforcement of the wall condition; a message-passing depth or multiscale graph that covers the channel; the mesh-based upstream variant, which keeps the boundary marker as an input.
 
 ## Attribution
 

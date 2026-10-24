@@ -4,6 +4,7 @@ Tracked result files. Each study directory is a copy of a run directory without 
 
 | Path | Content |
 |---|---|
+| `audit_checks.json` | output of `scripts/audit_checks.py`: Taylor-Hood reproduction of the reference and its solve time, split integrity, receptive field of the MeshGraphNet, and from the local run directory the inlet pressure level, pressure offset, mesh-weighted errors and the perturbation test (see `docs/SCIENTIFIC_AUDIT.md`) |
 | `physics_checks.json` | output of `scripts/verify_physics.py`: viscosity fit, boundary data of the reference, automatic-differentiation and least-squares residual checks, residual floor of the reference |
 | `<study>/study_metadata.json` | per session: timestamp, git commit and dirty state, device, GPU, package versions; resolved configuration, seed, dataset checksum and simulation numbers used |
 | `<study>/summary.json` | means over the test meshes per stage, paired change from data-driven to fine-tuned, compute record |
