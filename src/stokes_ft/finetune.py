@@ -21,7 +21,7 @@
 # from the device in use, and the Weights & Biases call is removed; the loss terms, their
 # weights and the optimiser are unchanged. The upstream `main` is replaced by
 # `finetune_sample`, which seeds the network, records a history, times the loop, stores the
-# network and writes the same `filtered_*` arrays to the .vtp file.
+# network and writes the same `filtered_*` arrays to the .vtp file, replacing each output atomically.
 
 """Physics-informed stage: a Fourier-feature network fitted per test mesh to the MeshGraphNet
 prediction, the Stokes residual and the boundary conditions."""
@@ -39,7 +39,7 @@ from physicsnemo.sym.eq.phy_informer import PhysicsInformer
 from sympy import Function, Number, Symbol
 
 from .data import boundary_masks, read_sample
-from .provenance import device_synchronize
+from .provenance import atomic_path, device_synchronize
 
 LOSS_NAMES = ["u", "v", "p", "u_in", "v_in", "u_noslip", "v_noslip", "mom_u", "mom_v", "cont"]
 # Weights of the ten loss terms in PhysicsInformedFineTuner.train, in the order of LOSS_NAMES.
@@ -432,7 +432,7 @@ def finetune_sample(cfg, vtp_path: Path, index: int, device: torch.device, out_d
     device_synchronize(device)
     seconds = time.perf_counter() - start
 
-    with open(out_dir / f"history_{index}.csv", "w", newline="") as f:
+    with atomic_path(out_dir / f"history_{index}.csv") as tmp, open(tmp, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
@@ -443,11 +443,13 @@ def finetune_sample(cfg, vtp_path: Path, index: int, device: torch.device, out_d
     polydata = pv.read(str(vtp_path))
     for key in ("u", "v", "p"):
         polydata[f"filtered_{key}"] = results[key].detach().cpu().numpy()
-    polydata.save(str(vtp_path))
+    with atomic_path(vtp_path) as tmp:  # the file also holds the prediction: never leave it half written
+        polydata.save(str(tmp))
 
     ckpt_dir = out_dir.parent / "checkpoints" / "finetune"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
-    torch.save(tuner.model.state_dict(), ckpt_dir / f"fourier_dnn_{index}.pt")
+    with atomic_path(ckpt_dir / f"fourier_dnn_{index}.pt") as tmp:
+        torch.save(tuner.model.state_dict(), tmp)
 
     record = {
         "stage": "physics_finetuned",

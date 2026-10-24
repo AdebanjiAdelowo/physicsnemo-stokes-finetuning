@@ -1,6 +1,8 @@
 """The study: data-driven training, prediction, physics-informed fine-tuning, evaluation."""
 
+import contextlib
 import json
+import os
 from pathlib import Path
 
 from omegaconf import OmegaConf
@@ -10,13 +12,21 @@ from .data import DATASET_ARCHIVE, DATASET_SHA256, DATASET_URL, prepare_split, s
 from .engine import predict_test, train_data_driven
 from .evaluate import STATUS, evaluate_study
 from .finetune import finetune_sample
+from .gpulock import gpu_lock
 from .provenance import collect_metadata, resolve_device, write_json
 
 ALL_STAGES = ("train", "predict", "finetune", "evaluate")
+ACCELERATOR_STAGES = ("train", "predict", "finetune")
+# st_flags bit of a file whose content a cloud provider has evicted; reading one can block indefinitely
+SF_DATALESS = 0x40000000
 
 
 def log(message: str) -> None:
     print(message, flush=True)
+
+
+def is_dataless(path: Path) -> bool:
+    return bool(getattr(os.stat(path), "st_flags", 0) & SF_DATALESS)
 
 
 def run_study(cfg, stages=ALL_STAGES, resume: bool = False, runs_root: Path | None = None,
@@ -50,7 +60,8 @@ def run_study(cfg, stages=ALL_STAGES, resume: bool = False, runs_root: Path | No
         "dataset": {
             "source": DATASET_URL,
             "archive_sha256_expected": DATASET_SHA256,
-            "archive_sha256_found": sha256_of(archive) if archive.exists() else None,
+            "archive_sha256_found": sha256_of(archive) if archive.exists() and not is_dataless(archive) else None,
+            "archive_dataless": archive.exists() and is_dataless(archive),
             "files_total": manifest["files_total"],
             "split_seed": manifest["split_seed"],
             "split_sizes": {k: len(manifest[k]) for k in ("train", "validation", "test")},
@@ -63,6 +74,15 @@ def run_study(cfg, stages=ALL_STAGES, resume: bool = False, runs_root: Path | No
     write_json(meta_path, meta)
     log(f"study '{cfg.name}' on {device}, commit {session['git_commit']}, dirty: {session['git_dirty']}")
 
+    needs_device = any(stage in stages for stage in ACCELERATOR_STAGES)
+    with gpu_lock(device.type, log=log) if needs_device else contextlib.nullcontext():
+        _run_device_stages(cfg, run_dir, device, stages, resume)
+    if "evaluate" in stages:
+        evaluate_study(cfg, run_dir, samples=evaluate_samples, log=log)
+    return run_dir
+
+
+def _run_device_stages(cfg, run_dir: Path, device, stages, resume: bool) -> None:
     if "train" in stages:
         train_data_driven(cfg, run_dir, device, resume=resume, log=log)
     if "predict" in stages:
@@ -81,6 +101,3 @@ def run_study(cfg, stages=ALL_STAGES, resume: bool = False, runs_root: Path | No
                 continue
             record = finetune_sample(cfg, run_dir / "predictions" / f"graph_{index}.vtp", index, device, out_dir, log=log)
             write_json(record_path, record)
-    if "evaluate" in stages:
-        evaluate_study(cfg, run_dir, samples=evaluate_samples, log=log)
-    return run_dir

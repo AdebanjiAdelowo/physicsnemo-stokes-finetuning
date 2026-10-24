@@ -1,9 +1,11 @@
 """Run metadata: code version, environment and device."""
 
 import json
+import os
 import platform
 import subprocess
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from importlib import metadata
 from pathlib import Path
@@ -81,7 +83,22 @@ def resolve_device(name: str) -> torch.device:
     return device
 
 
-def write_json(path: Path, obj) -> None:
+@contextmanager
+def atomic_path(path: Path):
+    """A temporary sibling of ``path`` to write to; it replaces ``path`` only if the block succeeds.
+
+    The temporary name keeps the suffix, so writers that choose the format by extension still work.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, indent=2, sort_keys=False) + "\n")
+    tmp = path.with_name(f".{path.stem}.partial{path.suffix}")
+    try:
+        yield tmp
+        os.replace(tmp, path)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def write_json(path: Path, obj) -> None:
+    with atomic_path(path) as tmp:
+        tmp.write_text(json.dumps(obj, indent=2, sort_keys=False) + "\n")
