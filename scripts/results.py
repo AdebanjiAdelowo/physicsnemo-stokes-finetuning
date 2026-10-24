@@ -14,7 +14,7 @@ refuses to overwrite an existing ``results/<name>/`` unless ``--force`` is given
 import argparse
 import shutil
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from _bootstrap import ROOT
 
@@ -49,7 +49,22 @@ def bundle(study_dir: Path) -> Path:
 
 
 def publish(source: Path, force: bool) -> Path:
-    name = source.stem if source.suffix == ".zip" else source.name
+    members = None
+    if source.suffix == ".zip":
+        with zipfile.ZipFile(source) as z:
+            paths = [PurePosixPath(m) for m in z.namelist() if not m.endswith("/")]
+            if not paths or any(p.is_absolute() or ".." in p.parts or len(p.parts) < 2 for p in paths):
+                raise SystemExit("archive must contain one study directory with safe relative paths")
+            roots = {p.parts[0] for p in paths}
+            if len(roots) != 1:
+                raise SystemExit("archive must contain exactly one study directory")
+            name = roots.pop()
+            members = [str(p) for p in paths if p.suffix in KEEP_SUFFIXES
+                       and not UNTRACKED_DIRS & set(p.parts[1:])]
+            if f"{name}/summary.json" not in members:
+                raise SystemExit("archive has no study summary.json")
+    else:
+        name = source.name
     target = ROOT / "results" / name
     if target.exists():
         if not force:
@@ -57,7 +72,6 @@ def publish(source: Path, force: bool) -> Path:
         shutil.rmtree(target)
     if source.suffix == ".zip":
         with zipfile.ZipFile(source) as z:
-            members = [m for m in z.namelist() if m.startswith(f"{name}/") and Path(m).suffix in KEEP_SUFFIXES]
             z.extractall(ROOT / "results", members)
     else:
         for path in tracked_files(source):
