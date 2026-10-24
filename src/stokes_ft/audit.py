@@ -4,6 +4,7 @@ offset, and graph distances that bound what the MeshGraphNet can see."""
 import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import shortest_path
+from scipy.spatial.distance import directed_hausdorff
 
 from .data import mesh_edges
 
@@ -58,3 +59,21 @@ def hop_distance(n_nodes: int, triangles: np.ndarray, sources: np.ndarray) -> np
     edges = mesh_edges(triangles)
     adjacency = coo_matrix((np.ones(len(edges)), (edges[:, 0], edges[:, 1])), shape=(n_nodes, n_nodes)).tocsr()
     return shortest_path(adjacency, unweighted=True, directed=False, indices=np.flatnonzero(sources)).min(0)
+
+
+def hausdorff(a: np.ndarray, b: np.ndarray) -> float:
+    """Symmetric Hausdorff distance between two point sets."""
+    return max(directed_hausdorff(a, b)[0], directed_hausdorff(b, a)[0])
+
+
+def nearest_geometry(queries: dict, pool: dict) -> dict:
+    """For each query point set, the pool entry at the smallest Hausdorff distance and that distance.
+
+    Entries are ``{number: points}``; a query is never matched with itself.
+    """
+    out = {}
+    for n, points in queries.items():
+        distances = {m: hausdorff(points, other) for m, other in pool.items() if m != n}
+        best = min(distances, key=distances.get)
+        out[n] = (best, distances[best])
+    return out

@@ -81,3 +81,14 @@ def test_meshgraphnet_output_is_blind_beyond_its_message_passing_depth():
     assert hops.max() > depth + 5
     assert change[hops > depth].max() == 0.0
     assert change[hops <= depth].max() > 0.0
+
+
+def test_nearest_geometry_finds_the_closest_other_point_set():
+    from stokes_ft.audit import hausdorff, nearest_geometry
+
+    square = np.array([[0, 0], [1, 0], [1, 1], [0, 1]], float)
+    pool = {1: square, 2: square + 0.1, 3: square * 2}
+    assert hausdorff(square, square + [0.3, 0.4]) == 0.5
+    found = nearest_geometry({1: square, 9: square + 0.01}, pool)
+    assert found[1][0] == 2  # never matched with itself
+    assert found[9] == (1, hausdorff(square + 0.01, square))

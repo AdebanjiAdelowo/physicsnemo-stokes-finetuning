@@ -104,12 +104,44 @@ def evaluate_study(cfg, run_dir: Path, samples: list[int] | None = None, log=pri
     write_json(run_dir / "summary.json", summary)
     with open(run_dir / "summary.csv", "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["metric", "unit", "reference", "data_driven", "physics_finetuned", "change", "relative_change", "samples_improved"])
+        writer.writerow(["metric", "unit", "reference", "data_driven", "physics_finetuned", "change", "relative_change", "samples_improved",
+                         "mesh_relative_change_mean", "mesh_relative_change_ci95_low", "mesh_relative_change_ci95_high", "sign_test_p", "wilcoxon_p"])
         for key, label, unit in TABLE:
             c = summary["comparison"][key]
-            writer.writerow([label, unit, c["reference"], c["data_driven"], c["physics_finetuned"], c["change"], c["relative_change"], f"{c['samples_improved']}/{summary['samples']}"])
+            u = c["uncertainty"] or {}
+            low, high = u.get("relative_change_mean_ci95", (None, None))
+            writer.writerow([label, unit, c["reference"], c["data_driven"], c["physics_finetuned"], c["change"], c["relative_change"], f"{c['samples_improved']}/{summary['samples']}",
+                             u.get("relative_change_mean"), low, high, u.get("sign_test_p"), u.get("wilcoxon_p")])
     log(format_table(summary))
     return summary
+
+
+def paired_uncertainty(before: np.ndarray, after: np.ndarray, resamples: int = 10000, seed: int = 0) -> dict:
+    """Uncertainty over meshes of the paired change from ``before`` to ``after``.
+
+    ``relative_change`` is the per-mesh ``after / before - 1``; its mean gets a percentile
+    bootstrap interval (meshes resampled with replacement, seeded). The exact two-sided sign test
+    and the Wilcoxon signed-rank test ask whether the change is centred on zero. With few meshes
+    the tests have little power, and the interval describes these meshes, not a population.
+    """
+    from scipy.stats import binomtest, wilcoxon
+
+    before, after = np.asarray(before, float), np.asarray(after, float)
+    relative = after / before - 1.0
+    rng = np.random.default_rng(seed)
+    means = relative[rng.integers(0, len(relative), size=(resamples, len(relative)))].mean(1)
+    lower, upper = np.percentile(means, [2.5, 97.5])
+    nonzero = after != before
+    improved = int((after < before).sum())
+    return {
+        "n": len(relative),
+        "relative_change_per_mesh": relative.tolist(),
+        "relative_change_mean": float(relative.mean()),
+        "relative_change_median": float(np.median(relative)),
+        "relative_change_mean_ci95": [float(lower), float(upper)],
+        "sign_test_p": float(binomtest(improved, int(nonzero.sum()), 0.5).pvalue) if nonzero.any() else None,
+        "wilcoxon_p": float(wilcoxon(after, before).pvalue) if nonzero.sum() >= 2 else None,
+    }
 
 
 def summarise(cfg, run_dir: Path, rows: list[dict]) -> dict:
@@ -139,6 +171,7 @@ def summarise(cfg, run_dir: Path, rows: list[dict]) -> dict:
             "change": float(after.mean() - before.mean()),
             "relative_change": float(after.mean() / before.mean() - 1.0),
             "samples_improved": int((after < before).sum()),
+            "uncertainty": paired_uncertainty(before, after) if len(before) > 1 else None,
         }
 
     def load(name):
