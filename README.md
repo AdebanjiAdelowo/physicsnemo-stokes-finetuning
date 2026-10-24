@@ -8,17 +8,11 @@ The model, the dataset pipeline, the Stokes residual and both training procedure
 
 ## Results
 
-| Study | Configuration | Status |
-|---|---|---|
-| Residual formulation checks | `scripts/verify_physics.py`, 20 test meshes | VERIFIED |
-| `smoke` | pipeline check, CPU | SMOKE (no numbers reported) |
-| `local` | 100 training meshes, 40 epochs; fine-tuning as upstream | LOCAL/REDUCED, 2 of the 10 configured test meshes |
-| `full` | NVIDIA settings (500 meshes, 500 epochs), 10 test meshes, CUDA | PENDING |
-| `official` | NVIDIA settings, test mesh 7 only | NOT RUN (it is sample 7 of `full`) |
+The experiment uses 100 training meshes and 40 epochs on Apple MPS. Physics-informed optimisation and paired evaluation cover test meshes 0 and 1. The configuration specifies ten test meshes; these results cover two. The residual checks additionally use 20 test meshes. Machine-readable coverage is recorded in [`results/local/summary.json`](results/local/summary.json).
 
 ### Reduced local study
 
-The only before/after numbers available so far come from `configs/local.yaml`: the MeshGraphNet saw 4,000 training iterations instead of the 250,000 of the NVIDIA configuration, so the data-driven baseline is weak, and the physics-informed stage (unchanged from upstream, 10,000 iterations) was completed on test meshes 0 and 1 only. The table is the mean over those two meshes; it does not describe the NVIDIA configuration. Source: [`results/local/summary.csv`](results/local/summary.csv).
+The before/after comparison uses `configs/local.yaml`: the MeshGraphNet saw 4,000 training iterations instead of the 250,000 of the NVIDIA configuration, so the data-driven baseline is weak, and the physics-informed stage (unchanged from upstream, 10,000 iterations) was completed on test meshes 0 and 1 only. The table is the mean over those two meshes; it does not describe the NVIDIA configuration. Source: [`results/local/summary.csv`](results/local/summary.csv).
 
 | Metric | Reference floor | Data-driven | Physics fine-tuned | Change | Meshes improved |
 |---|---:|---:|---:|---:|---:|
@@ -46,12 +40,12 @@ Residuals are nodal, with least-squares mesh derivatives; "reference floor" is t
 
 What these two meshes show, for a weak data-driven baseline:
 
-* **Velocity improves.** The velocity error falls on both meshes, most for the transverse component $v$, which the undertrained MeshGraphNet predicts worst. The fine-tuned field ends closer to the reference than the prediction it was fitted to: the PDE and boundary terms move it away from its data target in the right direction. The error was still decreasing after 10,000 iterations.
-* **Pressure does not.** The pressure error is unchanged within the spread of two meshes (0.217 to 0.203 on mesh 0, 0.100 to 0.104 on mesh 1). The momentum equation constrains only $\nabla p$, and with no outlet term in the loss the pressure level is inherited from the MeshGraphNet prediction; the error map shows a nearly uniform offset upstream of the polygon in both fields.
-* **PDE residuals drop to the resolution of the metric.** The nodal momentum residual falls from 2.5 times the reference floor to about the floor (0.21 and 0.38 against 0.39 and 0.34 on the two meshes), and the divergence residual to half its floor. Below the floor the metric cannot rank fields, so the supported statement is that the data-driven field is measurably less consistent with the Stokes equations than the reference, and the fine-tuned field is not.
+* **Velocity improves.** The velocity error falls on both meshes, most for the transverse component $v$, which the undertrained MeshGraphNet predicts worst. The fine-tuned field ends closer to the reference than the prediction it was fitted to: the PDE and boundary terms move it away from its data target in the right direction. The recorded histories show further reduction toward the end of the 10,000 iterations.
+* **Pressure changes little.** The mean pressure error falls by 3.3 %, with opposite changes on the two meshes (0.217 to 0.203 on mesh 0, 0.100 to 0.104 on mesh 1). The momentum equation constrains only $\nabla p$. The pressure data term anchors the pressure level to the MeshGraphNet prediction, while no outlet term enforces the reference pressure level; the error map shows a nearly uniform offset upstream of the polygon in both fields.
+* **PDE residuals drop to the resolution of the metric.** The nodal momentum residual falls from 2.5 times the reference floor to about the floor (0.21 and 0.38 against 0.39 and 0.34 on the two meshes), and the divergence residual to half its floor. Values near or below the reference residual are limited by mesh differentiation error. They show a reduction under this discrete operator, but do not establish that the fine-tuned field satisfies the continuous PDE more accurately than the reference.
 * **No-slip gets worse.** The MeshGraphNet receives the boundary marker as an input and reproduces the wall values to 0.003; the coordinate network enforces them only through a penalty and ends at 0.016, about 5 % of the inlet velocity scale. The inlet profile, which has the same penalty weight on far fewer nodes, improves.
 
-This is a trade: lower interior residuals and velocity error against a looser no-slip condition and an unchanged pressure. Whether it holds for a MeshGraphNet trained with the NVIDIA settings, where the data-driven error is expected to be much smaller and the room for improvement with it, is the open question of the pending `full` study.
+This is a trade: lower interior residuals and velocity error against a looser no-slip condition and a small change in pressure error. These two meshes do not establish the effect for a MeshGraphNet trained with the NVIDIA settings. `configs/full.yaml` defines that larger comparison.
 
 ### Compute
 
@@ -60,9 +54,9 @@ This is a trade: lower interior residuals and velocity error against a looser no
 | Parameters | 2,531,587 | 49,923 per test mesh |
 | Local study, Apple M3 Pro (MPS) | 2,308 s for 4,000 iterations | 1,690 s per mesh for 10,000 iterations (mean of 2) |
 | Inference | 0.19 s per mesh | one optimisation per mesh; no reusable model |
-| CUDA time and peak memory | PENDING | PENDING |
+| CUDA time and peak memory | Not measured | Not measured |
 
-The local timings were taken while other jobs were using the same machine and are upper bounds, not benchmarks. At these rates the physics-informed step on one test mesh takes about three quarters of the time of the whole reduced MeshGraphNet training, and it has to be repeated for every new geometry.
+The local timings include contention from other jobs on the same machine and should not be treated as isolated hardware benchmarks. At these rates the physics-informed step on one test mesh takes about three quarters of the time of the whole reduced MeshGraphNet training, and it has to be repeated for every new geometry.
 
 ## The Stokes problem
 
@@ -70,7 +64,7 @@ Steady incompressible Stokes flow in a channel $\Omega = [0, 1.5] \times [0, 0.4
 
 $$-\nu \Delta \mathbf{u} + \nabla p = 0, \qquad \nabla \cdot \mathbf{u} = 0 \quad \text{in } \Omega,$$
 
-with velocity $\mathbf{u} = (u, v)$, pressure $p$, kinematic viscosity $\nu = 0.01$ and no body force. The equations are used in dimensional form with these numerical values; no nondimensionalisation is applied.
+with velocity $\mathbf{u} = (u, v)$, pressure $p$, kinematic viscosity $\nu = 0.01$ and no body force. The code uses these numerical values directly without additional nondimensionalisation. Physical units are not specified by the dataset metadata.
 
 | Boundary | Condition |
 |---|---|
@@ -120,7 +114,7 @@ The example also ships `pi_fine_tuning_gnn.py`, which fits a new MeshGraphNet wi
 
 ### Differences between the upstream README and the upstream code
 
-Found while reading the source at the pinned commit; the code and the data are what this repository follows.
+At the pinned commit, the implementation and dataset differ from several descriptions in the upstream README:
 
 | Upstream README | Upstream code and data |
 |---|---|
@@ -143,7 +137,7 @@ Every fine-tuned test mesh is evaluated from one `.vtp` file that holds the mesh
 | | outlet pressure | RMS of $p$ over outlet nodes (the reference satisfies $p \approx 0$ there; no loss term enforces it) |
 | Compute | parameters, training time, fine-tuning time, inference time, peak CUDA memory | timers synchronised with the device |
 
-A graph network has no usable derivative with respect to position, so the residuals of nodal fields are computed on the mesh with PhysicsNeMo's weighted least-squares gradient (`grad_method="least_squares"`, applied twice for second derivatives), the operator of `pi_fine_tuning_gnn.py`. The same operator is applied to the reference, the MeshGraphNet prediction and the fine-tuned field. For the fine-tuned network the exact automatic-differentiation residual, the quantity it minimises, is reported as well.
+For a common evaluation of fields defined on mesh nodes, the residuals of nodal fields are computed on the mesh with PhysicsNeMo's weighted least-squares gradient (`grad_method="least_squares"`, applied twice for second derivatives), the operator of `pi_fine_tuning_gnn.py`. The same operator is applied to the reference, the MeshGraphNet prediction and the fine-tuned field. For the fine-tuned network the exact automatic-differentiation residual, the quantity it minimises, is reported as well.
 
 ### Checks of the residual formulation
 
@@ -160,9 +154,9 @@ A graph network has no usable derivative with respect to position, so the residu
 | Least-squares operator on analytic fields, dataset mesh: Laplacian | relative error 11 % at interior nodes, 42 to 50 % at boundary nodes |
 | Least-squares operator: residual of the **reference solution** | momentum 0.30 (0.15 to 0.56), divergence 0.10 (0.05 to 0.20) |
 
-The equations, the sign convention, the viscosity factor and the inlet profile in the NVIDIA code agree with the data, and coordinates are used unnormalised in both stages, so no rescaling of derivatives is involved. No defect was found in the residual implementation.
+The equations, the sign convention, the viscosity factor and the inlet profile in the NVIDIA code agree with the data, and coordinates are used unnormalised in both stages, so no rescaling of derivatives is involved. The analytic checks support the tested residual signs, factors and derivatives.
 
-The last two rows set the resolution of the nodal residual metrics. On these meshes ($h \approx 0.014$) the twice-applied least-squares gradient reproduces the Laplacian of smooth analytic fields only to about 11 % in the interior and worse next to boundaries, and the exact finite-element solution itself has a nodal momentum residual of about 0.30, concentrated at the polygon corners and the walls. A nodal residual near or below that floor does not show that a field is closer to a Stokes solution than the reference is; a smooth field can score below the floor.
+The last two rows set the resolution of the nodal residual metrics. On these meshes ($h \approx 0.014$) the twice-applied least-squares gradient reproduces the Laplacian of smooth analytic fields only to about 11 % in the interior and worse next to boundaries, and the finite-element reference itself has a nodal momentum residual of about 0.30, concentrated at the polygon corners and the walls. A nodal residual near or below that floor does not show that a field is closer to a Stokes solution than the reference is; a smooth field can score below the floor.
 
 ## Reproduction
 
@@ -175,7 +169,7 @@ pip install -r requirements.txt
 FORCE_ONLY_CPU=1 pip install --no-build-isolation --no-binary torch-scatter torch-scatter==2.1.2
 
 python scripts/prepare_data.py                  # 172 MB download, SHA-256 check, seeded split
-python -m pytest -q                             # 38 tests, no dataset needed
+python -m pytest -q                             # tests use a small synthetic dataset
 python scripts/verify_physics.py                # results/physics_checks.json
 python scripts/run_study.py --config smoke      # pipeline check on the CPU, about a minute
 python scripts/run_study.py --config local      # reduced study (Apple MPS); add --resume to continue it
@@ -196,7 +190,7 @@ python scripts/plot_results.py --study results/local --out figures
 
 All four share the architecture code, the optimisers, the learning-rate rule, the loss weights, the split and the seed. `full` and `official` use the same seed for both stages, so the upstream case (test mesh 7) is one of the ten samples of `full`.
 
-Changes to the upstream procedure, all in the reproducibility layer: a seed (upstream sets none), the seeded split, single-process training without Weights & Biases, a checkpoint every 25 epochs that stores the number of completed epochs with older ones removed (upstream writes one per epoch and keeps all), and per-mesh seeding and timing of the fine-tuning loop. Seeding fixes the initialisation and the sample order; scatter accumulation order is not fixed, so two runs agree to rounding and are not bit-for-bit identical.
+Changes to the upstream procedure, all in the reproducibility layer: a seed (upstream sets none), the seeded split, single-process training without Weights & Biases, a checkpoint every 25 epochs that stores the number of completed epochs with older ones removed (upstream writes one per epoch and keeps all), and per-mesh seeding and timing of the fine-tuning loop. Seeding fixes the initialisation and the sample order; scatter accumulation order is not fixed, so repeated runs may differ numerically, especially on accelerators.
 
 ### GPU run
 
@@ -207,7 +201,15 @@ python scripts/results.py publish physicsnemo-stokes-finetuning-full.zip
 python scripts/plot_results.py --study results/full --out figures
 ```
 
-NVIDIA states no reference hardware or training time for this example; its README only notes that multi-GPU training with `mpirun` is supported.
+NVIDIA states no reference hardware, GPU memory requirement or training time for this example; its README notes support for multi-GPU training with `mpirun`. The reference schedule is 250,000 graph-training updates plus 10,000 coordinate-network updates per test mesh.
+
+| Device | Evidence and feasibility |
+|---|---|
+| Apple M3 Pro, 18 GiB unified memory | CPU smoke and reduced MPS training and fine-tuning were executed. The remaining eight local fine-tunings project to 3.75 hours from the two measured meshes. |
+| Kaggle T4 or P100, 16 GB | No measurements. Run the launcher smoke and memory probe before assessing the full schedule; the installed PyTorch/CUDA build must support the selected GPU. |
+| Other single NVIDIA GPU | The same probe determines memory use and projected session time; parameter count alone does not predict graph activation memory. |
+
+The launcher stops before full training if the measured projection exceeds the session budget. It does not change epochs, data size, architecture or seeds to fit.
 
 ## Repository layout
 
@@ -226,9 +228,9 @@ Every study directory records the timestamp, repository commit and dirty state, 
 
 ## Limitations
 
-* **The before/after comparison is reduced and partial.** It rests on two test meshes and a MeshGraphNet trained for 1.6 % of the upstream iterations on 100 meshes. Two samples give no meaningful spread. The study with NVIDIA's settings on ten test meshes requires a CUDA GPU and has not been run; `results/` holds no CUDA numbers.
+* **The before/after comparison is reduced and partial.** It rests on two test meshes and a MeshGraphNet trained for 1.6 % of the upstream iterations on 100 meshes. Two samples are insufficient for reliable population-level uncertainty estimates. The reported results do not cover NVIDIA's full training schedule or CUDA hardware.
 * **One seed.** The fine-tuning network depends on its random Fourier matrix and initialisation; the sensitivity to that draw was not measured.
-* **Nodal residuals have a floor.** The least-squares mesh operator assigns the exact reference a momentum residual of about 0.3. Residuals below that level are not evidence of better physics, and the automatic-differentiation residual exists for the coordinate network only, so the two stages cannot be compared with an exact operator.
+* **Nodal residuals have a floor.** The least-squares mesh operator assigns the finite-element reference a momentum residual of about 0.3. Residuals below that level are not evidence of better physics, and the automatic-differentiation residual exists for the coordinate network only, so the two stages cannot be compared with an exact operator.
 * **The physics-informed step never sees the reference, and is not a surrogate.** It regularises one prediction on one mesh; its cost is a full optimisation per geometry. Its benefit is bounded by the information in the PDE, the two boundary terms and the MeshGraphNet prediction: the outlet condition and hence the pressure level are not constrained.
 * **Upstream choices are kept as they are.** The loss weights, the 10,000 iterations, the constant learning rate and the soft boundary penalties are NVIDIA's; no tuning or sweep was done, and the second upstream variant (`pi_fine_tuning_gnn.py`) was not run.
 * **Runs are seeded but not bit-for-bit reproducible**, and the pinned PhysicsNeMo commit is a development snapshot (2.3.0a0) of the main branch.
