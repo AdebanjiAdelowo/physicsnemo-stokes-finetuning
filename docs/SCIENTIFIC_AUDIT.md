@@ -13,7 +13,7 @@ New numbers in this document come from `scripts/audit_checks.py`, whose output i
 | Pressure gauge | Fixed in the reference by the natural outlet condition (p is about 0 there). Not fixed by any term of the physics-informed loss; the pressure data term sets it |
 | Does the code match NVIDIA's? | Yes. The physics-informed step differs from upstream only in argument plumbing and logging; the MeshGraphNet, graph, loss and schedule are upstream's |
 | Implementation errors found | None that change a reported number. One failing test (stale launcher-order assertion) was fixed |
-| Leakage | None found. Splits are disjoint by simulation number; normalisation statistics come from training files only; no polygon geometry repeats among the 42 files whose content is on the disk (see section 7) |
+| Leakage | None found. Splits are disjoint by simulation number; normalisation statistics come from training files only; all 1000 files scanned (2026-10-25): 1000 distinct polygons, and held-out polygons are no closer to the training set than training polygons are to each other (see section 7) |
 | Recomputed metrics | Match the stored `per_sample.csv` (boundary and error metrics recomputed with independent code) |
 | Main new result | The 15-layer MeshGraphNet cannot see the obstacle from the inlet (18 to 23 hops away). It predicts the same inlet pressure, 0.694 to 0.696, for every test geometry, while the reference ranges from 0.41 to 1.60. This is the main source of its pressure error, and the physics-informed step does not remove it |
 | Missing baseline | The classical solver: 0.56 s per mesh on one CPU core for the exact reference, against 1,690 s per mesh for the physics-informed step at a velocity error of 0.11 |
@@ -152,7 +152,17 @@ The comparison also lacks a control that separates the PDE terms from the refitt
 
 * **Split.** 800/100/100, seeded (`split_seed = 0`), recorded in `data/dataset/split.json`, disjoint by construction and re-verified on every run. The local study uses the first 100 training, 10 validation and 10 test files in numeric order.
 * **Normalisation.** Statistics from the training split only, written to and read from the run directory (`node_stats.json`, `edge_stats.json`).
-* **Geometry duplicates.** On this machine 958 of the 1000 raw files have been evicted by the cloud file provider (`SF_DATALESS`), and reading them blocks, so the scan covered the 42 resident files (30 train, 2 validation, 10 test). These hold 42 distinct polygons. A full scan is one command once the files are local (`python scripts/audit_checks.py`).
+* **Geometry duplicates.** The first scan (2026-10-24) covered only the 42 raw files whose content was on the disk; the cloud file provider had evicted the other 958 (`SF_DATALESS`), and reading them blocks. It was completed on 2026-10-25 (`results/audit_checks.json`, `split_integrity`): evicted files are read from `results_polygon.zip` after its SHA-256 is checked against the published value, and each resident file is checked byte for byte against its archive member (all 42 identical).
+
+  | Check, all 1000 files (800 train, 100 validation, 100 test) | Result |
+  |---|---|
+  | Simulation numbers disjoint across splits | yes |
+  | Distinct polygons (exact match of the rounded polygon node set) | 1000; no repeated geometry |
+  | Hausdorff distance, each held-out polygon to the nearest training polygon | mean 0.0171 (0.0025 to 0.041) |
+  | Same distance, each training polygon to the nearest other training polygon | mean 0.0182 (0.0015 to 0.052) |
+  | The 10 evaluated test meshes to the 100 training files the local study used | 0.017 to 0.058 |
+
+  Held-out geometries are therefore as far from the training set as training geometries are from one another: the splits are independent draws from the same generator, with no exact or preferential near-duplicates. Distances are in domain units (channel height 0.4). The generator does produce some close shapes (the closest held-out pair is 0.0025 apart, test file 824 against training file 268); none of the 10 evaluated test meshes is among them.
 * **Reference solver as leakage.** The physics-informed step uses only the boundary data and the PDE. The reference enters only the monitoring printout, as upstream.
 * **Seeds.** One seed per stage; sensitivity not measured (gap G3).
 * **Provenance.** Every run records the commit, dirty state, PhysicsNeMo commit, package versions, resolved configuration, dataset checksum and simulation numbers. The local study was run at commit `910170b`/`f18a24c` (`results/local/study_metadata.json`). The installed PhysicsNeMo is the pinned commit (`direct_url.json`).
