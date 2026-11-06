@@ -1,0 +1,21 @@
+# Controlled receptive-field experiment (G12), PENDING. The data-driven stage of configs/local.yaml
+# (100 training meshes, 40 epochs, upstream learning-rate rule) with one of three processors:
+#   baseline       upstream MeshGraphNet, 15 hops, 2,531,587 parameters
+#   global_latent  + shared mean-pooled global MLP, unbounded receptive field, +33,024 parameters
+#   shared_depth   the 15 blocks applied twice (weights shared), 30 hops, identical parameters
+# Only model_variant and seed change between runs; data, split, epochs, optimiser and schedule are
+# identical. Evaluation: scripts/evaluate_surrogate.py on the first 100 test meshes.
+#   python scripts/run_study.py --config arch --stages train,predict model_variant=global_latent seed=1 name=arch_global_latent_s1
+defaults:
+  - local
+  - _self_
+
+name: arch_baseline_s0
+model_variant: baseline
+processor_repeats: 2
+
+finetune:
+  samples: []
+
+evaluation:
+  plot_samples: []
