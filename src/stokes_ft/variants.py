@@ -243,8 +243,8 @@ def run_variant(cfg, run_dir: Path, variant: Variant, index: int, device, iterat
         if it % log_every == 0 or it == iterations - 1:
             device_synchronize(device)
             row = {"iteration": it + 1, "seconds": time.perf_counter() - start}
-            row.update({f"loss_{k}": float(v) for k, v in terms.items()})
-            row["loss_total"] = float(tuner.total(terms))
+            row.update({f"loss_{k}": float(v.detach()) for k, v in terms.items()})
+            row["loss_total"] = float(tuner.total(terms).detach())
             row.update(tuner.errors())
             rows.append(row)
             if not np.isfinite(row["loss_total"]):
