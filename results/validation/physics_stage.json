@@ -1,7 +1,7 @@
 {
   "environment": {
-    "timestamp_utc": "2026-11-07T10:37:41+00:00",
-    "git_commit": "ae22ab213562f33badee4cad8ff075a9b7dd2253",
+    "timestamp_utc": "2026-11-07T20:04:35+00:00",
+    "git_commit": "9da4f176cd7ff3479afdf6a964be04dc54a67013",
     "git_dirty": true,
     "device": "cpu",
     "gpu_name": null,
@@ -28,7 +28,10 @@
     "data_driven",
     "physics_finetuned",
     "control_data_bc",
-    "control_data_only"
+    "control_data_only",
+    "control_hard_bc",
+    "control_outlet",
+    "control_outlet_free_p"
   ],
   "means_over_available_meshes": {
     "reference": {
@@ -164,6 +167,63 @@
         7,
         8,
         9
+      ]
+    },
+    "control_hard_bc": {
+      "rel_l2_velocity": 0.19210093523287786,
+      "rel_l2_p": 0.18522185729265772,
+      "h1semi_velocity": 0.30235659816914706,
+      "l2_p_gauge_free": 0.1631995815537211,
+      "p_inlet_abs_error": 0.14047791972780121,
+      "weak_momentum_h1dual": 0.009584460447337554,
+      "weak_continuity_l2": 0.4128474546692932,
+      "nodal_momentum": 0.45495821417384336,
+      "nodal_continuity": 0.23380708683656531,
+      "bc_inflow": 2.9324060210191058e-08,
+      "bc_wall": 0.0,
+      "bc_polygon": 6.03079510689532e-08,
+      "recovered_p_rel_l2": 0.25682017589129486,
+      "meshes": [
+        0,
+        1
+      ]
+    },
+    "control_outlet": {
+      "rel_l2_velocity": 0.10704032719870167,
+      "rel_l2_p": 0.15090871999134994,
+      "h1semi_velocity": 0.2554323453935553,
+      "l2_p_gauge_free": 0.12724462497520722,
+      "p_inlet_abs_error": 0.12172483426212005,
+      "weak_momentum_h1dual": 0.004403725843812778,
+      "weak_continuity_l2": 0.09644357797405326,
+      "nodal_momentum": 0.28725924291717153,
+      "nodal_continuity": 0.061876788010203174,
+      "bc_inflow": 0.0015020497118531672,
+      "bc_wall": 0.007413768600810321,
+      "bc_polygon": 0.04187938656994225,
+      "recovered_p_rel_l2": 0.18747119389691985,
+      "meshes": [
+        0,
+        1
+      ]
+    },
+    "control_outlet_free_p": {
+      "rel_l2_velocity": 0.13302487273004454,
+      "rel_l2_p": 0.2217466004242039,
+      "h1semi_velocity": 0.30383674977149666,
+      "l2_p_gauge_free": 0.184318796729545,
+      "p_inlet_abs_error": 0.18013751238127573,
+      "weak_momentum_h1dual": 0.0033096088479833844,
+      "weak_continuity_l2": 0.08133587425148932,
+      "nodal_momentum": 0.1869794778696347,
+      "nodal_continuity": 0.05762793396469936,
+      "bc_inflow": 0.0024698279163147844,
+      "bc_wall": 0.009305451865762433,
+      "bc_polygon": 0.0509780507261815,
+      "recovered_p_rel_l2": 0.23716071418968798,
+      "meshes": [
+        0,
+        1
       ]
     }
   },
@@ -2160,6 +2220,1038 @@
         }
       }
     },
+    "data_driven->control_hard_bc": {
+      "meshes": [
+        0,
+        1
+      ],
+      "rel_l2_velocity": {
+        "data_driven": [
+          0.1598972119869136,
+          0.2150359292718667
+        ],
+        "control_hard_bc": [
+          0.13855446773238111,
+          0.2456474027333746
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.13347790114238656,
+            0.14235515695056833
+          ],
+          "relative_change_mean": 0.004438627904090886,
+          "relative_change_median": 0.004438627904090886,
+          "relative_change_mean_ci95": [
+            -0.13347790114238656,
+            0.14235515695056833
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "rel_l2_p": {
+        "data_driven": [
+          0.21737642712534727,
+          0.10041351197442983
+        ],
+        "control_hard_bc": [
+          0.17485889448641392,
+          0.19558482009890155
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.19559403566062006,
+            0.947793840222489
+          ],
+          "relative_change_mean": 0.3760999022809345,
+          "relative_change_median": 0.3760999022809345,
+          "relative_change_mean_ci95": [
+            -0.19559403566062006,
+            0.947793840222489
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "h1semi_velocity": {
+        "data_driven": [
+          0.3846379895685663,
+          0.48190284023526325
+        ],
+        "control_hard_bc": [
+          0.23614140984008936,
+          0.36857178649820477
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.38606841694196636,
+            -0.23517407301797733
+          ],
+          "relative_change_mean": -0.31062124497997184,
+          "relative_change_median": -0.31062124497997184,
+          "relative_change_mean_ci95": [
+            -0.38606841694196636,
+            -0.23517407301797733
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "l2_p_gauge_free": {
+        "data_driven": [
+          0.18666683444437174,
+          0.09430127441659235
+        ],
+        "control_hard_bc": [
+          0.1354812750031087,
+          0.19091788810433355
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.2742081076888716,
+            1.0245525766801458
+          ],
+          "relative_change_mean": 0.3751722344956371,
+          "relative_change_median": 0.3751722344956371,
+          "relative_change_mean_ci95": [
+            -0.2742081076888716,
+            1.0245525766801458
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "p_inlet_abs_error": {
+        "data_driven": [
+          0.1942178831936161,
+          0.05797377193797559
+        ],
+        "control_hard_bc": [
+          0.15267970799816055,
+          0.12827613145744188
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.2138741011508507,
+            1.2126580205041804
+          ],
+          "relative_change_mean": 0.49939195967666483,
+          "relative_change_median": 0.49939195967666483,
+          "relative_change_mean_ci95": [
+            -0.2138741011508507,
+            1.2126580205041804
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "weak_momentum_h1dual": {
+        "data_driven": [
+          0.013023526234969924,
+          0.014538739651964814
+        ],
+        "control_hard_bc": [
+          0.0060418054474366024,
+          0.013127115447238505
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.5360852860868404,
+            -0.09709398741008046
+          ],
+          "relative_change_mean": -0.3165896367484604,
+          "relative_change_median": -0.3165896367484604,
+          "relative_change_mean_ci95": [
+            -0.5360852860868404,
+            -0.09709398741008046
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "weak_continuity_l2": {
+        "data_driven": [
+          0.6030726125659391,
+          0.7968671252017389
+        ],
+        "control_hard_bc": [
+          0.4067197679134751,
+          0.4189751414251112
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.3255874011871085,
+            -0.47422207771585334
+          ],
+          "relative_change_mean": -0.3999047394514809,
+          "relative_change_median": -0.3999047394514809,
+          "relative_change_mean_ci95": [
+            -0.47422207771585334,
+            -0.3255874011871085
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "nodal_momentum": {
+        "data_driven": [
+          0.9003444429509567,
+          0.8959817298161905
+        ],
+        "control_hard_bc": [
+          0.436995048235005,
+          0.4729213801126817
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.5146357023066461,
+            -0.47217519690976184
+          ],
+          "relative_change_mean": -0.493405449608204,
+          "relative_change_median": -0.493405449608204,
+          "relative_change_mean_ci95": [
+            -0.5146357023066461,
+            -0.47217519690976184
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "nodal_continuity": {
+        "data_driven": [
+          0.5163119101179827,
+          0.7040067706770085
+        ],
+        "control_hard_bc": [
+          0.21770612465711317,
+          0.24990804901601746
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.5783437871743748,
+            -0.6450203898242438
+          ],
+          "relative_change_mean": -0.6116820884993093,
+          "relative_change_median": -0.6116820884993093,
+          "relative_change_mean_ci95": [
+            -0.6450203898242438,
+            -0.5783437871743748
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_inflow": {
+        "data_driven": [
+          0.007053757566831023,
+          0.005635529693212507
+        ],
+        "control_hard_bc": [
+          2.9043231426979652e-08,
+          2.9604888993402467e-08
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.9999958825872378,
+            -0.999994746742435
+          ],
+          "relative_change_mean": -0.9999953146648364,
+          "relative_change_median": -0.9999953146648364,
+          "relative_change_mean_ci95": [
+            -0.9999958825872378,
+            -0.999994746742435
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_wall": {
+        "data_driven": [
+          0.0017524582879229979,
+          0.0017496514039441339
+        ],
+        "control_hard_bc": [
+          0.0,
+          0.0
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -1.0,
+            -1.0
+          ],
+          "relative_change_mean": -1.0,
+          "relative_change_median": -1.0,
+          "relative_change_mean_ci95": [
+            -1.0,
+            -1.0
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_polygon": {
+        "data_driven": [
+          0.007135415639618775,
+          0.005605750501866969
+        ],
+        "control_hard_bc": [
+          4.8895919072876194e-08,
+          7.17199830650302e-08
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.9999931474322531,
+            -0.999987205998012
+          ],
+          "relative_change_mean": -0.9999901767151326,
+          "relative_change_median": -0.9999901767151326,
+          "relative_change_mean_ci95": [
+            -0.9999931474322531,
+            -0.999987205998012
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "recovered_p_rel_l2": {
+        "data_driven": [
+          0.24155556332095585,
+          0.23860447526910955
+        ],
+        "control_hard_bc": [
+          0.19627974678103108,
+          0.31736060500155866
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.18743437707442323,
+            0.3300697928805576
+          ],
+          "relative_change_mean": 0.07131770790306718,
+          "relative_change_median": 0.07131770790306718,
+          "relative_change_mean_ci95": [
+            -0.18743437707442323,
+            0.3300697928805576
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      }
+    },
+    "data_driven->control_outlet": {
+      "meshes": [
+        0,
+        1
+      ],
+      "rel_l2_velocity": {
+        "data_driven": [
+          0.1598972119869136,
+          0.2150359292718667
+        ],
+        "control_outlet": [
+          0.11725095929878859,
+          0.09682969509861475
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.26671042076465523,
+            -0.5497045752935807
+          ],
+          "relative_change_mean": -0.408207498029118,
+          "relative_change_median": -0.408207498029118,
+          "relative_change_mean_ci95": [
+            -0.5497045752935807,
+            -0.26671042076465523
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "rel_l2_p": {
+        "data_driven": [
+          0.21737642712534727,
+          0.10041351197442983
+        ],
+        "control_outlet": [
+          0.20147485062344006,
+          0.10034258935925981
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.07315225809989867,
+            -0.0007063054939068225
+          ],
+          "relative_change_mean": -0.036929281796902746,
+          "relative_change_median": -0.036929281796902746,
+          "relative_change_mean_ci95": [
+            -0.07315225809989867,
+            -0.0007063054939068225
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "h1semi_velocity": {
+        "data_driven": [
+          0.3846379895685663,
+          0.48190284023526325
+        ],
+        "control_outlet": [
+          0.2535049982914304,
+          0.25735969249568014
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.3409257401335285,
+            -0.46595107766943633
+          ],
+          "relative_change_mean": -0.4034384089014824,
+          "relative_change_median": -0.4034384089014824,
+          "relative_change_mean_ci95": [
+            -0.46595107766943633,
+            -0.3409257401335285
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "l2_p_gauge_free": {
+        "data_driven": [
+          0.18666683444437174,
+          0.09430127441659235
+        ],
+        "control_outlet": [
+          0.16711710274650235,
+          0.08737214720391212
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.10473061139147011,
+            -0.07347861686438717
+          ],
+          "relative_change_mean": -0.08910461412792864,
+          "relative_change_median": -0.08910461412792864,
+          "relative_change_mean_ci95": [
+            -0.10473061139147011,
+            -0.07347861686438717
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "p_inlet_abs_error": {
+        "data_driven": [
+          0.1942178831936161,
+          0.05797377193797559
+        ],
+        "control_outlet": [
+          0.1764588655473034,
+          0.06699080297693671
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.0914386325002251,
+            0.15553638718916152
+          ],
+          "relative_change_mean": 0.03204887734446821,
+          "relative_change_median": 0.03204887734446821,
+          "relative_change_mean_ci95": [
+            -0.0914386325002251,
+            0.15553638718916152
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "weak_momentum_h1dual": {
+        "data_driven": [
+          0.013023526234969924,
+          0.014538739651964814
+        ],
+        "control_outlet": [
+          0.003256042225692537,
+          0.005551409461933019
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.7499876633296423,
+            -0.6181643254625044
+          ],
+          "relative_change_mean": -0.6840759943960734,
+          "relative_change_median": -0.6840759943960734,
+          "relative_change_mean_ci95": [
+            -0.7499876633296423,
+            -0.6181643254625044
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "weak_continuity_l2": {
+        "data_driven": [
+          0.6030726125659391,
+          0.7968671252017389
+        ],
+        "control_outlet": [
+          0.0941508579389137,
+          0.09873629800919281
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.843881390106039,
+            -0.8760944015801929
+          ],
+          "relative_change_mean": -0.859987895843116,
+          "relative_change_median": -0.859987895843116,
+          "relative_change_mean_ci95": [
+            -0.8760944015801929,
+            -0.843881390106039
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "nodal_momentum": {
+        "data_driven": [
+          0.9003444429509567,
+          0.8959817298161905
+        ],
+        "control_outlet": [
+          0.21020756803352236,
+          0.36431091780082075
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.7665253896113926,
+            -0.5933947025063127
+          ],
+          "relative_change_mean": -0.6799600460588526,
+          "relative_change_median": -0.6799600460588526,
+          "relative_change_mean_ci95": [
+            -0.7665253896113926,
+            -0.5933947025063127
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "nodal_continuity": {
+        "data_driven": [
+          0.5163119101179827,
+          0.7040067706770085
+        ],
+        "control_outlet": [
+          0.06019529557287131,
+          0.06355828044753503
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.8834129246425556,
+            -0.9097192199069134
+          ],
+          "relative_change_mean": -0.8965660722747345,
+          "relative_change_median": -0.8965660722747345,
+          "relative_change_mean_ci95": [
+            -0.9097192199069134,
+            -0.8834129246425556
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_inflow": {
+        "data_driven": [
+          0.007053757566831023,
+          0.005635529693212507
+        ],
+        "control_outlet": [
+          0.0013191162922921438,
+          0.0016849831314141904
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.8129909796595446,
+            -0.7010071416279462
+          ],
+          "relative_change_mean": -0.7569990606437453,
+          "relative_change_median": -0.7569990606437453,
+          "relative_change_mean_ci95": [
+            -0.8129909796595446,
+            -0.7010071416279462
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_wall": {
+        "data_driven": [
+          0.0017524582879229979,
+          0.0017496514039441339
+        ],
+        "control_outlet": [
+          0.008184817996192466,
+          0.006642719205428176
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            3.6704780664954137,
+            2.796595819289428
+          ],
+          "relative_change_mean": 3.233536942892421,
+          "relative_change_median": 3.233536942892421,
+          "relative_change_mean_ci95": [
+            2.796595819289428,
+            3.6704780664954137
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_polygon": {
+        "data_driven": [
+          0.007135415639618775,
+          0.005605750501866969
+        ],
+        "control_outlet": [
+          0.041935444040148755,
+          0.04182332909973575
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            4.8770849741822815,
+            6.4607903234021355
+          ],
+          "relative_change_mean": 5.668937648792209,
+          "relative_change_median": 5.668937648792209,
+          "relative_change_mean_ci95": [
+            4.8770849741822815,
+            6.4607903234021355
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "recovered_p_rel_l2": {
+        "data_driven": [
+          0.24155556332095585,
+          0.23860447526910955
+        ],
+        "control_outlet": [
+          0.21580769040606465,
+          0.15913469738777505
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.10659192676378104,
+            -0.33306071812653415
+          ],
+          "relative_change_mean": -0.2198263224451576,
+          "relative_change_median": -0.2198263224451576,
+          "relative_change_mean_ci95": [
+            -0.33306071812653415,
+            -0.10659192676378104
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      }
+    },
+    "data_driven->control_outlet_free_p": {
+      "meshes": [
+        0,
+        1
+      ],
+      "rel_l2_velocity": {
+        "data_driven": [
+          0.1598972119869136,
+          0.2150359292718667
+        ],
+        "control_outlet_free_p": [
+          0.1404531967603857,
+          0.1255965486997034
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.12160321612186231,
+            -0.4159276120740103
+          ],
+          "relative_change_mean": -0.2687654140979363,
+          "relative_change_median": -0.2687654140979363,
+          "relative_change_mean_ci95": [
+            -0.4159276120740103,
+            -0.12160321612186231
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "rel_l2_p": {
+        "data_driven": [
+          0.21737642712534727,
+          0.10041351197442983
+        ],
+        "control_outlet_free_p": [
+          0.24426527352515925,
+          0.19922792732324854
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.12369715868182385,
+            0.9840748859972319
+          ],
+          "relative_change_mean": 0.5538860223395279,
+          "relative_change_median": 0.5538860223395279,
+          "relative_change_mean_ci95": [
+            0.12369715868182385,
+            0.9840748859972319
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "h1semi_velocity": {
+        "data_driven": [
+          0.3846379895685663,
+          0.48190284023526325
+        ],
+        "control_outlet_free_p": [
+          0.3056720648712269,
+          0.30200143467176643
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.2052993381800703,
+            -0.37331468201280904
+          ],
+          "relative_change_mean": -0.28930701009643967,
+          "relative_change_median": -0.28930701009643967,
+          "relative_change_mean_ci95": [
+            -0.37331468201280904,
+            -0.2052993381800703
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "l2_p_gauge_free": {
+        "data_driven": [
+          0.18666683444437174,
+          0.09430127441659235
+        ],
+        "control_outlet_free_p": [
+          0.19973929170426688,
+          0.1688983017548231
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.07003095809068771,
+            0.7910500446545965
+          ],
+          "relative_change_mean": 0.4305405013726421,
+          "relative_change_median": 0.4305405013726421,
+          "relative_change_mean_ci95": [
+            0.07003095809068771,
+            0.7910500446545965
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "p_inlet_abs_error": {
+        "data_driven": [
+          0.1942178831936161,
+          0.05797377193797559
+        ],
+        "control_outlet_free_p": [
+          0.21371753155601425,
+          0.14655749320653721
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.10040089018455078,
+            1.52799651130747
+          ],
+          "relative_change_mean": 0.8141987007460104,
+          "relative_change_median": 0.8141987007460104,
+          "relative_change_mean_ci95": [
+            0.10040089018455078,
+            1.52799651130747
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "weak_momentum_h1dual": {
+        "data_driven": [
+          0.013023526234969924,
+          0.014538739651964814
+        ],
+        "control_outlet_free_p": [
+          0.002865787911967541,
+          0.0037534297839992284
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.779952997347791,
+            -0.7418325196096364
+          ],
+          "relative_change_mean": -0.7608927584787137,
+          "relative_change_median": -0.7608927584787137,
+          "relative_change_mean_ci95": [
+            -0.779952997347791,
+            -0.7418325196096364
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "weak_continuity_l2": {
+        "data_driven": [
+          0.6030726125659391,
+          0.7968671252017389
+        ],
+        "control_outlet_free_p": [
+          0.07872321777936966,
+          0.08394853072360897
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.869463119135157,
+            -0.8946517831283902
+          ],
+          "relative_change_mean": -0.8820574511317736,
+          "relative_change_median": -0.8820574511317736,
+          "relative_change_mean_ci95": [
+            -0.8946517831283902,
+            -0.869463119135157
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "nodal_momentum": {
+        "data_driven": [
+          0.9003444429509567,
+          0.8959817298161905
+        ],
+        "control_outlet_free_p": [
+          0.14530881229070947,
+          0.22865014344855997
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.8386075313416194,
+            -0.7448049041184498
+          ],
+          "relative_change_mean": -0.7917062177300346,
+          "relative_change_median": -0.7917062177300346,
+          "relative_change_mean_ci95": [
+            -0.8386075313416194,
+            -0.7448049041184498
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "nodal_continuity": {
+        "data_driven": [
+          0.5163119101179827,
+          0.7040067706770085
+        ],
+        "control_outlet_free_p": [
+          0.055413864700789815,
+          0.05984200322860891
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.8926736656372557,
+            -0.9149979720066302
+          ],
+          "relative_change_mean": -0.903835818821943,
+          "relative_change_median": -0.903835818821943,
+          "relative_change_mean_ci95": [
+            -0.9149979720066302,
+            -0.8926736656372557
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_inflow": {
+        "data_driven": [
+          0.007053757566831023,
+          0.005635529693212507
+        ],
+        "control_outlet_free_p": [
+          0.0022635100975068926,
+          0.0026761457351226763
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.6791057707808635,
+            -0.5251296895222014
+          ],
+          "relative_change_mean": -0.6021177301515325,
+          "relative_change_median": -0.6021177301515325,
+          "relative_change_mean_ci95": [
+            -0.6791057707808635,
+            -0.5251296895222014
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_wall": {
+        "data_driven": [
+          0.0017524582879229979,
+          0.0017496514039441339
+        ],
+        "control_outlet_free_p": [
+          0.009040567645338728,
+          0.009570336086186139
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            4.158791913988178,
+            4.469853060222342
+          ],
+          "relative_change_mean": 4.31432248710526,
+          "relative_change_median": 4.31432248710526,
+          "relative_change_mean_ci95": [
+            4.158791913988178,
+            4.469853060222342
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_polygon": {
+        "data_driven": [
+          0.007135415639618775,
+          0.005605750501866969
+        ],
+        "control_outlet_free_p": [
+          0.05399604551597979,
+          0.04796005593638321
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            6.567330095835125,
+            7.55551026047455
+          ],
+          "relative_change_mean": 7.061420178154838,
+          "relative_change_median": 7.061420178154838,
+          "relative_change_mean_ci95": [
+            6.567330095835125,
+            7.55551026047455
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "recovered_p_rel_l2": {
+        "data_driven": [
+          0.24155556332095585,
+          0.23860447526910955
+        ],
+        "control_outlet_free_p": [
+          0.25042132456267996,
+          0.22390010381669603
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.036702782249498966,
+            -0.06162655346606227
+          ],
+          "relative_change_mean": -0.012461885608281653,
+          "relative_change_median": -0.012461885608281653,
+          "relative_change_mean_ci95": [
+            -0.06162655346606227,
+            0.036702782249498966
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      }
+    },
     "control_data_bc->physics_finetuned": {
       "meshes": [
         0,
@@ -3487,6 +4579,1023 @@
           "wilcoxon_p": 0.130859375
         }
       }
+    },
+    "control_hard_bc->physics_finetuned": {
+      "meshes": [
+        0,
+        1
+      ],
+      "rel_l2_velocity": {
+        "control_hard_bc": [
+          0.13855446773238111,
+          0.2456474027333746
+        ],
+        "physics_finetuned": [
+          0.11970821184135465,
+          0.0985697078288649
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.13602055710991678,
+            -0.5987349887193705
+          ],
+          "relative_change_mean": -0.36737777291464363,
+          "relative_change_median": -0.36737777291464363,
+          "relative_change_mean_ci95": [
+            -0.5987349887193705,
+            -0.13602055710991678
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "rel_l2_p": {
+        "control_hard_bc": [
+          0.17485889448641392,
+          0.19558482009890155
+        ],
+        "physics_finetuned": [
+          0.20296397057054458,
+          0.10419925990024621
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.16073003416085507,
+            -0.46724260171338616
+          ],
+          "relative_change_mean": -0.15325628377626554,
+          "relative_change_median": -0.15325628377626554,
+          "relative_change_mean_ci95": [
+            -0.46724260171338616,
+            0.16073003416085507
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "h1semi_velocity": {
+        "control_hard_bc": [
+          0.23614140984008936,
+          0.36857178649820477
+        ],
+        "physics_finetuned": [
+          0.2535896403157542,
+          0.2510348258494907
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.07388890617482335,
+            -0.31889842075388086
+          ],
+          "relative_change_mean": -0.12250475728952875,
+          "relative_change_median": -0.12250475728952875,
+          "relative_change_mean_ci95": [
+            -0.31889842075388086,
+            0.07388890617482335
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "l2_p_gauge_free": {
+        "control_hard_bc": [
+          0.1354812750031087,
+          0.19091788810433355
+        ],
+        "physics_finetuned": [
+          0.16972070304332768,
+          0.09518595144752237
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.252724430290705,
+            -0.5014298953720628
+          ],
+          "relative_change_mean": -0.12435273254067891,
+          "relative_change_median": -0.12435273254067891,
+          "relative_change_mean_ci95": [
+            -0.5014298953720628,
+            0.252724430290705
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "p_inlet_abs_error": {
+        "control_hard_bc": [
+          0.15267970799816055,
+          0.12827613145744188
+        ],
+        "physics_finetuned": [
+          0.1776629557402174,
+          0.06735589873076031
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.1636317495600519,
+            -0.4749147954067593
+          ],
+          "relative_change_mean": -0.1556415229233537,
+          "relative_change_median": -0.1556415229233537,
+          "relative_change_mean_ci95": [
+            -0.4749147954067593,
+            0.1636317495600519
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "weak_momentum_h1dual": {
+        "control_hard_bc": [
+          0.0060418054474366024,
+          0.013127115447238505
+        ],
+        "physics_finetuned": [
+          0.0032383378855901247,
+          0.006022891900242229
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.4640115585045731,
+            -0.5411869481570502
+          ],
+          "relative_change_mean": -0.5025992533308117,
+          "relative_change_median": -0.5025992533308117,
+          "relative_change_mean_ci95": [
+            -0.5411869481570502,
+            -0.4640115585045731
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "weak_continuity_l2": {
+        "control_hard_bc": [
+          0.4067197679134751,
+          0.4189751414251112
+        ],
+        "physics_finetuned": [
+          0.0935861040585962,
+          0.10869637180238426
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.7699002816147713,
+            -0.7405660597603427
+          ],
+          "relative_change_mean": -0.755233170687557,
+          "relative_change_median": -0.755233170687557,
+          "relative_change_mean_ci95": [
+            -0.7699002816147713,
+            -0.7405660597603427
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "nodal_momentum": {
+        "control_hard_bc": [
+          0.436995048235005,
+          0.4729213801126817
+        ],
+        "physics_finetuned": [
+          0.20725344425696718,
+          0.3767973260448593
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.5257304514226178,
+            -0.20325588588301746
+          ],
+          "relative_change_mean": -0.3644931686528176,
+          "relative_change_median": -0.3644931686528176,
+          "relative_change_mean_ci95": [
+            -0.5257304514226178,
+            -0.20325588588301746
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "nodal_continuity": {
+        "control_hard_bc": [
+          0.21770612465711317,
+          0.24990804901601746
+        ],
+        "physics_finetuned": [
+          0.06156929105415475,
+          0.06474868697150907
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.7171908178921181,
+            -0.7409099577766737
+          ],
+          "relative_change_mean": -0.7290503878343959,
+          "relative_change_median": -0.7290503878343959,
+          "relative_change_mean_ci95": [
+            -0.7409099577766737,
+            -0.7171908178921181
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_inflow": {
+        "control_hard_bc": [
+          2.9043231426979652e-08,
+          2.9604888993402467e-08
+        ],
+        "physics_finetuned": [
+          0.0012103344239779916,
+          0.001489304948763394
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            41672.545418697926,
+            50305.047392891414
+          ],
+          "relative_change_mean": 45988.79640579467,
+          "relative_change_median": 45988.79640579467,
+          "relative_change_mean_ci95": [
+            41672.545418697926,
+            50305.047392891414
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_wall": {
+        "control_hard_bc": [
+          0.0,
+          0.0
+        ],
+        "physics_finetuned": [
+          0.008316834889837425,
+          0.006665571205793499
+        ],
+        "improved": 0
+      },
+      "bc_polygon": {
+        "control_hard_bc": [
+          4.8895919072876194e-08,
+          7.17199830650302e-08
+        ],
+        "physics_finetuned": [
+          0.04152583642807265,
+          0.03984785700245629
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            849268.9843964705,
+            555602.2684269501
+          ],
+          "relative_change_mean": 702435.6264117103,
+          "relative_change_median": 702435.6264117103,
+          "relative_change_mean_ci95": [
+            555602.2684269501,
+            849268.9843964705
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "recovered_p_rel_l2": {
+        "control_hard_bc": [
+          0.19627974678103108,
+          0.31736060500155866
+        ],
+        "physics_finetuned": [
+          0.21843453734368187,
+          0.16715322990000198
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.11287354363344781,
+            -0.47330189297067593
+          ],
+          "relative_change_mean": -0.18021417466861406,
+          "relative_change_median": -0.18021417466861406,
+          "relative_change_mean_ci95": [
+            -0.47330189297067593,
+            0.11287354363344781
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      }
+    },
+    "control_outlet->physics_finetuned": {
+      "meshes": [
+        0,
+        1
+      ],
+      "rel_l2_velocity": {
+        "control_outlet": [
+          0.11725095929878859,
+          0.09682969509861475
+        ],
+        "physics_finetuned": [
+          0.11970821184135465,
+          0.0985697078288649
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.020957206297172126,
+            0.017969825563098896
+          ],
+          "relative_change_mean": 0.01946351593013551,
+          "relative_change_median": 0.01946351593013551,
+          "relative_change_mean_ci95": [
+            0.017969825563098896,
+            0.020957206297172126
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "rel_l2_p": {
+        "control_outlet": [
+          0.20147485062344006,
+          0.10034258935925981
+        ],
+        "physics_finetuned": [
+          0.20296397057054458,
+          0.10419925990024621
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.007391095923370061,
+            0.038435031083144944
+          ],
+          "relative_change_mean": 0.022913063503257503,
+          "relative_change_median": 0.022913063503257503,
+          "relative_change_mean_ci95": [
+            0.007391095923370061,
+            0.038435031083144944
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "h1semi_velocity": {
+        "control_outlet": [
+          0.2535049982914304,
+          0.25735969249568014
+        ],
+        "physics_finetuned": [
+          0.2535896403157542,
+          0.2510348258494907
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.0003338870037838948,
+            -0.024575979963511907
+          ],
+          "relative_change_mean": -0.012121046479864006,
+          "relative_change_median": -0.012121046479864006,
+          "relative_change_mean_ci95": [
+            -0.024575979963511907,
+            0.0003338870037838948
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "l2_p_gauge_free": {
+        "control_outlet": [
+          0.16711710274650235,
+          0.08737214720391212
+        ],
+        "physics_finetuned": [
+          0.16972070304332768,
+          0.09518595144752237
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.015579496377307933,
+            0.08943129468220712
+          ],
+          "relative_change_mean": 0.052505395529757526,
+          "relative_change_median": 0.052505395529757526,
+          "relative_change_mean_ci95": [
+            0.015579496377307933,
+            0.08943129468220712
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "p_inlet_abs_error": {
+        "control_outlet": [
+          0.1764588655473034,
+          0.06699080297693671
+        ],
+        "physics_finetuned": [
+          0.1776629557402174,
+          0.06735589873076031
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.006823631043866296,
+            0.00544993846318409
+          ],
+          "relative_change_mean": 0.006136784753525193,
+          "relative_change_median": 0.006136784753525193,
+          "relative_change_mean_ci95": [
+            0.00544993846318409,
+            0.006823631043866296
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "weak_momentum_h1dual": {
+        "control_outlet": [
+          0.003256042225692537,
+          0.005551409461933019
+        ],
+        "physics_finetuned": [
+          0.0032383378855901247,
+          0.006022891900242229
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.005437380376308476,
+            0.08493022205302037
+          ],
+          "relative_change_mean": 0.039746420838355945,
+          "relative_change_median": 0.039746420838355945,
+          "relative_change_mean_ci95": [
+            -0.005437380376308476,
+            0.08493022205302037
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "weak_continuity_l2": {
+        "control_outlet": [
+          0.0941508579389137,
+          0.09873629800919281
+        ],
+        "physics_finetuned": [
+          0.0935861040585962,
+          0.10869637180238426
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.0059983933516986054,
+            0.10087550368015741
+          ],
+          "relative_change_mean": 0.0474385551642294,
+          "relative_change_median": 0.0474385551642294,
+          "relative_change_mean_ci95": [
+            -0.0059983933516986054,
+            0.10087550368015741
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "nodal_momentum": {
+        "control_outlet": [
+          0.21020756803352236,
+          0.36431091780082075
+        ],
+        "physics_finetuned": [
+          0.20725344425696718,
+          0.3767973260448593
+        ],
+        "improved": 1,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.01405336546248459,
+            0.03427404349947394
+          ],
+          "relative_change_mean": 0.010110339018494674,
+          "relative_change_median": 0.010110339018494674,
+          "relative_change_mean_ci95": [
+            -0.01405336546248459,
+            0.03427404349947394
+          ],
+          "sign_test_p": 1.0,
+          "wilcoxon_p": 1.0
+        }
+      },
+      "nodal_continuity": {
+        "control_outlet": [
+          0.06019529557287131,
+          0.06355828044753503
+        ],
+        "physics_finetuned": [
+          0.06156929105415475,
+          0.06474868697150907
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.022825628950025045,
+            0.018729369573751597
+          ],
+          "relative_change_mean": 0.02077749926188832,
+          "relative_change_median": 0.02077749926188832,
+          "relative_change_mean_ci95": [
+            0.018729369573751597,
+            0.022825628950025045
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_inflow": {
+        "control_outlet": [
+          0.0013191162922921438,
+          0.0016849831314141904
+        ],
+        "physics_finetuned": [
+          0.0012103344239779916,
+          0.001489304948763394
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.08246571507742428,
+            -0.11613064784011562
+          ],
+          "relative_change_mean": -0.09929818145876995,
+          "relative_change_median": -0.09929818145876995,
+          "relative_change_mean_ci95": [
+            -0.11613064784011562,
+            -0.08246571507742428
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_wall": {
+        "control_outlet": [
+          0.008184817996192466,
+          0.006642719205428176
+        ],
+        "physics_finetuned": [
+          0.008316834889837425,
+          0.006665571205793499
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.016129484333844868,
+            0.003440157510594233
+          ],
+          "relative_change_mean": 0.00978482092221955,
+          "relative_change_median": 0.00978482092221955,
+          "relative_change_mean_ci95": [
+            0.003440157510594233,
+            0.016129484333844868
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_polygon": {
+        "control_outlet": [
+          0.041935444040148755,
+          0.04182332909973575
+        ],
+        "physics_finetuned": [
+          0.04152583642807265,
+          0.03984785700245629
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.00976757541148121,
+            -0.04723373628552052
+          ],
+          "relative_change_mean": -0.028500655848500867,
+          "relative_change_median": -0.028500655848500867,
+          "relative_change_mean_ci95": [
+            -0.04723373628552052,
+            -0.00976757541148121
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "recovered_p_rel_l2": {
+        "control_outlet": [
+          0.21580769040606465,
+          0.15913469738777505
+        ],
+        "physics_finetuned": [
+          0.21843453734368187,
+          0.16715322990000198
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.012172165564046988,
+            0.050388335440683774
+          ],
+          "relative_change_mean": 0.03128025050236538,
+          "relative_change_median": 0.03128025050236538,
+          "relative_change_mean_ci95": [
+            0.012172165564046988,
+            0.050388335440683774
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      }
+    },
+    "control_outlet_free_p->physics_finetuned": {
+      "meshes": [
+        0,
+        1
+      ],
+      "rel_l2_velocity": {
+        "control_outlet_free_p": [
+          0.1404531967603857,
+          0.1255965486997034
+        ],
+        "physics_finetuned": [
+          0.11970821184135465,
+          0.0985697078288649
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.14770034002445787,
+            -0.2151877671054374
+          ],
+          "relative_change_mean": -0.18144405356494764,
+          "relative_change_median": -0.18144405356494764,
+          "relative_change_mean_ci95": [
+            -0.2151877671054374,
+            -0.14770034002445787
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "rel_l2_p": {
+        "control_outlet_free_p": [
+          0.24426527352515925,
+          0.19922792732324854
+        ],
+        "physics_finetuned": [
+          0.20296397057054458,
+          0.10419925990024621
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.16908380941165857,
+            -0.47698467127461364
+          ],
+          "relative_change_mean": -0.3230342403431361,
+          "relative_change_median": -0.3230342403431361,
+          "relative_change_mean_ci95": [
+            -0.47698467127461364,
+            -0.16908380941165857
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "h1semi_velocity": {
+        "control_outlet_free_p": [
+          0.3056720648712269,
+          0.30200143467176643
+        ],
+        "physics_finetuned": [
+          0.2535896403157542,
+          0.2510348258494907
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.170386602313214,
+            -0.16876280365247054
+          ],
+          "relative_change_mean": -0.16957470298284227,
+          "relative_change_median": -0.16957470298284227,
+          "relative_change_mean_ci95": [
+            -0.170386602313214,
+            -0.16876280365247054
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "l2_p_gauge_free": {
+        "control_outlet_free_p": [
+          0.19973929170426688,
+          0.1688983017548231
+        ],
+        "physics_finetuned": [
+          0.16972070304332768,
+          0.09518595144752237
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.15028885105582834,
+            -0.43643038172345494
+          ],
+          "relative_change_mean": -0.29335961638964164,
+          "relative_change_median": -0.29335961638964164,
+          "relative_change_mean_ci95": [
+            -0.43643038172345494,
+            -0.15028885105582834
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "p_inlet_abs_error": {
+        "control_outlet_free_p": [
+          0.21371753155601425,
+          0.14655749320653721
+        ],
+        "physics_finetuned": [
+          0.1776629557402174,
+          0.06735589873076031
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.16870200377710776,
+            -0.5404131357798367
+          ],
+          "relative_change_mean": -0.35455756977847225,
+          "relative_change_median": -0.35455756977847225,
+          "relative_change_mean_ci95": [
+            -0.5404131357798367,
+            -0.16870200377710776
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "weak_momentum_h1dual": {
+        "control_outlet_free_p": [
+          0.002865787911967541,
+          0.0037534297839992284
+        ],
+        "physics_finetuned": [
+          0.0032383378855901247,
+          0.006022891900242229
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.12999914336536,
+            0.6046368912821167
+          ],
+          "relative_change_mean": 0.36731801732373837,
+          "relative_change_median": 0.36731801732373837,
+          "relative_change_mean_ci95": [
+            0.12999914336536,
+            0.6046368912821167
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "weak_continuity_l2": {
+        "control_outlet_free_p": [
+          0.07872321777936966,
+          0.08394853072360897
+        ],
+        "physics_finetuned": [
+          0.0935861040585962,
+          0.10869637180238426
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.1887992729270973,
+            0.2947977869946854
+          ],
+          "relative_change_mean": 0.24179852996089135,
+          "relative_change_median": 0.24179852996089135,
+          "relative_change_mean_ci95": [
+            0.1887992729270973,
+            0.2947977869946854
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "nodal_momentum": {
+        "control_outlet_free_p": [
+          0.14530881229070947,
+          0.22865014344855997
+        ],
+        "physics_finetuned": [
+          0.20725344425696718,
+          0.3767973260448593
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.426296457797269,
+            0.6479207944587555
+          ],
+          "relative_change_mean": 0.5371086261280122,
+          "relative_change_median": 0.5371086261280122,
+          "relative_change_mean_ci95": [
+            0.426296457797269,
+            0.6479207944587555
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "nodal_continuity": {
+        "control_outlet_free_p": [
+          0.055413864700789815,
+          0.05984200322860891
+        ],
+        "physics_finetuned": [
+          0.06156929105415475,
+          0.06474868697150907
+        ],
+        "improved": 0,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            0.11108097922066063,
+            0.0819939754382153
+          ],
+          "relative_change_mean": 0.09653747732943796,
+          "relative_change_median": 0.09653747732943796,
+          "relative_change_mean_ci95": [
+            0.0819939754382153,
+            0.11108097922066063
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_inflow": {
+        "control_outlet_free_p": [
+          0.0022635100975068926,
+          0.0026761457351226763
+        ],
+        "physics_finetuned": [
+          0.0012103344239779916,
+          0.001489304948763394
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.4652842833300831,
+            -0.4434888469573115
+          ],
+          "relative_change_mean": -0.4543865651436973,
+          "relative_change_median": -0.4543865651436973,
+          "relative_change_mean_ci95": [
+            -0.4652842833300831,
+            -0.4434888469573115
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_wall": {
+        "control_outlet_free_p": [
+          0.009040567645338728,
+          0.009570336086186139
+        ],
+        "physics_finetuned": [
+          0.008316834889837425,
+          0.006665571205793499
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.08005390633567755,
+            -0.3035175415192982
+          ],
+          "relative_change_mean": -0.19178572392748788,
+          "relative_change_median": -0.19178572392748788,
+          "relative_change_mean_ci95": [
+            -0.3035175415192982,
+            -0.08005390633567755
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "bc_polygon": {
+        "control_outlet_free_p": [
+          0.05399604551597979,
+          0.04796005593638321
+        ],
+        "physics_finetuned": [
+          0.04152583642807265,
+          0.03984785700245629
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.23094671042561188,
+            -0.16914490142979344
+          ],
+          "relative_change_mean": -0.20004580592770266,
+          "relative_change_median": -0.20004580592770266,
+          "relative_change_mean_ci95": [
+            -0.23094671042561188,
+            -0.16914490142979344
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      },
+      "recovered_p_rel_l2": {
+        "control_outlet_free_p": [
+          0.25042132456267996,
+          0.22390010381669603
+        ],
+        "physics_finetuned": [
+          0.21843453734368187,
+          0.16715322990000198
+        ],
+        "improved": 2,
+        "uncertainty": {
+          "n": 2,
+          "relative_change_per_mesh": [
+            -0.12773188255775658,
+            -0.25344728720247467
+          ],
+          "relative_change_mean": -0.19058958488011563,
+          "relative_change_median": -0.19058958488011563,
+          "relative_change_mean_ci95": [
+            -0.25344728720247467,
+            -0.12773188255775658
+          ],
+          "sign_test_p": 0.5,
+          "wilcoxon_p": 0.5
+        }
+      }
     }
   },
   "control_runs": {
@@ -3531,6 +5640,45 @@
         "cpu"
       ],
       "seconds_per_mesh_mean": 120.18745050848811
+    },
+    "hard_bc": {
+      "meshes": [
+        0,
+        1
+      ],
+      "iterations": [
+        10000
+      ],
+      "device": [
+        "mps"
+      ],
+      "seconds_per_mesh_mean": 517.973795291502
+    },
+    "outlet": {
+      "meshes": [
+        0,
+        1
+      ],
+      "iterations": [
+        10000
+      ],
+      "device": [
+        "mps"
+      ],
+      "seconds_per_mesh_mean": 331.69663599997875
+    },
+    "outlet_free_p": {
+      "meshes": [
+        0,
+        1
+      ],
+      "iterations": [
+        10000
+      ],
+      "device": [
+        "mps"
+      ],
+      "seconds_per_mesh_mean": 330.9886487709882
     }
   },
   "per_mesh": [
@@ -3665,6 +5813,84 @@
       "recovered_p_inlet": 0.6741054895256974
     },
     {
+      "index": 0,
+      "stage": "control_hard_bc",
+      "rel_l2_u": 0.13334829428599765,
+      "rel_l2_v": 0.24486228022261278,
+      "rel_l2_p": 0.17485889448641392,
+      "rel_l2_velocity": 0.13855446773238111,
+      "rel_l2_total": 0.16772470660691466,
+      "l2_velocity": 0.137846055032545,
+      "h1semi_velocity": 0.23614140984008936,
+      "l2_p": 0.17371196892820376,
+      "l2_p_gauge_free": 0.1354812750031087,
+      "p_offset": -0.04728498585567374,
+      "weak_momentum_h1dual": 0.0060418054474366024,
+      "weak_continuity_l2": 0.4067197679134751,
+      "nodal_momentum": 0.436995048235005,
+      "nodal_continuity": 0.21770612465711317,
+      "bc_inflow": 2.9043231426979652e-08,
+      "bc_wall": 0.0,
+      "bc_polygon": 4.8895919072876194e-08,
+      "outlet_p_rms": 0.0012270141013545036,
+      "p_inlet": 0.7361924033612013,
+      "p_inlet_abs_error": 0.15267970799816055,
+      "recovered_p_rel_l2": 0.19627974678103108,
+      "recovered_p_inlet": 0.7211800882242275
+    },
+    {
+      "index": 0,
+      "stage": "control_outlet",
+      "rel_l2_u": 0.11136167504355504,
+      "rel_l2_v": 0.22916193939741175,
+      "rel_l2_p": 0.20147485062344006,
+      "rel_l2_velocity": 0.11725095929878859,
+      "rel_l2_total": 0.18661714066860854,
+      "l2_velocity": 0.11624190050938493,
+      "h1semi_velocity": 0.2535049982914304,
+      "l2_p": 0.20072817389423045,
+      "l2_p_gauge_free": 0.16711710274650235,
+      "p_offset": -0.048358847667140124,
+      "weak_momentum_h1dual": 0.003256042225692537,
+      "weak_continuity_l2": 0.0941508579389137,
+      "nodal_momentum": 0.21020756803352236,
+      "nodal_continuity": 0.06019529557287131,
+      "bc_inflow": 0.0013191162922921438,
+      "bc_wall": 0.008184817996192466,
+      "bc_polygon": 0.041935444040148755,
+      "outlet_p_rms": 0.000646083404399371,
+      "p_inlet": 0.7124132458120584,
+      "p_inlet_abs_error": 0.1764588655473034,
+      "recovered_p_rel_l2": 0.21580769040606465,
+      "recovered_p_inlet": 0.6995725159039559
+    },
+    {
+      "index": 0,
+      "stage": "control_outlet_free_p",
+      "rel_l2_u": 0.13374607452236892,
+      "rel_l2_v": 0.26959607961715637,
+      "rel_l2_p": 0.24426527352515925,
+      "rel_l2_velocity": 0.1404531967603857,
+      "rel_l2_total": 0.22602379427714608,
+      "l2_velocity": 0.1391725668229378,
+      "h1semi_velocity": 0.3056720648712269,
+      "l2_p": 0.24347260644067384,
+      "l2_p_gauge_free": 0.19973929170426688,
+      "p_offset": -0.06054999034738861,
+      "weak_momentum_h1dual": 0.002865787911967541,
+      "weak_continuity_l2": 0.07872321777936966,
+      "nodal_momentum": 0.14530881229070947,
+      "nodal_continuity": 0.055413864700789815,
+      "bc_inflow": 0.0022635100975068926,
+      "bc_wall": 0.009040567645338728,
+      "bc_polygon": 0.05399604551597979,
+      "outlet_p_rms": 0.0016902159462824098,
+      "p_inlet": 0.6751545798033476,
+      "p_inlet_abs_error": 0.21371753155601425,
+      "recovered_p_rel_l2": 0.25042132456267996,
+      "recovered_p_inlet": 0.6689583169025706
+    },
+    {
       "index": 1,
       "stage": "reference",
       "rel_l2_u": 0.0,
@@ -3793,6 +6019,84 @@
       "p_inlet_abs_error": 0.05872547879965617,
       "recovered_p_rel_l2": 0.2385264063965601,
       "recovered_p_inlet": 0.5747824063700042
+    },
+    {
+      "index": 1,
+      "stage": "control_hard_bc",
+      "rel_l2_u": 0.24047532854859535,
+      "rel_l2_v": 0.3577514712638521,
+      "rel_l2_p": 0.19558482009890155,
+      "rel_l2_velocity": 0.2456474027333746,
+      "rel_l2_total": 0.21100658239548345,
+      "l2_velocity": 0.24620200371960596,
+      "h1semi_velocity": 0.36857178649820477,
+      "l2_p": 0.19217299065417887,
+      "l2_p_gauge_free": 0.19091788810433355,
+      "p_offset": -0.007972998765216455,
+      "weak_momentum_h1dual": 0.013127115447238505,
+      "weak_continuity_l2": 0.4189751414251112,
+      "nodal_momentum": 0.4729213801126817,
+      "nodal_continuity": 0.24990804901601746,
+      "bc_inflow": 2.9604888993402467e-08,
+      "bc_wall": 0.0,
+      "bc_polygon": 7.17199830650302e-08,
+      "outlet_p_rms": 0.06027124645211341,
+      "p_inlet": 0.6237056889841633,
+      "p_inlet_abs_error": 0.12827613145744188,
+      "recovered_p_rel_l2": 0.31736060500155866,
+      "recovered_p_inlet": 0.5191178373196261
+    },
+    {
+      "index": 1,
+      "stage": "control_outlet",
+      "rel_l2_u": 0.08743881151153524,
+      "rel_l2_v": 0.236498794713132,
+      "rel_l2_p": 0.10034258935925981,
+      "rel_l2_velocity": 0.09682969509861475,
+      "rel_l2_total": 0.09935802691611467,
+      "l2_velocity": 0.09536383485422315,
+      "h1semi_velocity": 0.25735969249568014,
+      "l2_p": 0.09433716068509777,
+      "l2_p_gauge_free": 0.08737214720391212,
+      "p_offset": -0.01293542650589559,
+      "weak_momentum_h1dual": 0.005551409461933019,
+      "weak_continuity_l2": 0.09873629800919281,
+      "nodal_momentum": 0.36431091780082075,
+      "nodal_continuity": 0.06355828044753503,
+      "bc_inflow": 0.0016849831314141904,
+      "bc_wall": 0.006642719205428176,
+      "bc_polygon": 0.04182332909973575,
+      "outlet_p_rms": 0.0009036679161346801,
+      "p_inlet": 0.6849910174646685,
+      "p_inlet_abs_error": 0.06699080297693671,
+      "recovered_p_rel_l2": 0.15913469738777505,
+      "recovered_p_inlet": 0.6316277618869998
+    },
+    {
+      "index": 1,
+      "stage": "control_outlet_free_p",
+      "rel_l2_u": 0.11594037950848421,
+      "rel_l2_v": 0.2802196093468524,
+      "rel_l2_p": 0.19922792732324854,
+      "rel_l2_velocity": 0.1255965486997034,
+      "rel_l2_total": 0.181390440705902,
+      "l2_velocity": 0.12425017746610455,
+      "h1semi_velocity": 0.30200143467176643,
+      "l2_p": 0.1966750741020096,
+      "l2_p_gauge_free": 0.1688983017548231,
+      "p_offset": -0.036640328134278415,
+      "weak_momentum_h1dual": 0.0037534297839992284,
+      "weak_continuity_l2": 0.08394853072360897,
+      "nodal_momentum": 0.22865014344855997,
+      "nodal_continuity": 0.05984200322860891,
+      "bc_inflow": 0.0026761457351226763,
+      "bc_wall": 0.009570336086186139,
+      "bc_polygon": 0.04796005593638321,
+      "outlet_p_rms": 0.003008081946237103,
+      "p_inlet": 0.605424327235068,
+      "p_inlet_abs_error": 0.14655749320653721,
+      "recovered_p_rel_l2": 0.22390010381669603,
+      "recovered_p_inlet": 0.5820874060857157
     },
     {
       "index": 2,

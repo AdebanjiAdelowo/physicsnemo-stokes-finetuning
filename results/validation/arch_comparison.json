@@ -1,0 +1,356 @@
+{
+  "rule": "Primary endpoints: the inlet-level slope against the reference (higher is better, 1 is\nideal) and the inlet-level RMS error (lower is better). Secondary: pressure and velocity relative\nL2, gauge-free pressure error, velocity H1 error, boundary mismatches. For each metric, an arm is\n**better** than the baseline only if the difference between its mean over seeds and the\nbaseline's mean over seeds exceeds the baseline's seed range (max - min over its seeds), in the\nfavourable direction; **worse** if it exceeds it in the other direction; otherwise\n**indistinguishable**. A claim that an arm improves pressure prediction additionally requires\n\"better\" on pressure relative L2, not only on the inlet-level correlation or slope. Costs are\nreported, not ruled on. An arm with fewer than 3 seeds is reported as incomplete.",
+  "same_test_meshes_in_every_run": true,
+  "arms": {
+    "baseline": {
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "complete": true,
+      "inlet_slope": [
+        3.251781514013278e-05,
+        0.00023518520472493753,
+        0.00024263581909264405
+      ],
+      "inlet_rms_error": [
+        0.23763900193987514,
+        0.2367865742627276,
+        0.2373725291720358
+      ],
+      "inlet_correlation": [
+        0.012703650186454408,
+        0.06267776504633225,
+        0.10881767689222717
+      ],
+      "rel_l2_p": [
+        0.3366582427081955,
+        0.33403798722141054,
+        0.3348092539845744
+      ],
+      "rel_l2_velocity": [
+        0.21027419405899966,
+        0.21020392846219693,
+        0.20890702437442246
+      ],
+      "l2_p_gauge_free": [
+        0.28870202608805007,
+        0.2872592592687236,
+        0.2884177629227665
+      ],
+      "h1semi_velocity": [
+        0.514791512677129,
+        0.5096856198431172,
+        0.507862343523367
+      ],
+      "bc_polygon": [
+        0.007547475400649734,
+        0.007871527169257297,
+        0.006658076033660324
+      ],
+      "bc_wall": [
+        0.0016075824099467204,
+        0.0016091452869962872,
+        0.0016553730409376328
+      ],
+      "bc_inflow": [
+        0.005677400504774772,
+        0.0051036704622813844,
+        0.0063626109992538345
+      ],
+      "parameters": [
+        2531587
+      ],
+      "receptive_field_hops": [
+        "15"
+      ],
+      "train_seconds_mps": [
+        745.4119128330494,
+        777.003355246794,
+        735.7144125038758
+      ],
+      "inference_seconds_mps": [
+        0.592428879084764,
+        0.0739965542103164,
+        0.06845253750798293
+      ],
+      "inference_seconds_cpu_mean": [
+        0.29840980376000514,
+        0.269478856336209,
+        0.2943681370420381
+      ],
+      "test_numbers_identical": true
+    },
+    "global_latent": {
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "complete": true,
+      "inlet_slope": [
+        0.013323673961407318,
+        0.019258206281340562,
+        0.014037998790466353
+      ],
+      "inlet_rms_error": [
+        0.23356616893893695,
+        0.23250624920242818,
+        0.23420211303339308
+      ],
+      "inlet_correlation": [
+        0.8151399835822224,
+        0.8156921394457042,
+        0.7979275746031625
+      ],
+      "rel_l2_p": [
+        0.3347997390710521,
+        0.32786609420198287,
+        0.3303282617598969
+      ],
+      "rel_l2_velocity": [
+        0.2092337686084282,
+        0.20787025822975103,
+        0.20813624447368104
+      ],
+      "l2_p_gauge_free": [
+        0.2893619184158549,
+        0.28627565203818955,
+        0.2883027451134313
+      ],
+      "h1semi_velocity": [
+        0.5127494891152339,
+        0.4998076331296853,
+        0.505912273362021
+      ],
+      "bc_polygon": [
+        0.0072050399649574316,
+        0.007925170242761993,
+        0.006792282481986605
+      ],
+      "bc_wall": [
+        0.002262976209962496,
+        0.0022094531508762938,
+        0.0019289290644991083
+      ],
+      "bc_inflow": [
+        0.006418246769837671,
+        0.006009501138271292,
+        0.006603456080032715
+      ],
+      "parameters": [
+        2564611
+      ],
+      "receptive_field_hops": [
+        "None"
+      ],
+      "train_seconds_mps": [
+        1031.0930856220657,
+        992.9682292491198,
+        882.6497292030836
+      ],
+      "inference_seconds_mps": [
+        0.12425681680906564,
+        0.11986480000196024,
+        0.10219175400561653
+      ],
+      "inference_seconds_cpu_mean": [
+        0.34363914289220704,
+        0.40703785165213047,
+        0.3303865075390786
+      ],
+      "test_numbers_identical": true
+    },
+    "shared_depth": {
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "complete": true,
+      "inlet_slope": [
+        0.000172360106577173,
+        0.00030172947028361417,
+        8.05715591007042e-05
+      ],
+      "inlet_rms_error": [
+        0.23753819188519232,
+        0.2367112720552502,
+        0.2372462188337021
+      ],
+      "inlet_correlation": [
+        0.06330558549923751,
+        0.10933024032047815,
+        0.03950163182852912
+      ],
+      "rel_l2_p": [
+        0.33770336533301937,
+        0.3333281483832289,
+        0.3366656994363075
+      ],
+      "rel_l2_velocity": [
+        0.2107794387201108,
+        0.21058946413022275,
+        0.21088461335975014
+      ],
+      "l2_p_gauge_free": [
+        0.2886502874196252,
+        0.2866690675800196,
+        0.289939922796304
+      ],
+      "h1semi_velocity": [
+        0.5083634466113288,
+        0.5087224821831319,
+        0.5133964086418296
+      ],
+      "bc_polygon": [
+        0.010438957518454918,
+        0.011217706217558505,
+        0.006201396447502344
+      ],
+      "bc_wall": [
+        0.0020944240443942857,
+        0.002152971639243466,
+        0.0017895929593848838
+      ],
+      "bc_inflow": [
+        0.006257293044560737,
+        0.006132693626152864,
+        0.005452463932021075
+      ],
+      "parameters": [
+        2531587
+      ],
+      "receptive_field_hops": [
+        "30"
+      ],
+      "train_seconds_mps": [
+        1390.6960104148602,
+        1422.9973805841291,
+        1387.4784409191343
+      ],
+      "inference_seconds_mps": [
+        0.13791913740569725,
+        0.1388295374927111,
+        0.1394013125973288
+      ],
+      "inference_seconds_cpu_mean": [
+        0.597686050820048,
+        0.5770151088049169,
+        0.5676307583070593
+      ],
+      "test_numbers_identical": true
+    }
+  },
+  "comparisons_to_baseline": {
+    "global_latent": {
+      "inlet_slope": {
+        "difference_of_means": 0.01536984673141884,
+        "baseline_seed_range": 0.00021011800395251127,
+        "verdict": "better"
+      },
+      "inlet_rms_error": {
+        "difference_of_means": -0.0038411913999600866,
+        "baseline_seed_range": 0.0008524276771475492,
+        "verdict": "better"
+      },
+      "inlet_correlation": {
+        "difference_of_means": 0.7481868685020251,
+        "baseline_seed_range": 0.09611402670577276,
+        "verdict": "better"
+      },
+      "rel_l2_p": {
+        "difference_of_means": -0.004170462960416177,
+        "baseline_seed_range": 0.0026202554867849615,
+        "verdict": "better"
+      },
+      "rel_l2_velocity": {
+        "difference_of_means": -0.0013816251945862612,
+        "baseline_seed_range": 0.001367169684577202,
+        "verdict": "better"
+      },
+      "l2_p_gauge_free": {
+        "difference_of_means": -0.00014624423735482006,
+        "baseline_seed_range": 0.0014427668193264798,
+        "verdict": "indistinguishable"
+      },
+      "h1semi_velocity": {
+        "difference_of_means": -0.004623360145557753,
+        "baseline_seed_range": 0.00692916915376196,
+        "verdict": "indistinguishable"
+      },
+      "bc_polygon": {
+        "difference_of_means": -5.1528637953775214e-05,
+        "baseline_seed_range": 0.0012134511355969728,
+        "verdict": "indistinguishable"
+      },
+      "bc_wall": {
+        "difference_of_means": 0.0005097525624857525,
+        "baseline_seed_range": 4.779063099091233e-05,
+        "verdict": "worse"
+      },
+      "bc_inflow": {
+        "difference_of_means": 0.000629174007277228,
+        "baseline_seed_range": 0.00125894053697245,
+        "verdict": "indistinguishable"
+      },
+      "primary_endpoints_better": true,
+      "improves_pressure_prediction": true
+    },
+    "shared_depth": {
+      "inlet_slope": {
+        "difference_of_means": 1.4774099001259018e-05,
+        "baseline_seed_range": 0.00021011800395251127,
+        "verdict": "indistinguishable"
+      },
+      "inlet_rms_error": {
+        "difference_of_means": -0.00010080753349794858,
+        "baseline_seed_range": 0.0008524276771475492,
+        "verdict": "indistinguishable"
+      },
+      "inlet_correlation": {
+        "difference_of_means": 0.009312788507743641,
+        "baseline_seed_range": 0.09611402670577276,
+        "verdict": "indistinguishable"
+      },
+      "rel_l2_p": {
+        "difference_of_means": 0.000730576412791728,
+        "baseline_seed_range": 0.0026202554867849615,
+        "verdict": "indistinguishable"
+      },
+      "rel_l2_velocity": {
+        "difference_of_means": 0.0009561231048215435,
+        "baseline_seed_range": 0.001367169684577202,
+        "verdict": "indistinguishable"
+      },
+      "l2_p_gauge_free": {
+        "difference_of_means": 0.00029340983880282723,
+        "baseline_seed_range": 0.0014427668193264798,
+        "verdict": "indistinguishable"
+      },
+      "h1semi_velocity": {
+        "difference_of_means": -0.0006190462024411314,
+        "baseline_seed_range": 0.00692916915376196,
+        "verdict": "indistinguishable"
+      },
+      "bc_polygon": {
+        "difference_of_means": 0.0019269938599828038,
+        "baseline_seed_range": 0.0012134511355969728,
+        "verdict": "worse"
+      },
+      "bc_wall": {
+        "difference_of_means": 0.000388295968380665,
+        "baseline_seed_range": 4.779063099091233e-05,
+        "verdict": "worse"
+      },
+      "bc_inflow": {
+        "difference_of_means": 0.00023292287880822844,
+        "baseline_seed_range": 0.00125894053697245,
+        "verdict": "indistinguishable"
+      },
+      "primary_endpoints_better": false,
+      "improves_pressure_prediction": false
+    }
+  }
+}

@@ -144,11 +144,49 @@ def costs(out):
     return _save(fig, out, "costs.png")
 
 
+ARMS = {"baseline": ("Baseline, 15 hops", COLORS["data_driven"], "o"),
+        "global_latent": ("Global latent", COLORS["physics_finetuned"], "s"),
+        "shared_depth": ("Shared depth, 30 hops", "#1baf7a", "^")}
+
+
+def architecture(out):
+    comp = load("arch_comparison.json")
+    fig, axes = plt.subplots(1, 3, figsize=(11.5, 3.7))
+    ax = axes[0]
+    lim = [0, 0]
+    for arm, (name, color, marker) in ARMS.items():
+        m = load(f"surrogate_arch_{arm}_s0_test100.json")["per_mesh"]
+        ref = np.array([r["ref_p_inlet"] for r in m])
+        lim[1] = max(lim[1], ref.max() * 1.05)
+        ax.scatter(ref, [r["pred_p_inlet"] for r in m], s=14, color=color, marker=marker, edgecolors="white",
+                   linewidths=0.5, label=name, zorder=3)
+    ax.plot(lim, lim, color=GRID, lw=1.2, zorder=0)
+    ax.set_xlim(lim)
+    ax.set_ylim(lim)
+    ax.set_xlabel("Reference inlet pressure level")
+    ax.set_ylabel("Predicted inlet pressure level")
+    ax.set_title("Seed 0, 100 test meshes")
+    ax.legend(loc="upper left", fontsize=7.5)
+    for ax, (key, label) in zip(axes[1:], (("inlet_correlation", "Inlet level: correlation with reference"),
+                                            ("rel_l2_p", "Pressure relative L2, zoomed axis"))):
+        for k, (arm, (name, color, marker)) in enumerate(ARMS.items()):
+            v = comp["arms"][arm][key]
+            ax.scatter([k] * len(v), v, s=30, color=color, marker=marker, edgecolors="white", linewidths=0.6, zorder=3)
+            ax.plot([k - 0.25, k + 0.25], [np.mean(v)] * 2, color=INK, lw=1.2)
+        ax.set_xticks(range(len(ARMS)), [n.split(",")[0] for n, _, _ in ARMS.values()])
+        ax.set_xlim(-0.6, len(ARMS) - 0.4)
+        ax.set_title(f"{label} (3 seeds)")
+    fig.suptitle("Receptive-field arms: the global latent ranks the inlet level but barely moves it (local training budget)",
+                 fontweight="bold", fontsize=10)
+    fig.tight_layout()
+    return _save(fig, out, "architecture.png")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", default="figures/validation")
     out = ROOT / parser.parse_args().out
-    for fn in (inlet_level, controls, fields, costs):
+    for fn in (inlet_level, controls, fields, costs, architecture):
         try:
             print(fn(out))
         except (TypeError, FileNotFoundError, KeyError) as error:
