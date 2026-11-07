@@ -7,8 +7,10 @@
 Reads the checkpoint and the training normalisation of ``--run``; never writes into it. Test files
 are taken from the disk when resident and otherwise from the downloaded archive after its SHA-256
 is checked (an evicted file can block on read), into a temporary directory that is removed after.
-Writes ``results/validation/surrogate_<run name>_test<count>.json`` with per-mesh errors and
-inlet-level statistics. Runs on the CPU.
+Writes ``results/validation/surrogate_<run name>_test<count>.json`` with per-mesh errors,
+boundary mismatches, inlet-level statistics, the CPU inference time, and the training and
+accelerator-inference records of the run. Runs on the CPU. The model sees only the node and edge
+inputs (positions, boundary markers, edge geometry); the reference enters only the metrics.
 """
 
 import argparse
@@ -30,7 +32,7 @@ from stokes_ft.data import DATASET_ARCHIVE, DATASET_SHA256, INFLOW, make_dataset
 from stokes_ft.metrics import field_errors
 from stokes_ft.model import build_meshgraphnet, count_parameters, receptive_field_hops
 from stokes_ft.provenance import collect_metadata, write_json
-from stokes_ft.weak import WeakDiagnostics, pressure_levels
+from stokes_ft.weak import WeakDiagnostics, boundary_breakdown, pressure_levels
 
 SF_DATALESS = 0x40000000
 
@@ -97,6 +99,7 @@ def main() -> None:
             row = {"index": i, "number": numbers[i], "nodes": len(s["coords"]), "inference_seconds_cpu": seconds}
             row |= {f"rel_l2_{k}": v for k, v in field_errors(fields, ref).items()}
             row |= diag.errors(fields, ref) | diag.residuals(fields)
+            row |= boundary_breakdown(s["coords"], s["marker"], fields, cfg.physics.u_max)
             row |= {f"pred_{k}": v for k, v in pressure_levels(s["coords"], s["marker"], fields["p"]).items()}
             row |= {f"ref_{k}": v for k, v in pressure_levels(s["coords"], s["marker"], ref["p"]).items()}
             recovered = diag.recover_pressure(fields["u"], fields["v"])
@@ -110,7 +113,8 @@ def main() -> None:
     x, y, rec = col("ref_p_inlet"), col("pred_p_inlet"), col("recovered_p_inlet")
     summary = {k: {"mean": float(col(k).mean()), "median": float(np.median(col(k))), "std": float(col(k).std(ddof=1))}
                for k in ("rel_l2_velocity", "rel_l2_p", "rel_l2_total", "h1semi_velocity", "l2_p_gauge_free",
-                         "recovered_p_rel_l2", "weak_momentum_h1dual", "weak_continuity_l2")}
+                         "recovered_p_rel_l2", "weak_momentum_h1dual", "weak_continuity_l2",
+                         "bc_inflow", "bc_wall", "bc_polygon", "outlet_p_rms", "inference_seconds_cpu")}
     level = {
         "slope_vs_reference": float(np.polyfit(x, y, 1)[0]), "correlation": float(np.corrcoef(x, y)[0, 1]),
         "rms_error": float(np.sqrt(np.mean((y - x) ** 2))), "pred_std": float(y.std(ddof=1)), "ref_std": float(x.std(ddof=1)),
@@ -123,7 +127,10 @@ def main() -> None:
         "model_variant": cfg.get("model_variant", "baseline"), "parameters": count_parameters(model),
         "receptive_field_hops": receptive_field_hops(model), "checkpoint_epoch": epoch,
         "test_meshes": len(rows), "test_numbers": numbers, "files_read_from": origins,
-        "summary": summary, "inlet_pressure_level": level, "per_mesh": rows,
+        "summary": summary, "inlet_pressure_level": level,
+        "training_record": json.loads((run_dir / "train_metrics.json").read_text()) if (run_dir / "train_metrics.json").exists() else None,
+        "accelerator_inference": json.loads((run_dir / "predict_metrics.json").read_text()) if (run_dir / "predict_metrics.json").exists() else None,
+        "per_mesh": rows,
     }
     name = run_dir.name
     path = ROOT / "results" / "validation" / f"surrogate_{name}_test{len(rows)}.json"

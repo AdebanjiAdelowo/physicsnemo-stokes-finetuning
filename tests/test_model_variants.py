@@ -119,3 +119,22 @@ def test_checkpoint_round_trip(variant, tmp_path):
 def test_unknown_variant_is_rejected():
     with pytest.raises(ValueError):
         build_meshgraphnet(cfg_for("deeper"))
+
+
+@pytest.mark.parametrize("variant", ["baseline", "global_latent", "shared_depth"])
+def test_no_reference_information_reaches_the_prediction(variant):
+    """The forward pass uses node and edge inputs only: changing the targets graph.y changes nothing."""
+    graph, _, n = line_graph(11)
+    cfg = cfg_for(variant)
+    torch.manual_seed(0)
+    model = build_meshgraphnet(cfg).eval()
+    with torch.no_grad():
+        for p in model.parameters():
+            p.add_(0.01 * torch.randn_like(p))
+    x, e = torch.randn(n, 7), torch.randn(graph.edge_index.shape[1], 3)
+    graph.y = torch.zeros(n, 3)
+    with torch.no_grad():
+        a = model(x, e, graph)
+        graph.y = torch.randn(n, 3) * 100
+        b = model(x, e, graph)
+    assert torch.equal(a, b)
