@@ -4,7 +4,9 @@
   uninterrupted two-epoch run to rounding (checkpoint of model, optimiser, scheduler; seeded order).
 * **Repeatability**: two uninterrupted runs with the same seed must agree to rounding (scatter-add
   accumulation order is not fixed, so they are not required to be bit-for-bit identical).
-* **Checkpoint round trip**: two models loaded from the same checkpoint give identical outputs.
+* **Checkpoint round trip**: two models loaded from the same checkpoint have bit-identical weights,
+  and their outputs agree to rounding (``OUTPUT_TOLERANCE``; scatter-add is not bit-reproducible on
+  CUDA, so even one model called twice differs in the last bits; that difference is reported).
 * **Gradients**: one backward pass from the loaded model gives finite, nonzero gradients for every
   parameter that requires one.
 
@@ -26,6 +28,7 @@ from .engine import train_data_driven
 from .model import build_meshgraphnet
 
 TOLERANCE = 1e-3
+OUTPUT_TOLERANCE = 1e-4  # max |difference| / max |output| between two loads of one checkpoint
 
 
 def _history(run_dir: Path) -> dict:
@@ -65,8 +68,16 @@ def run_device_checks(cfg, out_dir: Path, device: torch.device, log=print) -> di
     b, _ = load()
     graph = next(iter(make_dataset(two, "train", uninterrupted))).to(device)
     a.eval(), b.eval()
+    sa, sb = a.state_dict(), b.state_dict()
+    weights_identical = sa.keys() == sb.keys() and all(torch.equal(sa[k], sb[k]) for k in sa)
     with torch.no_grad():
-        identical = bool(torch.equal(a(graph.x, graph.edge_attr, graph), b(graph.x, graph.edge_attr, graph)))
+        ya, ya2, yb = (m(graph.x, graph.edge_attr, graph) for m in (a, a, b))
+    # scatter-add accumulation order is not fixed on CUDA: even one model called twice is not
+    # bit-identical, so outputs are compared to rounding and the difference is reported
+    scale = float(ya.abs().max())
+    output_diff = float((ya - yb).abs().max()) / scale
+    repeat_call_diff = float((ya - ya2).abs().max()) / scale
+    identical = weights_identical and output_diff < OUTPUT_TOLERANCE
     a.train()
     loss = torch.nn.functional.mse_loss(a(graph.x, graph.edge_attr, graph), graph.y)
     loss.backward()
@@ -83,7 +94,10 @@ def run_device_checks(cfg, out_dir: Path, device: torch.device, log=print) -> di
         "resume_epochs_in_history": len(h_int["loss"]),
         "resume_max_relative_difference": _max_rel_diff(h_int, h_ref),
         "repeat_max_relative_difference": _max_rel_diff(h_rep, h_ref),
-        "checkpoint_epoch": epoch, "checkpoint_outputs_identical": identical,
+        "checkpoint_epoch": epoch, "checkpoint_weights_identical": weights_identical,
+        "checkpoint_output_max_relative_difference": output_diff,
+        "same_model_repeat_call_max_relative_difference": repeat_call_diff,
+        "checkpoint_round_trip_ok": identical,
         "gradients_finite": grads_finite, "gradient_norm": grad_norm,
         "all_losses_finite": finite,
         "losses": {k: v.tolist() for k, v in h_ref.items()},
