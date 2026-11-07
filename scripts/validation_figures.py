@@ -127,7 +127,7 @@ def costs(out):
     items = [("Taylor-Hood FEM solve (CPU, 1 thread)", per["taylor_hood_fem_cpu_1_thread"]["value"]),
              ("MeshGraphNet inference (CPU)", per["meshgraphnet_inference_cpu"]["value"]),
              ("Data-only fit, 10k iterations (CPU)", per["data_only_fit_cpu"]["value"]),
-             ("Physics-informed fit, 10k iterations (MPS)", per["physics_informed_fit_mps"]["value"]),
+             ("Physics-informed fit, 10k iterations (MPS, median of 10)", per["physics_informed_fit_mps"]["value"]),
              ("Physics-informed fit, 10k iterations (CPU, extrapolated)", per["physics_informed_fit_cpu"]["value"])]
     fig, ax = plt.subplots(figsize=(8.2, 2.8))
     y = np.arange(len(items))[::-1]

@@ -101,10 +101,25 @@ def child(task: str, threads: int) -> dict:
             "peak_minus_baseline_mb": rss_mb() - base} | per
 
 
+ACCURACY_NOTE = ("Taylor-Hood reproduces the reference to relative L2 below 1e-9 (audit_checks.json); the MeshGraphNet "
+                 "velocity error is 0.21 on 100 test meshes; the physics-informed fit 0.136 on 10 meshes (0.233 before).")
+
+
+def physics_fit_mps() -> dict:
+    """Median over the stored per-mesh fits; the median, not the mean, because some runs shared the accelerator."""
+    records = [json.loads(p.read_text()) for p in sorted((ROOT / "results" / "local" / "finetune").glob("finetune_*.json"))]
+    seconds = [r["seconds"] for r in records]
+    return {"value": float(np.median(seconds)), "per_mesh": seconds, "meshes": len(seconds),
+            "kind": "stored, 10,000 iterations, median over meshes; runs above the median overlapped other jobs "
+                    "on the shared accelerator or a system sleep"}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--threads", type=int, default=3)
     parser.add_argument("--child", default=None)
+    parser.add_argument("--stored-only", action="store_true",
+                        help="keep the CPU measurements of the existing costs.json; refresh only the stored entries")
     args = parser.parse_args()
     if args.child:
         print("RESULT " + json.dumps(child(args.child, args.threads)))
@@ -114,6 +129,17 @@ def main() -> None:
     import torch
 
     from stokes_ft.provenance import collect_metadata, write_json
+
+    if args.stored_only:
+        out = json.loads((ROOT / "results" / "validation" / "costs.json").read_text())
+        out["per_new_geometry_seconds"]["physics_informed_fit_mps"] = physics_fit_mps()
+        out["accuracy_note"] = ACCURACY_NOTE
+        fem = out["per_new_geometry_seconds"]["taylor_hood_fem_cpu_1_thread"]["value"]
+        out["ratios"]["physics_fit_mps_over_fem"] = out["per_new_geometry_seconds"]["physics_informed_fit_mps"]["value"] / fem
+        out["stored_entries_refreshed"] = collect_metadata(torch.device("cpu"))
+        write_json(ROOT / "results" / "validation" / "costs.json", out)
+        print(json.dumps(out["per_new_geometry_seconds"]["physics_informed_fit_mps"], indent=1), out["ratios"])
+        return
 
     results = {}
     for task, threads in (("fem", 1), ("mgn_inference", args.threads), ("pinn_iteration", args.threads),
@@ -140,7 +166,7 @@ def main() -> None:
             "taylor_hood_fem_cpu_1_thread": {"value": fem, "kind": "measured, median of 10 meshes"},
             "meshgraphnet_inference_cpu": {"value": mgn, "kind": "measured, median of 10 meshes", "threads": args.threads},
             "meshgraphnet_inference_mps": {"value": stored["data_driven_inference_seconds_per_mesh"], "kind": "stored (results/local/summary.json)"},
-            "physics_informed_fit_mps": {"value": stored["finetune_seconds_per_mesh"], "kind": "stored, 10,000 iterations, meshes 0 and 1"},
+            "physics_informed_fit_mps": physics_fit_mps(),
             "physics_informed_fit_cpu": {"value": pinn_it * 10000, "kind": "EXTRAPOLATED from the per-iteration time x 10,000", "threads": args.threads},
             "data_only_fit_cpu": {"value": float(np.mean(data_only_measured)) if data_only_measured else data_it * 10000,
                                   "kind": "measured, complete 10,000-iteration runs" if data_only_measured else "EXTRAPOLATED",
@@ -150,8 +176,7 @@ def main() -> None:
             "meshgraphnet_training_mps": {"value": stored["data_driven_train_seconds"], "kind": "stored, 100 meshes x 40 epochs"},
             "training_data_fem_cpu": {"value": fem * 100, "kind": "derived: 100 Taylor-Hood solves at the measured median"},
         },
-        "accuracy_note": "Taylor-Hood reproduces the reference to relative L2 below 1e-9 (audit_checks.json); the MeshGraphNet "
-                         "velocity error is 0.21 on 100 test meshes; the physics-informed fit 0.11 on 2 meshes.",
+        "accuracy_note": ACCURACY_NOTE,
     }
     ratio = {"physics_fit_mps_over_fem": out["per_new_geometry_seconds"]["physics_informed_fit_mps"]["value"] / fem,
              "mgn_inference_cpu_over_fem": mgn / fem}

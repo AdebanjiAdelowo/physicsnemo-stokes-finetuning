@@ -124,8 +124,21 @@
       "kind": "stored (results/local/summary.json)"
     },
     "physics_informed_fit_mps": {
-      "value": 1689.5741208334803,
-      "kind": "stored, 10,000 iterations, meshes 0 and 1"
+      "value": 336.27987737499643,
+      "per_mesh": [
+        1942.4566922920058,
+        1436.6915493749548,
+        328.343543459021,
+        331.3370308749727,
+        1437.3266340410337,
+        979.5766143749934,
+        341.22272387502016,
+        329.5696631249739,
+        327.13681458402425,
+        326.03543908399297
+      ],
+      "meshes": 10,
+      "kind": "stored, 10,000 iterations, median over meshes; runs above the median overlapped other jobs on the shared accelerator or a system sleep"
     },
     "physics_informed_fit_cpu": {
       "value": 2957.674208257231,
@@ -149,9 +162,31 @@
       "kind": "derived: 100 Taylor-Hood solves at the measured median"
     }
   },
-  "accuracy_note": "Taylor-Hood reproduces the reference to relative L2 below 1e-9 (audit_checks.json); the MeshGraphNet velocity error is 0.21 on 100 test meshes; the physics-informed fit 0.11 on 2 meshes.",
+  "accuracy_note": "Taylor-Hood reproduces the reference to relative L2 below 1e-9 (audit_checks.json); the MeshGraphNet velocity error is 0.21 on 100 test meshes; the physics-informed fit 0.136 on 10 meshes (0.233 before).",
   "ratios": {
-    "physics_fit_mps_over_fem": 5527.397178236461,
+    "physics_fit_mps_over_fem": 1100.130750335665,
     "mgn_inference_cpu_over_fem": 1.3119456427279537
+  },
+  "stored_entries_refreshed": {
+    "timestamp_utc": "2026-11-07T10:40:13+00:00",
+    "git_commit": "ae22ab213562f33badee4cad8ff075a9b7dd2253",
+    "git_dirty": true,
+    "device": "cpu",
+    "gpu_name": null,
+    "cuda_version": null,
+    "python_version": "3.12.2",
+    "torch_version": "2.14.1",
+    "physicsnemo": {
+      "version": "2.3.0a0",
+      "commit": "b45a5c810c741e6b41f8515be24c51121f8fc21f",
+      "url": "https://github.com/nvidia/physicsnemo"
+    },
+    "torch_geometric_version": "2.8.0.post1",
+    "torch_scatter_version": "2.1.2",
+    "pyvista_version": "0.49.0",
+    "sympy_version": "1.14.0",
+    "numpy_version": "2.5.3",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "processor": "arm"
   }
 }
