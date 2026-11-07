@@ -1,0 +1,29 @@
+{
+  "stage": "physics_finetuned",
+  "index": 2,
+  "file": "graph_2.vtp",
+  "seed": 1002,
+  "parameter_count": 49923,
+  "iterations": 10000,
+  "seconds": 328.343543459021,
+  "seconds_per_iteration": 0.0328343543459021,
+  "peak_cuda_memory_mb": null,
+  "final": {
+    "iteration": 10000,
+    "seconds": 328.3412294170121,
+    "loss_u": 0.002361882012337446,
+    "loss_v": 0.0009066284983418882,
+    "loss_p": 0.003290007822215557,
+    "loss_u_in": 2.6503361283403137e-08,
+    "loss_v_in": 1.9812890172943298e-07,
+    "loss_u_noslip": 0.00014572760846931487,
+    "loss_v_noslip": 0.0001123285765061155,
+    "loss_mom_u": 0.0008634246187284589,
+    "loss_mom_v": 0.0002616030105855316,
+    "loss_cont": 7.223105785669759e-05,
+    "loss_total": 0.01098866471316029,
+    "rel_l2_u": 0.061939556151628494,
+    "rel_l2_v": 0.19840754568576813,
+    "rel_l2_p": 0.18845076858997345
+  }
+}
