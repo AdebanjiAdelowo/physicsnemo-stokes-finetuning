@@ -276,7 +276,7 @@ Completed on 2026-11-07, on MPS behind the shared accelerator lock (`scripts/mps
 | G5/G6 variants on meshes 2 to 9 (optional; would turn section 4.4 into a ten-mesh paired comparison) | none; not run in this session | `python scripts/run_controls.py --config local --variant hard_bc --samples 2,3,4,5,6,7,8,9 --device mps` (and `outlet`, `outlet_free_p`), then `python scripts/physics_stage_checks.py` | about 70 min (`hard_bc`) and 45 min (each outlet variant) on an idle MPS |
 | G3 fine-tuning seed sensitivity | needs a `finetune_seed` override (not implemented) | none yet | about 6 min per mesh and seed on MPS |
 
-The CUDA smoke test and probe were **not run**: no CUDA device is available on this machine. No GPU timing, memory figure or convergence curve in this repository is measured on CUDA.
+The CUDA smoke test, device checks and timing probe **ran** on a Kaggle Tesla T4 on 2026-11-07 (code `71e7c79`; [`results/cuda_probe_t4`](../results/cuda_probe_t4/README.md)): all passed; 93.3 ms per training iteration and 32.4 ms per fine-tuning iteration, projecting about 7.7 h for the full study. These are timing and pipeline checks: **no CUDA scientific result exists yet**, and the full study (G2) has not been started.
 
 ## 7. Reproduction
 

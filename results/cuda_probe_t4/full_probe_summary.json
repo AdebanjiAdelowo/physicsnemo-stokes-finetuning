@@ -1,0 +1,357 @@
+{
+  "study": "full_probe",
+  "result_status": "UNLABELLED",
+  "samples": 1,
+  "sample_indices": [
+    7
+  ],
+  "samples_configured": 1,
+  "partial": false,
+  "comparison": {
+    "rel_l2_velocity": {
+      "reference": null,
+      "data_driven": 0.2537424935220816,
+      "physics_finetuned": 0.2694278785954679,
+      "change": 0.015685385073386293,
+      "relative_change": 0.061816154068893736,
+      "samples_improved": 0,
+      "uncertainty": null
+    },
+    "rel_l2_u": {
+      "reference": null,
+      "data_driven": 0.211997774666152,
+      "physics_finetuned": 0.25792760944525894,
+      "change": 0.04592983477910695,
+      "relative_change": 0.2166524382222217,
+      "samples_improved": 0,
+      "uncertainty": null
+    },
+    "rel_l2_v": {
+      "reference": null,
+      "data_driven": 1.4162108345388331,
+      "physics_finetuned": 0.8234947594019215,
+      "change": -0.5927160751369116,
+      "relative_change": -0.4185224831512607,
+      "samples_improved": 1,
+      "uncertainty": null
+    },
+    "rel_l2_p": {
+      "reference": null,
+      "data_driven": 0.8679088967273548,
+      "physics_finetuned": 0.61418471014207,
+      "change": -0.25372418658528484,
+      "relative_change": -0.2923396540143889,
+      "samples_improved": 1,
+      "uncertainty": null
+    },
+    "rel_l2_total": {
+      "reference": null,
+      "data_driven": 0.6257382962191567,
+      "physics_finetuned": 0.46611903751967243,
+      "change": -0.15961925869948423,
+      "relative_change": -0.2550894833573998,
+      "samples_improved": 1,
+      "uncertainty": null
+    },
+    "res_momentum": {
+      "reference": 0.17295850139622343,
+      "data_driven": 1.3248929306271107,
+      "physics_finetuned": 0.10710510598982693,
+      "change": -1.2177878246372837,
+      "relative_change": -0.9191594252532309,
+      "samples_improved": 1,
+      "uncertainty": null
+    },
+    "res_continuity": {
+      "reference": 0.050907955270138285,
+      "data_driven": 0.7990630504015184,
+      "physics_finetuned": 0.013533291148293065,
+      "change": -0.7855297592532253,
+      "relative_change": -0.9830635503149685,
+      "samples_improved": 1,
+      "uncertainty": null
+    },
+    "bc_boundary": {
+      "reference": 6.882451444326948e-17,
+      "data_driven": 0.016473749728785604,
+      "physics_finetuned": 0.036043852497634365,
+      "change": 0.01957010276884876,
+      "relative_change": 1.1879567852516728,
+      "samples_improved": 0,
+      "uncertainty": null
+    },
+    "bc_inflow": {
+      "reference": 4.361922897597276e-17,
+      "data_driven": 0.04528789438159679,
+      "physics_finetuned": 0.00549400257901816,
+      "change": -0.03979389180257863,
+      "relative_change": -0.878687171173701,
+      "samples_improved": 1,
+      "uncertainty": null
+    },
+    "bc_noslip": {
+      "reference": 7.105189803674344e-17,
+      "data_driven": 0.008703657812326248,
+      "physics_finetuned": 0.03792962669030611,
+      "change": 0.029225968877979864,
+      "relative_change": 3.3578949802679077,
+      "samples_improved": 0,
+      "uncertainty": null
+    },
+    "bc_outflow_pressure": {
+      "reference": 6.952787504195981e-08,
+      "data_driven": 0.053673689650901225,
+      "physics_finetuned": 0.1369123701150311,
+      "change": 0.08323868046412988,
+      "relative_change": 1.5508283668501672,
+      "samples_improved": 0,
+      "uncertainty": null
+    }
+  },
+  "stages": {
+    "reference": {
+      "bc_boundary": {
+        "mean": 6.882451444326948e-17,
+        "std": null,
+        "min": 6.882451444326948e-17,
+        "max": 6.882451444326948e-17
+      },
+      "bc_inflow": {
+        "mean": 4.361922897597276e-17,
+        "std": null,
+        "min": 4.361922897597276e-17,
+        "max": 4.361922897597276e-17
+      },
+      "bc_noslip": {
+        "mean": 7.105189803674344e-17,
+        "std": null,
+        "min": 7.105189803674344e-17,
+        "max": 7.105189803674344e-17
+      },
+      "bc_outflow_pressure": {
+        "mean": 6.952787504195981e-08,
+        "std": null,
+        "min": 6.952787504195981e-08,
+        "max": 6.952787504195981e-08
+      },
+      "res_continuity": {
+        "mean": 0.050907955270138285,
+        "std": null,
+        "min": 0.050907955270138285,
+        "max": 0.050907955270138285
+      },
+      "res_momentum": {
+        "mean": 0.17295850139622343,
+        "std": null,
+        "min": 0.17295850139622343,
+        "max": 0.17295850139622343
+      },
+      "res_momentum_x": {
+        "mean": 0.15186984900992964,
+        "std": null,
+        "min": 0.15186984900992964,
+        "max": 0.15186984900992964
+      },
+      "res_momentum_y": {
+        "mean": 0.08276588770096409,
+        "std": null,
+        "min": 0.08276588770096409,
+        "max": 0.08276588770096409
+      }
+    },
+    "data_driven": {
+      "bc_boundary": {
+        "mean": 0.016473749728785604,
+        "std": null,
+        "min": 0.016473749728785604,
+        "max": 0.016473749728785604
+      },
+      "bc_inflow": {
+        "mean": 0.04528789438159679,
+        "std": null,
+        "min": 0.04528789438159679,
+        "max": 0.04528789438159679
+      },
+      "bc_noslip": {
+        "mean": 0.008703657812326248,
+        "std": null,
+        "min": 0.008703657812326248,
+        "max": 0.008703657812326248
+      },
+      "bc_outflow_pressure": {
+        "mean": 0.053673689650901225,
+        "std": null,
+        "min": 0.053673689650901225,
+        "max": 0.053673689650901225
+      },
+      "rel_l2_p": {
+        "mean": 0.8679088967273548,
+        "std": null,
+        "min": 0.8679088967273548,
+        "max": 0.8679088967273548
+      },
+      "rel_l2_total": {
+        "mean": 0.6257382962191567,
+        "std": null,
+        "min": 0.6257382962191567,
+        "max": 0.6257382962191567
+      },
+      "rel_l2_u": {
+        "mean": 0.211997774666152,
+        "std": null,
+        "min": 0.211997774666152,
+        "max": 0.211997774666152
+      },
+      "rel_l2_v": {
+        "mean": 1.4162108345388331,
+        "std": null,
+        "min": 1.4162108345388331,
+        "max": 1.4162108345388331
+      },
+      "rel_l2_velocity": {
+        "mean": 0.2537424935220816,
+        "std": null,
+        "min": 0.2537424935220816,
+        "max": 0.2537424935220816
+      },
+      "res_continuity": {
+        "mean": 0.7990630504015184,
+        "std": null,
+        "min": 0.7990630504015184,
+        "max": 0.7990630504015184
+      },
+      "res_momentum": {
+        "mean": 1.3248929306271107,
+        "std": null,
+        "min": 1.3248929306271107,
+        "max": 1.3248929306271107
+      },
+      "res_momentum_x": {
+        "mean": 0.9104733354505864,
+        "std": null,
+        "min": 0.9104733354505864,
+        "max": 0.9104733354505864
+      },
+      "res_momentum_y": {
+        "mean": 0.9624861469440368,
+        "std": null,
+        "min": 0.9624861469440368,
+        "max": 0.9624861469440368
+      }
+    },
+    "physics_finetuned": {
+      "autodiff_continuity": {
+        "mean": 0.00867665105491821,
+        "std": null,
+        "min": 0.00867665105491821,
+        "max": 0.00867665105491821
+      },
+      "autodiff_momentum": {
+        "mean": 0.1088598209093828,
+        "std": null,
+        "min": 0.1088598209093828,
+        "max": 0.1088598209093828
+      },
+      "autodiff_momentum_x": {
+        "mean": 0.10426093715855239,
+        "std": null,
+        "min": 0.10426093715855239,
+        "max": 0.10426093715855239
+      },
+      "autodiff_momentum_y": {
+        "mean": 0.03130682978589954,
+        "std": null,
+        "min": 0.03130682978589954,
+        "max": 0.03130682978589954
+      },
+      "bc_boundary": {
+        "mean": 0.036043852497634365,
+        "std": null,
+        "min": 0.036043852497634365,
+        "max": 0.036043852497634365
+      },
+      "bc_inflow": {
+        "mean": 0.00549400257901816,
+        "std": null,
+        "min": 0.00549400257901816,
+        "max": 0.00549400257901816
+      },
+      "bc_noslip": {
+        "mean": 0.03792962669030611,
+        "std": null,
+        "min": 0.03792962669030611,
+        "max": 0.03792962669030611
+      },
+      "bc_outflow_pressure": {
+        "mean": 0.1369123701150311,
+        "std": null,
+        "min": 0.1369123701150311,
+        "max": 0.1369123701150311
+      },
+      "rel_l2_p": {
+        "mean": 0.61418471014207,
+        "std": null,
+        "min": 0.61418471014207,
+        "max": 0.61418471014207
+      },
+      "rel_l2_total": {
+        "mean": 0.46611903751967243,
+        "std": null,
+        "min": 0.46611903751967243,
+        "max": 0.46611903751967243
+      },
+      "rel_l2_u": {
+        "mean": 0.25792760944525894,
+        "std": null,
+        "min": 0.25792760944525894,
+        "max": 0.25792760944525894
+      },
+      "rel_l2_v": {
+        "mean": 0.8234947594019215,
+        "std": null,
+        "min": 0.8234947594019215,
+        "max": 0.8234947594019215
+      },
+      "rel_l2_velocity": {
+        "mean": 0.2694278785954679,
+        "std": null,
+        "min": 0.2694278785954679,
+        "max": 0.2694278785954679
+      },
+      "res_continuity": {
+        "mean": 0.013533291148293065,
+        "std": null,
+        "min": 0.013533291148293065,
+        "max": 0.013533291148293065
+      },
+      "res_momentum": {
+        "mean": 0.10710510598982693,
+        "std": null,
+        "min": 0.10710510598982693,
+        "max": 0.10710510598982693
+      },
+      "res_momentum_x": {
+        "mean": 0.10297926577939952,
+        "std": null,
+        "min": 0.10297926577939952,
+        "max": 0.10297926577939952
+      },
+      "res_momentum_y": {
+        "mean": 0.029441035114748586,
+        "std": null,
+        "min": 0.029441035114748586,
+        "max": 0.029441035114748586
+      }
+    }
+  },
+  "compute": {
+    "data_driven_parameters": 2531587,
+    "data_driven_train_seconds": 46.66231390000007,
+    "data_driven_inference_seconds_per_mesh": 0.036541522099992105,
+    "data_driven_peak_cuda_memory_mb": 1153.4404296875,
+    "finetune_parameters_per_mesh": 49923,
+    "finetune_seconds_per_mesh": 6.485282310999992,
+    "finetune_seconds_total": 6.485282310999992,
+    "finetune_peak_cuda_memory_mb": 289.2470703125
+  }
+}

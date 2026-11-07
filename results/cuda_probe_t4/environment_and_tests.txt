@@ -1,0 +1,4 @@
+torch 2.15.0+cu132 | CUDA 13.2 | physicsnemo 2.3.0a0 | torch_geometric 2.8.1 | torch_scatter 2.1.2 | Tesla T4
+$ PYTHONPATH=src python -c "import numpy, stokes_ft.data, stokes_ft.engine, stokes_ft.model, stokes_ft.study, stokes_ft.physics, stokes_ft.weak, stokes_ft.variants, stokes_ft.fem; print('project imports OK | numpy', numpy.__version__)"
+project imports OK | numpy 2.5.4
+96 passed in 36.69s
