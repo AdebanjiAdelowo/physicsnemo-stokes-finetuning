@@ -2,7 +2,7 @@
 
 Continuation of the [scientific audit](SCIENTIFIC_AUDIT.md). It asks when a learned graph surrogate of this Stokes problem is accurate, physically consistent and worth its cost compared with the finite-element method, and it separates what was measured from what remains proposed.
 
-Branch `research/validation-2026-11`, based on `57926cb`. Every number here comes from a file in [`results/validation/`](../results/validation/), produced by a script named next to it. Historical results (`results/local/`, `results/audit_checks.json`, `results/physics_checks.json`) were not modified.
+Branch `research/validation-2026-11`, based on `57926cb`. Every number here comes from a file in [`results/validation/`](../results/validation/), produced by a script named next to it. Historical results (`results/audit_checks.json`, `results/physics_checks.json`) were not modified. `results/local/` was republished once, after G1 added meshes 2 to 9 to the same run; its mesh 0 and 1 rows are unchanged and the two-mesh version is kept in `results/local_2mesh/`.
 
 ## Status labels
 
@@ -89,7 +89,7 @@ The predicted inlet level has a standard deviation of 0.0005 across 100 geometri
 
 The ten-mesh subset of the earlier studies is slightly harder than these 100 meshes (velocity 0.233 against 0.210); meshes 0 and 1 are easier (0.188).
 
-### 3.3 Controlled architecture experiment (PENDING)
+### 3.3 Controlled architecture experiment (LOCAL/REDUCED, 3 arms x 3 seeds, completed 2026-11-07)
 
 Design (`configs/arch.yaml`, `src/stokes_ft/model.py`, `tests/test_model_variants.py`). Three processors, identical in data, split, seed set, epochs, optimiser and learning-rate schedule:
 
@@ -114,7 +114,34 @@ python scripts/run_study.py --config arch --stages train,predict model_variant=s
 python scripts/evaluate_surrogate.py --run runs/arch_global_latent_s0 --config arch --count 100 model_variant=global_latent
 ```
 
-**Estimated cost**: baseline 2,308 s (measured), global latent about 2,400 s, shared depth about 4,600 s per seed on MPS, so about 7 h for three seeds of all three arms. Disk: 30 MB of checkpoints per run.
+The queue (`scripts/mps_queue.sh arch`) ran the nine runs with `--stages train,predict --resume`; each was then evaluated on the CPU by `scripts/evaluate_surrogate.py` and the fixed rule applied by `scripts/arch_compare.py` (committed at `b3921e1`, before any arm was trained). Every run recorded a clean working tree. The model sees only node and edge inputs; a test checks that changing the reference fields leaves every arm's output unchanged.
+
+**Results** on the same first 100 test meshes ([`arch_comparison.json`](../results/validation/arch_comparison.json), [`surrogate_arch_*_test100.json`](../results/validation/); figure [`architecture.png`](../figures/validation/architecture.png)). Values are means over seeds 0, 1, 2, with the seed range in brackets.
+
+| Metric | Baseline | Global latent | Shared depth | Verdict, global latent | Verdict, shared depth |
+|---|---|---|---|---|---|
+| Inlet-level slope (ideal 1) | 0.0001 [0.0000, 0.0002] | 0.0155 [0.0133, 0.0193] | 0.0002 [0.0001, 0.0003] | better | indistinguishable |
+| Inlet-level RMS error | 0.2373 [0.2368, 0.2376] | 0.2334 [0.2325, 0.2342] | 0.2371 [0.2367, 0.2375] | better | indistinguishable |
+| Inlet-level correlation | 0.06 [0.01, 0.11] | **0.81** [0.80, 0.82] | 0.07 [0.04, 0.11] | better | indistinguishable |
+| Pressure rel. $L^2$ | 0.3352 [0.3340, 0.3367] | 0.3310 [0.3279, 0.3348] | 0.3359 [0.3333, 0.3377] | better | indistinguishable |
+| Velocity rel. $L^2$ | 0.2098 [0.2089, 0.2103] | 0.2084 [0.2079, 0.2092] | 0.2108 [0.2106, 0.2109] | better (margin 0.0014 against a range of 0.0014) | indistinguishable |
+| Gauge-free pressure error | 0.2881 | 0.2880 | 0.2884 | indistinguishable | indistinguishable |
+| Velocity $H^1$ error | 0.5108 | 0.5061 | 0.5102 | indistinguishable | indistinguishable |
+| No-slip RMS, walls | 0.0016 | 0.0021 | 0.0020 | worse | worse |
+| Parameters | 2,531,587 | 2,564,611 | 2,531,587 | | |
+| Training, 40 epochs, MPS (median) | 745 s | 993 s | 1,391 s | | |
+| Inference per mesh, MPS / CPU 3 threads (median) | 0.074 / 0.29 s | 0.120 / 0.34 s | 0.139 / 0.58 s | | |
+
+Reproducibility check: `arch_baseline_s0` has the configuration of `runs/local` with the new keys at their defaults, and reproduces its 100-mesh errors (velocity 0.210, pressure 0.337 in both).
+
+**Reading.** Under the pre-registered rule the global latent is **better** than the baseline on both primary endpoints and on pressure relative $L^2$, so it meets the rule's condition for a pressure claim. The sizes matter more than the verdict:
+
+* The global latent carries the missing information: its predicted inlet level correlates 0.81 with the reference on every seed, against 0.06 for the baseline. This is the direct test of section 3.1's explanation, and it supports it: the information reaches the inlet once the receptive field covers the domain.
+* It barely uses it: the slope is 0.016, so the predicted level moves by under 2 % of the required amount, and the pressure error falls by 1.3 % (0.335 to 0.331). The gauge-free pressure error, which excludes the level, is unchanged, as expected if the arm acts only on the level.
+* Shared depth, at 30 hops, is indistinguishable from the baseline on every accuracy metric while costing 1.9 times the training and inference time. Thirty hops reach the inlet only from the nearest obstacles; the global level needs the whole obstacle.
+* The rule compares against the range of three baseline seeds, which is a lenient threshold. The velocity verdict sits exactly at that threshold and should not be read as an improvement.
+
+Why the effect is small is not established. Two explanations fit and were not separated: the zero-initialised global path and 40 epochs leave too little training to learn a large output scale for one pooled feature; or the mean-pooled latent of a 15-hop encoder is a weak summary of the channel resistance, which section 3.1 shows depends on the gap widths. A longer schedule (G2) or a pooled feature with an explicit scale (for example, attention pooling) would separate them. The multiscale graph is not needed to show that the information is reachable, but nothing here shows the global latent is sufficient.
 
 ## 4. Physics-informed stage
 
@@ -125,9 +152,9 @@ The physics-informed step **does not update the MeshGraphNet**. For each test me
 | `upstream` | data + soft inlet/no-slip (weight 10) + strong-form PDE | A, B | **LOCAL/REDUCED, 10 meshes** (MPS; G1 completed 2026-11-07) |
 | `data_only` | the three data terms only | C: more than smoothing? | **LOCAL/REDUCED, 10 meshes** (CPU) |
 | `data_bc` | data + soft inlet/no-slip, no PDE | D: boundary penalties without the PDE | **LOCAL/REDUCED, 10 meshes** (CPU) |
-| `hard_bc` | upstream PDE and data; inlet and no-slip exact by a distance-function ansatz | D | PENDING |
-| `outlet` | upstream + outlet condition (weight 10) | E | PENDING |
-| `outlet_free_p` | as `outlet` with pressure data weight 0 | E | PENDING |
+| `hard_bc` | upstream PDE and data; inlet and no-slip exact by a distance-function ansatz | D | **LOCAL/REDUCED, meshes 0 and 1** (MPS) |
+| `outlet` | upstream + outlet condition (weight 10) | E | **LOCAL/REDUCED, meshes 0 and 1** (MPS) |
+| `outlet_free_p` | as `outlet` with pressure data weight 0 | E | **LOCAL/REDUCED, meshes 0 and 1** (MPS) |
 
 Source: `scripts/physics_stage_checks.py`, [`physics_stage.json`](../results/validation/physics_stage.json); figure [`physics_stage_controls.png`](../figures/validation/physics_stage_controls.png). The upstream fit and the two controls ran on all ten meshes, 10,000 iterations each (upstream on MPS, controls on the CPU). Meshes 0 and 1 of the upstream fit were run in October; meshes 2 to 9 on 2026-11-07 by resuming the same study (identical configuration, checkpoint and seed rule; the mesh 0 and 1 artifacts were checked bit-identical by SHA-256 afterwards). The two-mesh results as first published are kept in [`results/local_2mesh`](../results/local_2mesh).
 
@@ -195,9 +222,30 @@ The inlet-level mean of relative changes is dominated by mesh 4, where the MeshG
 
 **C. More than smoothing?** Yes, for velocity and the $H^1$ error, on ten meshes. Refitting the same network with the same seed and iterations to the MeshGraphNet prediction alone leaves the velocity $L^2$ error unchanged (mean change +0.1 %, interval −0.4 to +0.7 %), and the soft boundary penalties alone change it by −0.7 %. The data-only fit lowers the $H^1$ error by 7 %: it removes nodal noise in the gradients, not error. Against this control the physics-informed fit lowers the velocity $L^2$ error by 38 % [−55, −20] on 9 of 10 meshes and the $H^1$ error by 38 % on 10 of 10. The difference is attributable to the PDE terms. Against the same control the pressure gain (−16 %) is less consistent (7 of 10 meshes, sign test p = 0.34).
 
-**D. Why no-slip deteriorates.** Not because of the soft penalty. With the same penalties (weight 10) and no PDE terms, the no-slip error falls by 80 % on the polygon and 67 % on the walls, on ten of ten meshes. It deteriorates only when the strong-form PDE terms are added. Two mechanisms are consistent with this: the PDE terms are node means over a mesh refined around the polygon, so they dominate there; and at the polygon corners the exact pressure and velocity gradients are singular, so the strong-form residual cannot be satisfied near them and trades against the boundary values. The hard-constraint variant (G6), which removes the trade-off by construction, is implemented and tested but not run.
+**D. Why no-slip deteriorates.** Not because of the soft penalty. With the same penalties (weight 10) and no PDE terms, the no-slip error falls by 80 % on the polygon and 67 % on the walls, on ten of ten meshes. It deteriorates only when the strong-form PDE terms are added. Two mechanisms are consistent with this: the PDE terms are node means over a mesh refined around the polygon, so they dominate there; and at the polygon corners the exact pressure and velocity gradients are singular, so the strong-form residual cannot be satisfied near them and trades against the boundary values. The hard-constraint variant (G6) removes the trade-off by construction; on meshes 0 and 1 (section 4.4) it meets every boundary condition to single precision, but it does not keep the velocity gain on both meshes: the error rises above the upstream fit on mesh 0 (0.139 against 0.120) and above the MeshGraphNet itself on mesh 1 (0.246 against 0.215), and the interior continuity residual is four times that of the upstream fit. Exact boundary values move the conflict into the interior next to the boundary rather than removing it.
 
-**E. Why pressure barely moves.** The inlet level barely moves. Over ten meshes the fitted level has correlation 0.81 with the reference but slope 0.13 (the MeshGraphNet: correlation −0.10, slope 0.0002): the PDE terms move it in the right direction by about an eighth of the required amount, and the pre-registered falsification threshold (slope ≥ 0.5) is not reached. The controls leave it unchanged. The pressure-recovery experiment (section 3.2) shows that the momentum equation and the outlet condition, solved globally, would move the level in the right direction from the MeshGraphNet velocity (correlation 0.94 over 100 meshes), while the pressure data term holds it at the MeshGraphNet value. The prediction is falsifiable with `outlet_free_p` (G5): with the pressure data weight at 0 and the outlet condition imposed, the inlet level should move toward the reference. One caveat applies before running it: the strong-form momentum term is a local constraint on $\nabla p$, and a coordinate network may propagate the outlet level upstream much more slowly than the global FEM solve does.
+**E. Why pressure barely moves.** The inlet level barely moves. Over ten meshes the fitted level has correlation 0.81 with the reference but slope 0.13 (the MeshGraphNet: correlation −0.10, slope 0.0002): the PDE terms move it in the right direction by about an eighth of the required amount, and the pre-registered falsification threshold (slope ≥ 0.5) is not reached. The controls leave it unchanged. The pressure-recovery experiment (section 3.2) shows that the momentum equation and the outlet condition, solved globally, would move the level in the right direction from the MeshGraphNet velocity (correlation 0.94 over 100 meshes), while the pressure data term holds it at the MeshGraphNet value. The prediction tested with `outlet_free_p` (G5) was that, with the pressure data weight at 0 and the outlet condition imposed, the inlet level would move toward the reference. **It did not**: on meshes 0 and 1 the level moved away from the reference (0.675 and 0.605 against 0.889 and 0.752; upstream fit 0.711 and 0.685) and the pressure error rose (0.244 and 0.199 against 0.203 and 0.104), although the outlet pressure is closer to zero. The caveat stated before the run applies: the strong-form momentum term constrains $\nabla p$ locally, and the coordinate network does not propagate the outlet level upstream the way a global solve does. Adding the outlet term while keeping the pressure data (`outlet`) changes almost nothing: the outlet pressure RMS falls from 0.003 and 0.012 to 0.0006 and 0.0009, the inlet level is unchanged to three decimals, and velocity and pressure errors change by 1 to 4 %. Conclusion on two meshes: the outlet condition is not the missing constraint for this loss; the level needs a global mechanism (section 3.3) or a global solve.
+
+### 4.4 Hard-BC and outlet variants, meshes 0 and 1 (LOCAL/REDUCED, n = 2)
+
+Same network, seed, optimiser and 10,000 iterations as the upstream fit of each mesh; MPS. Values for mesh 0 / mesh 1. With two meshes these are descriptive; no interval is given.
+
+| Metric | MeshGraphNet | Upstream fit | `hard_bc` | `outlet` | `outlet_free_p` |
+|---|---|---|---|---|---|
+| Velocity rel. $L^2$ | 0.160 / 0.215 | 0.120 / 0.099 | 0.139 / 0.246 | **0.117 / 0.097** | 0.141 / 0.126 |
+| Velocity $H^1$ error | 0.385 / 0.482 | 0.254 / 0.251 | **0.236** / 0.369 | 0.254 / 0.257 | 0.306 / 0.302 |
+| Pressure rel. $L^2$ | 0.217 / 0.100 | 0.203 / 0.104 | **0.175** / 0.196 | 0.202 / 0.100 | 0.244 / 0.199 |
+| Gauge-free pressure error | 0.187 / 0.094 | 0.170 / 0.095 | **0.136** / 0.191 | 0.167 / 0.087 | 0.200 / 0.169 |
+| Inlet level (reference 0.889 / 0.752) | 0.695 / 0.694 | 0.711 / 0.685 | 0.736 / 0.624 | 0.712 / 0.685 | 0.675 / 0.605 |
+| Weak momentum residual ($10^{-3}$) | 13.0 / 14.5 | 3.2 / 6.0 | 6.0 / 13.1 | 3.3 / 5.6 | 2.9 / 3.8 |
+| Weak continuity residual | 0.60 / 0.80 | 0.09 / 0.11 | 0.41 / 0.42 | 0.09 / 0.10 | 0.08 / 0.08 |
+| No-slip RMS, polygon | 0.0071 / 0.0056 | 0.042 / 0.040 | **5e-8 / 7e-8** | 0.042 / 0.042 | 0.054 / 0.048 |
+| No-slip RMS, walls | 0.0018 / 0.0017 | 0.0083 / 0.0067 | **0 / 0** | 0.0082 / 0.0066 | 0.0090 / 0.0096 |
+| Inlet RMS | 0.0071 / 0.0056 | 0.0012 / 0.0015 | **3e-8 / 3e-8** | 0.0013 / 0.0017 | 0.0023 / 0.0027 |
+| Outlet pressure RMS | 0.0062 / 0.0062 | 0.0028 / 0.0116 | 0.0012 / 0.060 | **0.0006 / 0.0009** | 0.0017 / 0.0030 |
+| Time, 10,000 iterations, MPS | | 336 s (median, 10 meshes) | 510 / 526 s | 328 / 336 s | 327 / 335 s |
+
+The hard-BC constraints were checked on the trained networks: on every polygon node, corners included, the velocity is zero to float32 precision (RMS $5\times10^{-8}$ and $7\times10^{-8}$), the channel walls are exactly zero, and the inlet profile is exact to $3\times10^{-8}$. The PDE is collocated at all nodes except the polygon (section 8). On mesh 0 `hard_bc` gives the best pressure and $H^1$ errors of all variants; on mesh 1 it is worse than the MeshGraphNet on velocity and pressure, with a large outlet pressure (0.060). Two meshes cannot say which is typical.
 
 ## 5. Cost against the finite-element method
 
@@ -218,14 +266,15 @@ One-off costs of the surrogate: 2,308 s of MeshGraphNet training on MPS (local c
 
 **Where a learned surrogate could still be worthwhile** (not tested here): much larger 3-D meshes, where direct solves scale superlinearly in time and memory; many-query settings that need gradients with respect to geometry; or problems without a cheap, trusted solver. This 2-D Stokes problem with a direct solver is none of these.
 
-## 6. Pending runs and their commands
+## 6. Completed and pending runs
 
-| Run | Blocker on 2026-11-06 | Command | Estimated cost |
+Completed on 2026-11-07, on MPS behind the shared accelerator lock (`scripts/mps_queue.sh all`; logs in `runs/queue_logs/`, untracked): G1 (section 4.2), the nine architecture runs (section 3.3), and `hard_bc`, `outlet`, `outlet_free_p` on meshes 0 and 1 (section 4.4).
+
+| Pending run | Blocker | Command | Estimated cost |
 |---|---|---|---|
-| G5 `outlet`, `outlet_free_p`, meshes 0 and 1 | MPS lock | `python scripts/run_controls.py --config local --variant outlet_free_p --samples 0,1 --device mps` (and `--variant outlet`) | about 0.5 h per mesh and variant on MPS |
-| G6 `hard_bc`, meshes 0 and 1 | MPS lock | `python scripts/run_controls.py --config local --variant hard_bc --samples 0,1 --device mps` | about 0.6 h per mesh on MPS |
-| G12 architecture experiment | MPS lock | section 3.3 | about 7 h MPS |
 | G2 full CUDA study | no CUDA device here; the Kaggle launcher can only check out a commit that exists on GitHub, and this branch is not pushed | `kaggle/run_cuda.ipynb` with `REF` set to the pushed commit; steps B and C (smoke test, timing and memory probe) run before any full study, and step D refuses to start if the projection exceeds the session budget | no probe exists yet; a projection from the MPS rates is not a substitute and is not given |
+| G5/G6 variants on meshes 2 to 9 (optional; would turn section 4.4 into a ten-mesh paired comparison) | none; not run in this session | `python scripts/run_controls.py --config local --variant hard_bc --samples 2,3,4,5,6,7,8,9 --device mps` (and `outlet`, `outlet_free_p`), then `python scripts/physics_stage_checks.py` | about 70 min (`hard_bc`) and 45 min (each outlet variant) on an idle MPS |
+| G3 fine-tuning seed sensitivity | needs a `finetune_seed` override (not implemented) | none yet | about 6 min per mesh and seed on MPS |
 
 The CUDA smoke test and probe were **not run**: no CUDA device is available on this machine. No GPU timing, memory figure or convergence curve in this repository is measured on CUDA.
 
@@ -246,8 +295,12 @@ python scripts/run_controls.py --config local --variant data_only --samples 0,1,
 python scripts/run_controls.py --config local --variant data_bc   --samples 0,1,2,3,4,5,6,7,8,9 --threads 3
 python scripts/physics_stage_checks.py
 python scripts/benchmark_costs.py --threads 3
+python scripts/arch_compare.py                                         # after the nine arch runs and their evaluate_surrogate.py calls
+python scripts/g1_decision.py
 python scripts/validation_figures.py
 ```
+
+Accelerator runs (MPS, behind the shared lock, in this order): `bash scripts/mps_queue.sh g1`, `bash scripts/mps_queue.sh arch`, `bash scripts/mps_queue.sh variants`. Each architecture run is evaluated with `python scripts/evaluate_surrogate.py --run runs/arch_<arm>_s<seed> --config arch --count 100 model_variant=<arm> seed=<seed> name=arch_<arm>_s<seed>`.
 
 Seeds: MeshGraphNet `seed: 0`; coordinate networks `seed + 1000 + index` for every variant; bootstrap seed 0. Each output JSON records the commit, dirty state and package versions.
 
@@ -257,14 +310,15 @@ Seeds: MeshGraphNet `seed: 0`; coordinate networks `seed + 1000 + index` for eve
 * **Ten test meshes.** G1 and the controls have n = 10; the intervals are wide (velocity −55 % to −19 %) and a sign test on ten meshes cannot reach p < 0.002. The 100-mesh evaluation (section 3.2) covers the MeshGraphNet only.
 * **One seed per mesh** for every coordinate-network fit (G3). The controls share the seed of the upstream run, which removes initialisation as a confounder but does not measure seed variance.
 * **Vertex-only evaluation.** No residual computed from vertex values certifies accuracy (section 2.3). Errors against the Taylor-Hood reference are the primary evidence throughout.
-* **Hard-BC variant collocation.** `hard_bc` collocates the PDE at all nodes except the polygon, where the distance function is singular and the ansatz fixes the velocity; the upstream loss also uses the polygon nodes. This difference will have to be stated with its result.
+* **Hard-BC variant collocation.** `hard_bc` collocates the PDE at all nodes except the polygon, where the distance function is singular and the ansatz fixes the velocity; the upstream loss also uses the polygon nodes. Its results (section 4.4) therefore differ from the upstream fit in two ways, the constraint and the collocation set.
+* **Two meshes for the hard-BC and outlet variants**, and three seeds per architecture arm. The architecture rule compares against the range of three baseline seeds, a lenient threshold.
 * **Timings** come from a machine shared with other sessions and differ between devices and thread counts; ratios of order 10 or more are robust, factors of 2 are not.
 * **No CUDA result** of any kind exists in this repository.
 
 ## 9. Remaining research questions
 
 1. Does the PDE-driven velocity improvement, established on ten meshes of the local surrogate (G1), hold on a well-trained surrogate (G2)?
-2. Does a global latent recover the inlet level at 1.3 % extra parameters, and by how much more than seed noise (G12)?
-3. Does removing the pressure data term let the outlet condition fix the level inside the coordinate network (G5), as the FEM pressure recovery suggests it should?
-4. Does exact boundary imposition (G6) keep the velocity gain while removing the no-slip loss?
+2. The global latent ranks the inlet level correctly (correlation 0.81) but moves it by under 2 % of the required amount. Is that a training-budget effect or a limit of mean pooling (G2, or an attention-pooled variant)?
+3. Removing the pressure data term did not let the outlet condition fix the level in the coordinate network (G5, two meshes). Does a weak-form or global pressure solve inside the fit do so, as the FEM pressure recovery suggests?
+4. Exact boundary imposition (G6) removed the no-slip loss but kept the velocity gain on only one of two meshes. Does that hold on ten meshes, and does a distance function with a smoother corner behaviour help?
 5. At what mesh size, if any, does surrogate inference become cheaper than the direct solve on this hardware?
