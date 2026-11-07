@@ -68,3 +68,10 @@ def test_archive_names():
     text = "\n".join(_code())
     for name in ("full", "full-checkpoints", "full-figures"):
         assert f"physicsnemo-stokes-finetuning-{name}.zip" in text
+
+
+def test_embedded_device_checks_match_the_module():
+    text = "\n".join(_code())
+    start = text.index("DEVICE_CHECKS_SOURCE = r'''") + len("DEVICE_CHECKS_SOURCE = r'''")
+    embedded = text[start:text.index("'''", start)]
+    assert embedded == (REPO_ROOT / "src" / "stokes_ft" / "device_checks.py").read_text()
