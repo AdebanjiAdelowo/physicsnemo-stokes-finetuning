@@ -1,7 +1,7 @@
 """Checks of the training pipeline on one device, run before a long study (``scripts/device_checks.py``).
 
-* **Resume after an interruption**: a run trained for one epoch and resumed to two must match an
-  uninterrupted two-epoch run to rounding (checkpoint of model, optimiser, scheduler; seeded order).
+* **Resume after an interruption**: a two-epoch run paused after epoch one (verified checkpoint,
+  ``checkpoint.py``) and resumed must match an uninterrupted two-epoch run to rounding.
 * **Repeatability**: two uninterrupted runs with the same seed must agree to rounding (scatter-add
   accumulation order is not fixed, so they are not required to be bit-for-bit identical).
 * **Checkpoint round trip**: two models loaded from the same checkpoint have bit-identical weights,
@@ -10,9 +10,7 @@
 * **Gradients**: one backward pass from the loaded model gives finite, nonzero gradients for every
   parameter that requires one.
 
-The learning-rate decay is set explicitly so that the one-epoch and two-epoch runs use the same
-schedule (the default decay depends on the number of epochs). The numbers verify the pipeline;
-they are not results.
+The numbers verify the pipeline; they are not results.
 """
 
 import csv
@@ -49,11 +47,9 @@ def run_device_checks(cfg, out_dir: Path, device: torch.device, log=print) -> di
     two = cfg.copy()
     two.epochs, two.lr_decay_rate = 2, 0.99
     two.training.checkpoint_every = 1
-    one = two.copy()
-    one.epochs = 1
 
     interrupted, uninterrupted, repeat = out_dir / "interrupted", out_dir / "uninterrupted", out_dir / "repeat"
-    first = train_data_driven(one, interrupted, device, log=log)
+    first = train_data_driven(two, interrupted, device, log=log, stop=lambda epoch: epoch >= 1)
     resumed = train_data_driven(two, interrupted, device, resume=True, log=log)
     reference = train_data_driven(two, uninterrupted, device, log=log)
     train_data_driven(two, repeat, device, log=log)
@@ -90,7 +86,8 @@ def run_device_checks(cfg, out_dir: Path, device: torch.device, log=print) -> di
         "device": str(device),
         "gpu_name": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
         "epochs": 2, "lr_decay_rate": 0.99, "tolerance": TOLERANCE,
-        "interrupted_after_epoch": first["epochs"], "resumed_flag": resumed["resumed"],
+        "interrupted_after_epoch": first["epochs_completed"], "first_status": first["status"],
+        "resumed_flag": resumed["resumed"], "resumed_from_verified_checkpoint": resumed["resumed_from_verified_checkpoint"],
         "resume_epochs_in_history": len(h_int["loss"]),
         "resume_max_relative_difference": _max_rel_diff(h_int, h_ref),
         "repeat_max_relative_difference": _max_rel_diff(h_rep, h_ref),
@@ -104,7 +101,8 @@ def run_device_checks(cfg, out_dir: Path, device: torch.device, log=print) -> di
         "peak_cuda_memory_mb": reference["peak_cuda_memory_mb"],
     }
     out["passed"] = bool(
-        out["resumed_flag"] and out["resume_epochs_in_history"] == 2 and out["checkpoint_epoch"] == 2
+        out["first_status"] == "paused" and out["resumed_flag"] and out["resumed_from_verified_checkpoint"]
+        and out["resume_epochs_in_history"] == 2 and out["checkpoint_epoch"] == 2
         and out["resume_max_relative_difference"] < TOLERANCE and out["repeat_max_relative_difference"] < TOLERANCE
         and identical and grads_finite and grad_norm > 0 and finite
     )

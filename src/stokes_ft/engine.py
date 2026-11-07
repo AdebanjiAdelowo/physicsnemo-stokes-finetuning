@@ -19,7 +19,9 @@
 # Adelowo (2026): single process (no DistributedManager, DistributedSampler or
 # DistributedDataParallel) and no Weights & Biases; explicit device and seed, with the sample
 # order drawn per epoch from a seeded generator; a checkpoint every `training.checkpoint_every`
-# epochs holding the number of completed epochs, older ones removed; loss, learning rate,
+# epochs holding the number of completed epochs, written atomically with a manifest of checksums
+# and the random-number-generator states (checkpoint.py), the newest three kept; a stop condition
+# that pauses training at an epoch boundary for continuation in another session; loss, learning rate,
 # validation errors and time written to history.csv; inference timed and returned.
 
 """Data-driven stage: MeshGraphNet training and prediction on the test meshes."""
@@ -32,13 +34,14 @@ from pathlib import Path
 
 import pyvista as pv
 import torch
-from physicsnemo.utils import load_checkpoint, save_checkpoint
+from physicsnemo.utils import load_checkpoint
 from torch.amp import GradScaler, autocast
 from torch_geometric.loader import DataLoader as PyGDataLoader
 
-from .data import make_dataset
+from . import checkpoint
+from .data import make_dataset, sample_number
 from .model import build_meshgraphnet, count_parameters
-from .provenance import device_synchronize, write_json
+from .provenance import atomic_path, device_synchronize, write_json
 
 HISTORY_FIELDS = ["epoch", "loss", "lr", "val_rel_l2_u", "val_rel_l2_v", "val_rel_l2_p", "seconds"]
 
@@ -56,13 +59,6 @@ def lr_decay_rate(cfg) -> float:
     return math.pow(final_lr_multiplier, 1.0 / cfg.epochs)
 
 
-def _prune_checkpoints(ckpt_dir: Path, keep_epoch: int) -> None:
-    for path in ckpt_dir.iterdir():
-        parts = path.name.split(".")
-        if len(parts) >= 3 and parts[-2].isdigit() and int(parts[-2]) != keep_epoch:
-            path.unlink()
-
-
 def _read_history(path: Path, upto_epoch: int) -> list[dict]:
     if not path.exists():
         return []
@@ -71,7 +67,7 @@ def _read_history(path: Path, upto_epoch: int) -> list[dict]:
 
 
 def _write_history(path: Path, rows: list[dict]) -> None:
-    with open(path, "w", newline="") as f:
+    with atomic_path(path) as tmp, open(tmp, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=HISTORY_FIELDS)
         writer.writeheader()
         writer.writerows(rows)
@@ -89,10 +85,18 @@ def validate(model, dataloader, device) -> dict:
     return {key: value / len(dataloader) for key, value in errors.items()}
 
 
-def train_data_driven(cfg, run_dir: Path, device: torch.device, resume: bool = False, log=print) -> dict:
+KEEP_CHECKPOINTS = 3
+
+
+def train_data_driven(cfg, run_dir: Path, device: torch.device, resume: bool = False, log=print,
+                      stop=None) -> dict:
     """Train the MeshGraphNet on the mean squared error of the normalised (u, v, p).
 
-    Returns the training record, also written to ``<run_dir>/train_metrics.json``.
+    Returns the training record, also written to ``<run_dir>/train_metrics.json`` when training is
+    complete. ``stop(epochs_completed)`` is asked after every epoch; when it returns True a verified
+    checkpoint of that epoch is written (if the schedule did not just write one) and the record
+    ``{"status": "paused", ...}`` is returned without ``train_metrics.json``, so that ``resume``
+    continues from there in another session.
     """
     run_dir = Path(run_dir)
     ckpt_dir = run_dir / "checkpoints" / "data_driven"
@@ -130,10 +134,11 @@ def train_data_driven(cfg, run_dir: Path, device: torch.device, resume: bool = F
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=len(dataloader), gamma=lr_decay_rate(cfg))
     scaler = GradScaler(device.type) if cfg.amp else None
 
-    epoch_init = load_checkpoint(
-        str(ckpt_dir), models=model, optimizer=optimizer, scheduler=scheduler, scaler=scaler, device=device
-    )
-    history = _read_history(run_dir / "history.csv", epoch_init)
+    fp = checkpoint.fingerprint(cfg, run_dir, model, [sample_number(p) for p in dataset.data_list],
+                                [sample_number(p) for p in validation_dataset.data_list])
+    restored = checkpoint.load_latest(ckpt_dir, fp, model, optimizer, scheduler, scaler, device, log=log)
+    epoch_init = restored["epoch"]
+    history = _read_history(restored["history_csv"] or run_dir / "history.csv", epoch_init)
     if len(history) != epoch_init:
         raise RuntimeError(f"history.csv has {len(history)} epochs but the checkpoint is at epoch {epoch_init}")
     if device.type == "cuda":
@@ -176,12 +181,14 @@ def train_data_driven(cfg, run_dir: Path, device: torch.device, resume: bool = F
         log(f"epoch {epoch + 1}/{cfg.epochs} loss {loss_agg:.3e} val u {errors['u']:.3f} v {errors['v']:.3f} "
             f"p {errors['p']:.3f} ({seconds:.1f} s)")
 
-        if (epoch + 1) % cfg.training.checkpoint_every == 0 or epoch + 1 == cfg.epochs:
-            save_checkpoint(
-                str(ckpt_dir), models=model, optimizer=optimizer, scheduler=scheduler, scaler=scaler, epoch=epoch + 1
-            )
-            _prune_checkpoints(ckpt_dir, epoch + 1)
+        pause = stop is not None and epoch + 1 < cfg.epochs and stop(epoch + 1)
+        if (epoch + 1) % cfg.training.checkpoint_every == 0 or epoch + 1 == cfg.epochs or pause:
             _write_history(run_dir / "history.csv", history)
+            checkpoint.save(ckpt_dir, epoch + 1, model, optimizer, scheduler, scaler, run_dir / "history.csv", fp,
+                            keep=KEEP_CHECKPOINTS)
+        if pause:
+            log(f"paused after epoch {epoch + 1} of {cfg.epochs}; verified checkpoint written")
+            return {"stage": "data_driven", "status": "paused", "epochs_completed": epoch + 1, "epochs": cfg.epochs}
 
     train_seconds = sum(float(row["seconds"]) for row in history)
     iterations = cfg.epochs * len(dataloader)
@@ -196,6 +203,9 @@ def train_data_driven(cfg, run_dir: Path, device: torch.device, resume: bool = F
         "final_val_rel_l2": {key: float(history[-1][f"val_rel_l2_{key}"]) for key in ("u", "v", "p")},
         "peak_cuda_memory_mb": torch.cuda.max_memory_allocated() / 2**20 if device.type == "cuda" else None,
         "resumed": epoch_init > 0,
+        "resumed_from_epoch": epoch_init,
+        "resumed_from_verified_checkpoint": restored["verified"] if epoch_init > 0 else None,
+        "status": "complete",
     }
     write_json(metrics_path, record)
     return record

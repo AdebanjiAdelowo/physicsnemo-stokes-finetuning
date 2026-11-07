@@ -6,11 +6,13 @@
     python scripts/run_study.py --config local --stages evaluate
     python scripts/run_study.py --config full name=probe epochs=1 pi_iters=200
     python scripts/run_study.py --config local --resume --stages evaluate --evaluate-samples 0,1
+    python scripts/run_study.py --config full --resume --max-hours 8.5     # pause safely before 8.5 h
 
 Trailing arguments are Hydra overrides. Results go to ``runs/<name>``.
 """
 
 import argparse
+import time
 
 import _bootstrap  # noqa: F401
 from stokes_ft.config import load_config
@@ -24,11 +26,17 @@ def main() -> None:
     parser.add_argument("--resume", action="store_true", help="continue an interrupted run of the same configuration")
     parser.add_argument("--evaluate-samples", default=None,
                         help="comma-separated subset of finetune.samples to evaluate when the fine-tuning stage is incomplete")
+    parser.add_argument("--max-hours", type=float, default=None,
+                        help="pause at the next safe point after this many hours (not part of the configuration)")
+    parser.add_argument("--stop-after-epoch", type=int, default=None,
+                        help="pause training after this epoch (recovery tests; not part of the configuration)")
     parser.add_argument("overrides", nargs="*")
     args = parser.parse_args()
     cfg = load_config(args.config, args.overrides)
     subset = [int(i) for i in args.evaluate_samples.split(",")] if args.evaluate_samples else None
-    print(run_study(cfg, stages=args.stages.split(","), resume=args.resume, evaluate_samples=subset))
+    deadline = time.time() + args.max_hours * 3600 if args.max_hours is not None else None
+    print(run_study(cfg, stages=args.stages.split(","), resume=args.resume, evaluate_samples=subset,
+                    deadline=deadline, stop_after_epoch=args.stop_after_epoch))
 
 
 if __name__ == "__main__":

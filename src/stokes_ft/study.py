@@ -3,6 +3,7 @@
 import contextlib
 import json
 import os
+import time
 from pathlib import Path
 
 from omegaconf import OmegaConf
@@ -30,10 +31,16 @@ def is_dataless(path: Path) -> bool:
 
 
 def run_study(cfg, stages=ALL_STAGES, resume: bool = False, runs_root: Path | None = None,
-              evaluate_samples: list[int] | None = None) -> Path:
+              evaluate_samples: list[int] | None = None, deadline: float | None = None,
+              stop_after_epoch: int | None = None) -> Path:
     """Run the requested stages of one configuration in ``runs/<cfg.name>``.
 
     ``evaluate_samples`` evaluates a subset of the configured test samples (a partial result).
+    ``deadline`` (``time.time()`` value) and ``stop_after_epoch`` end a session early at a safe
+    point: training pauses at an epoch boundary with a verified checkpoint, and fine-tuning stops
+    between meshes when the next one may not finish in time. Neither is part of the configuration,
+    so ``--resume`` in a later session continues the same run. ``<run>/status.json`` records whether
+    the run is ``paused`` or ``complete``.
     """
     unknown = set(stages) - set(ALL_STAGES)
     if unknown:
@@ -76,15 +83,26 @@ def run_study(cfg, stages=ALL_STAGES, resume: bool = False, runs_root: Path | No
 
     needs_device = any(stage in stages for stage in ACCELERATOR_STAGES)
     with gpu_lock(device.type, log=log) if needs_device else contextlib.nullcontext():
-        _run_device_stages(cfg, run_dir, device, stages, resume)
+        state = _run_device_stages(cfg, run_dir, device, stages, resume, deadline, stop_after_epoch)
+    write_json(run_dir / "status.json", state | {"stages_requested": list(stages), "written_unix": time.time()})
+    if state["state"] == "paused":
+        log(f"PAUSED: {state['reason']}. Continue with --resume in another session.")
+        return run_dir
     if "evaluate" in stages:
         evaluate_study(cfg, run_dir, samples=evaluate_samples, log=log)
     return run_dir
 
 
-def _run_device_stages(cfg, run_dir: Path, device, stages, resume: bool) -> None:
+def _run_device_stages(cfg, run_dir: Path, device, stages, resume: bool, deadline=None, stop_after_epoch=None) -> dict:
+    def stop(epochs_completed: int) -> bool:
+        return (stop_after_epoch is not None and epochs_completed >= stop_after_epoch) or \
+            (deadline is not None and time.time() >= deadline)
+
     if "train" in stages:
-        train_data_driven(cfg, run_dir, device, resume=resume, log=log)
+        record = train_data_driven(cfg, run_dir, device, resume=resume, log=log, stop=stop)
+        if record.get("status") == "paused":
+            return {"state": "paused", "stage": "train", "epochs_completed": record["epochs_completed"],
+                    "reason": f"training paused after epoch {record['epochs_completed']} of {cfg.epochs}"}
     if "predict" in stages:
         done = run_dir / "predict_metrics.json"
         files = [run_dir / "predictions" / f"graph_{i}.vtp" for i in range(cfg.num_test_samples)]
@@ -94,10 +112,17 @@ def _run_device_stages(cfg, run_dir: Path, device, stages, resume: bool) -> None
             predict_test(cfg, run_dir, device, log=log)
     if "finetune" in stages:
         out_dir = run_dir / "finetune"
+        last_seconds = None
         for index in cfg.finetune.samples:
             record_path = out_dir / f"finetune_{index}.json"
             if resume and record_path.exists() and json.loads(record_path.read_text())["iterations"] == cfg.pi_iters:
                 log(f"sample {index} already fine-tuned")
                 continue
+            if deadline is not None and last_seconds is not None and time.time() + 1.5 * last_seconds > deadline:
+                done = [i for i in cfg.finetune.samples if (out_dir / f"finetune_{i}.json").exists()]
+                return {"state": "paused", "stage": "finetune", "meshes_completed": done,
+                        "reason": f"fine-tuning stopped before mesh {index}: the session deadline is near"}
             record = finetune_sample(cfg, run_dir / "predictions" / f"graph_{index}.vtp", index, device, out_dir, log=log)
             write_json(record_path, record)
+            last_seconds = record["seconds"]
+    return {"state": "complete"}

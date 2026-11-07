@@ -1,0 +1,21 @@
+# Cross-session recovery test (scripts/recovery_check.py). The upstream architecture, optimiser
+# and seed of configs/official.yaml on 50 training meshes for 6 epochs, with a checkpoint every
+# 2 epochs; the test pauses after epoch 3. Its numbers verify continuation; they are not results.
+defaults:
+  - official
+  - _self_
+
+name: recovery_check
+device: cuda
+
+epochs: 6
+num_training_samples: 50
+
+training:
+  checkpoint_every: 2
+
+finetune:
+  samples: [0]
+
+evaluation:
+  plot_samples: [0]

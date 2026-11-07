@@ -23,7 +23,11 @@ def study(tiny_root):
 def test_checkpoints_of_both_stages_are_kept(study):
     cfg, run_dir, _ = study
     names = sorted(p.name for p in (run_dir / "checkpoints" / "data_driven").iterdir())
-    assert names == [f"MeshGraphNet.0.{cfg.epochs}.mdlus", f"checkpoint.0.{cfg.epochs}.pt"]
+    # every epoch of the tiny run is a checkpoint epoch; the newest three are kept, each verified
+    expected = sorted(f"{kind}.0.{e}.{ext}" for e in range(max(1, cfg.epochs - 2), cfg.epochs + 1)
+                      for kind, ext in (("MeshGraphNet", "mdlus"), ("checkpoint", "pt"), ("rng", "pt"),
+                                        ("history", "csv"), ("manifest", "json")))
+    assert names == expected
     for index in cfg.finetune.samples:
         assert (run_dir / "checkpoints" / "finetune" / f"fourier_dnn_{index}.pt").exists()
 
