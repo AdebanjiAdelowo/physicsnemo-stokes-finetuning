@@ -1,0 +1,157 @@
+{
+  "environment": {
+    "timestamp_utc": "2026-11-07T00:16:09+00:00",
+    "git_commit": "453e9b6c9c813af00bd08385f0a87b3adf930f84",
+    "git_dirty": true,
+    "device": "cpu",
+    "gpu_name": null,
+    "cuda_version": null,
+    "python_version": "3.12.2",
+    "torch_version": "2.14.1",
+    "physicsnemo": {
+      "version": "2.3.0a0",
+      "commit": "b45a5c810c741e6b41f8515be24c51121f8fc21f",
+      "url": "https://github.com/nvidia/physicsnemo"
+    },
+    "torch_geometric_version": "2.8.0.post1",
+    "torch_scatter_version": "2.1.2",
+    "pyvista_version": "0.49.0",
+    "sympy_version": "1.14.0",
+    "numpy_version": "2.5.3",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "processor": "arm"
+  },
+  "measured_cpu": {
+    "fem": {
+      "task": "fem",
+      "threads": 1,
+      "rss_after_imports_mb": 591.3125,
+      "peak_rss_mb": 1159.859375,
+      "peak_minus_baseline_mb": 568.546875,
+      "seconds_per_mesh": [
+        0.30372654198436067,
+        0.31724512501386926,
+        0.3076187499682419,
+        0.3220616250182502,
+        0.301939416967798,
+        0.3248423329787329,
+        0.283086292038206,
+        0.30352820799453184,
+        0.300524708989542,
+        0.32266162504674867
+      ],
+      "load_average_before": [
+        6.013671875,
+        4.1435546875,
+        3.37890625
+      ]
+    },
+    "mgn_inference": {
+      "task": "mgn_inference",
+      "threads": 3,
+      "rss_after_imports_mb": 649.4375,
+      "peak_rss_mb": 775.734375,
+      "peak_minus_baseline_mb": 126.296875,
+      "seconds_per_mesh": [
+        0.39067995804362,
+        0.3499685419956222,
+        0.3974258330417797,
+        0.4012359579792246,
+        0.3877713750116527,
+        0.42888979200506583,
+        0.41180970799177885,
+        0.41290537500754,
+        0.4014112089644186,
+        0.400815834000241
+      ],
+      "load_average_before": [
+        5.58544921875,
+        4.13671875,
+        3.38916015625
+      ]
+    },
+    "pinn_iteration": {
+      "task": "pinn_iteration",
+      "threads": 3,
+      "rss_after_imports_mb": 563.171875,
+      "peak_rss_mb": 1049.09375,
+      "peak_minus_baseline_mb": 485.921875,
+      "seconds_per_iteration": [
+        0.2619742552007665,
+        0.2957674208257231,
+        0.30993259687529645
+      ],
+      "meshes": 3,
+      "iterations_timed": 40,
+      "load_average_before": [
+        5.408203125,
+        4.26025390625,
+        3.4638671875
+      ]
+    },
+    "data_only_iteration": {
+      "task": "data_only_iteration",
+      "threads": 3,
+      "rss_after_imports_mb": 550.71875,
+      "peak_rss_mb": 637.640625,
+      "peak_minus_baseline_mb": 86.921875,
+      "seconds_per_iteration": [
+        0.010741953333296502,
+        0.009068937083357013,
+        0.010685344999850107
+      ],
+      "meshes": 3,
+      "iterations_timed": 300,
+      "load_average_before": [
+        10.32275390625,
+        5.70361328125,
+        4.03662109375
+      ]
+    }
+  },
+  "per_new_geometry_seconds": {
+    "taylor_hood_fem_cpu_1_thread": {
+      "value": 0.3056726459763013,
+      "kind": "measured, median of 10 meshes"
+    },
+    "meshgraphnet_inference_cpu": {
+      "value": 0.4010258959897328,
+      "kind": "measured, median of 10 meshes",
+      "threads": 3
+    },
+    "meshgraphnet_inference_mps": {
+      "value": 0.1928512748796493,
+      "kind": "stored (results/local/summary.json)"
+    },
+    "physics_informed_fit_mps": {
+      "value": 1689.5741208334803,
+      "kind": "stored, 10,000 iterations, meshes 0 and 1"
+    },
+    "physics_informed_fit_cpu": {
+      "value": 2957.674208257231,
+      "kind": "EXTRAPOLATED from the per-iteration time x 10,000",
+      "threads": 3
+    },
+    "data_only_fit_cpu": {
+      "value": 120.18745050848811,
+      "kind": "measured, complete 10,000-iteration runs",
+      "runs": 10,
+      "threads": 3
+    }
+  },
+  "one_off_costs_seconds": {
+    "meshgraphnet_training_mps": {
+      "value": 2307.739846623037,
+      "kind": "stored, 100 meshes x 40 epochs"
+    },
+    "training_data_fem_cpu": {
+      "value": 30.56726459763013,
+      "kind": "derived: 100 Taylor-Hood solves at the measured median"
+    }
+  },
+  "accuracy_note": "Taylor-Hood reproduces the reference to relative L2 below 1e-9 (audit_checks.json); the MeshGraphNet velocity error is 0.21 on 100 test meshes; the physics-informed fit 0.11 on 2 meshes.",
+  "ratios": {
+    "physics_fit_mps_over_fem": 5527.397178236461,
+    "mgn_inference_cpu_over_fem": 1.3119456427279537
+  }
+}

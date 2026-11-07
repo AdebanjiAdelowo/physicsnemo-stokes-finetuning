@@ -133,7 +133,7 @@ def costs(out):
     y = np.arange(len(items))[::-1]
     ax.barh(y, [v for _, v in items], height=0.55, color=COLORS["data_driven"])
     for yi, (_, v) in zip(y, items):
-        ax.text(v * 1.15, yi, f"{v:.3g} s", va="center", color=INK, fontsize=8)
+        ax.text(v * 1.15, yi, f"{v:,.0f} s" if v >= 10 else f"{v:.2f} s", va="center", color=INK, fontsize=8)
     ax.set_yticks(y, [n for n, _ in items])
     ax.set_xscale("log")
     ax.set_xlim(right=max(v for _, v in items) * 8)
