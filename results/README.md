@@ -6,6 +6,10 @@ Tracked result files. Each study directory is a copy of a run directory without 
 |---|---|
 | `audit_checks.json` | output of `scripts/audit_checks.py`: Taylor-Hood reproduction of the reference and its solve time, split integrity, receptive field of the MeshGraphNet, and from the local run directory the inlet pressure level, pressure offset, mesh-weighted errors and the perturbation test (see `docs/SCIENTIFIC_AUDIT.md`) |
 | `physics_checks.json` | output of `scripts/verify_physics.py`: viscosity fit, boundary data of the reference, automatic-differentiation and least-squares residual checks, residual floor of the reference |
+| `validation/geometry_pressure.json` | `scripts/geometry_pressure.py`: reference inlet and outlet pressure, lubrication estimate of the pressure drop and inlet hop distance for all 1000 files; fit on the training split, held-out error |
+| `validation/surrogate_local_test100.json` | `scripts/evaluate_surrogate.py`: the local MeshGraphNet on the first 100 test meshes (CPU), errors, weak residuals, inlet level and the pressure recovered from its velocity |
+| `validation/physics_stage.json` | `scripts/physics_stage_checks.py`: reference, MeshGraphNet, physics-informed fit and every control on the ten local test meshes; solution errors, nodal and weak residuals, per-boundary mismatches, paired comparisons |
+| `validation/costs.json` | `scripts/benchmark_costs.py`: time and peak memory per new geometry of the Taylor-Hood solve, MeshGraphNet inference and the coordinate-network fits, with measured and extrapolated values marked |
 | `<study>/study_metadata.json` | per session: timestamp, git commit and dirty state, device, GPU, package versions; resolved configuration, seed, dataset checksum and simulation numbers used |
 | `<study>/summary.json` | means over the test meshes per stage, paired change from data-driven to fine-tuned, compute record |
 | `<study>/summary.csv` | the comparison table |

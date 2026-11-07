@@ -60,6 +60,23 @@ The local timings include contention from other jobs on the same machine and sho
 
 **Classical baseline.** The physics-informed step uses the same inputs as a finite-element solver: the mesh, the equations and the boundary data. A Taylor-Hood P2-P1 solve on the same mesh (`src/stokes_ft/fem.py`) takes 0.5 to 0.65 s on the CPU and reproduces the reference to a relative error of $3 \times 10^{-10}$ or less on all ten test meshes ([`results/audit_checks.json`](results/audit_checks.json)). On this problem neither learned stage is competitive with the solver, and the study measures the effect of the physics-informed step on a learned prediction, not an alternative to solving the PDE.
 
+### Controls, mesh-consistent diagnostics and cost
+
+A second study adds controls and diagnostics that do not depend on the training budget. Full methodology, tables and commands: [`docs/VALIDATION.md`](docs/VALIDATION.md). Labels: VERIFIED (independent of training), LOCAL/REDUCED (the MeshGraphNet above).
+
+* **The inlet pressure level is a global property of the obstacle (VERIFIED).** Over all 1000 dataset files it ranges from 0.30 to 3.53 and correlates 0.89 with a zero-parameter lubrication estimate of the channel resistance; a line fitted on the 800 training files predicts the 200 held-out levels with RMSE 0.121, against 0.265 for a predictor that cannot see the geometry. In 99.4 % of files the inlet lies beyond the 15-hop receptive field.
+* **The MeshGraphNet is blind to it on 100 test meshes (LOCAL/REDUCED).** Its predicted inlet level has slope 0.00006 against the reference. The pressure implied by its own velocity, through the momentum equation and the outlet condition solved with the Taylor-Hood discretisation, correlates 0.94 with the reference level: the velocity carries the information that the 15-hop pressure head cannot propagate. Parameter-matched receptive-field variants (a global latent, and shared-weight double depth) are defined in `configs/arch.yaml`.
+* **The velocity gain is not a smoothing effect (LOCAL/REDUCED).** The same coordinate network with the same seed and iterations, fitted to the MeshGraphNet prediction without physics terms, leaves the velocity error unchanged on ten meshes (+0.1 %, 95 % interval −0.4 to +0.7 %). On meshes 0 and 1 the physics-informed fit lowers it by 25 % and 54 %.
+* **The no-slip loss comes from the PDE terms, not the penalty (LOCAL/REDUCED).** With the same boundary penalties and no PDE terms, the no-slip error on the polygon falls by 80 % (ten of ten meshes); with the PDE terms it rises sixfold.
+* **Residuals do not certify accuracy.** A residual of the Taylor-Hood equations, which includes the outlet condition, separates the MeshGraphNet from the reference more clearly than the nodal residual, but the physics-informed field still falls below the reference's own floor while its velocity error is 25 %. Errors against the finite-element reference are the primary evidence.
+* **Cost per new geometry.** A Taylor-Hood solve takes 0.31 s on one CPU thread and is exact; MeshGraphNet inference takes 0.40 s on three CPU threads and 0.19 s on the laptop GPU at a velocity error of 0.21; the physics-informed fit takes 1,690 s on the laptop GPU, about 5,500 solves.
+
+![Inlet pressure level against the geometry and the MeshGraphNet](figures/validation/inlet_pressure_level.png)
+
+![Physics-informed fit against data-only and boundary-penalty controls](figures/validation/physics_stage_controls.png)
+
+![Cost per new geometry](figures/validation/costs.png)
+
 ## The Stokes problem
 
 Steady incompressible Stokes flow in a channel $\Omega = [0, 1.5] \times [0, 0.4]$ obstructed by one random polygon:
