@@ -24,7 +24,8 @@ Studies:
 
 | Study | Configuration | Status |
 |---|---|---|
-| `local` | `configs/local.yaml`: 100 training meshes, 40 epochs, Apple MPS; fine-tuning as upstream, completed and evaluated on test meshes 0 and 1 of the 10 configured (`summary.json`: `partial: true`) | LOCAL/REDUCED |
+| `local` | `configs/local.yaml`: 100 training meshes, 40 epochs, Apple MPS; fine-tuning as upstream, completed and evaluated on all 10 configured test meshes (`summary.json`: `partial: false`); `controls/` holds the fields and records of the `data_only` and `data_bc` controls (`docs/VALIDATION.md`, section 4) | LOCAL/REDUCED |
+| `local_2mesh` | the `local` study as first published, with test meshes 0 and 1 only; kept for comparison | LOCAL/REDUCED |
 | `full` | `configs/full.yaml`: upstream settings, 10 test meshes, CUDA | PENDING |
 | `official` | `configs/official.yaml`: upstream settings, test mesh 7 only | NOT RUN (it is sample 7 of `full`) |
 

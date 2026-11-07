@@ -122,14 +122,14 @@ The physics-informed step **does not update the MeshGraphNet**. For each test me
 
 | Variant | Loss | Question | Status |
 |---|---|---|---|
-| `upstream` | data + soft inlet/no-slip (weight 10) + strong-form PDE | | 2 meshes (stored, MPS) |
+| `upstream` | data + soft inlet/no-slip (weight 10) + strong-form PDE | A, B | **LOCAL/REDUCED, 10 meshes** (MPS; G1 completed 2026-11-07) |
 | `data_only` | the three data terms only | C: more than smoothing? | **LOCAL/REDUCED, 10 meshes** (CPU) |
 | `data_bc` | data + soft inlet/no-slip, no PDE | D: boundary penalties without the PDE | **LOCAL/REDUCED, 10 meshes** (CPU) |
 | `hard_bc` | upstream PDE and data; inlet and no-slip exact by a distance-function ansatz | D | PENDING |
 | `outlet` | upstream + outlet condition (weight 10) | E | PENDING |
 | `outlet_free_p` | as `outlet` with pressure data weight 0 | E | PENDING |
 
-Source: `scripts/physics_stage_checks.py`, [`physics_stage.json`](../results/validation/physics_stage.json); figure [`physics_stage_controls.png`](../figures/validation/physics_stage_controls.png). The upstream fit exists on meshes 0 and 1 only (G1 is pending); the two controls ran on all ten meshes, 10,000 iterations each, on the CPU.
+Source: `scripts/physics_stage_checks.py`, [`physics_stage.json`](../results/validation/physics_stage.json); figure [`physics_stage_controls.png`](../figures/validation/physics_stage_controls.png). The upstream fit and the two controls ran on all ten meshes, 10,000 iterations each (upstream on MPS, controls on the CPU). Meshes 0 and 1 of the upstream fit were run in October; meshes 2 to 9 on 2026-11-07 by resuming the same study (identical configuration, checkpoint and seed rule; the mesh 0 and 1 artifacts were checked bit-identical by SHA-256 afterwards). The two-mesh results as first published are kept in [`results/local_2mesh`](../results/local_2mesh).
 
 ### 4.1 Controls on ten meshes (LOCAL/REDUCED)
 
@@ -145,33 +145,59 @@ Paired change from the MeshGraphNet prediction, ten meshes; interval: bootstrap 
 | Inlet RMS | −13 % [−17, −10], 10/10 | −86 % [−93, −78], 10/10 |
 | Inlet pressure level, mean absolute error | 0.233 (MeshGraphNet 0.233) | 0.233 |
 
-### 4.2 The upstream fit against the controls, meshes 0 and 1 (LOCAL/REDUCED, n = 2)
+### 4.2 G1: the upstream fit on ten meshes, pre-registered decision (LOCAL/REDUCED, n = 10)
+
+Source: `scripts/g1_decision.py` (committed at `ce18d14`, before any mesh 2 to 9 was fine-tuned, applying the rules fixed at `57926cb` in [`EXPERIMENT_GAPS.md`](EXPERIMENT_GAPS.md)), [`g1_decision.json`](../results/validation/g1_decision.json).
+
+| Pre-registered test | Result | Outcome |
+|---|---|---|
+| Primary: velocity relative $L^2$, physics fit against MeshGraphNet, paired over the 10 meshes; generalises if at least 9 of 10 improve and the bootstrap 95 % interval of the mean relative change lies below 0 | 9 of 10 improve (sign test p = 0.021, Wilcoxon p = 0.010); mean change −37.7 % [−54.8, −19.3]; median −52.8 % | **Generalises across this test set** (local, undertrained surrogate only) |
+| Falsification of the receptive-field explanation: contradicted if the fitted inlet level has slope ≥ 0.5 and correlation ≥ 0.8 against the reference level | slope 0.13, correlation 0.81 (MeshGraphNet: slope −0.0002, correlation −0.10) | **Not contradicted** (slope criterion fails) |
+
+Per-mesh velocity change: −25, −54, −75, −57, −64, −57, −1, **+11**, −51, −4 % (meshes 0 to 9). Mesh 7 got worse and meshes 6 and 9 barely moved; the earlier two-mesh figures (−25 % and −54 %) were typical, not best cases.
+
+Means over the ten meshes (paired changes in the next table):
 
 | Metric | Reference | MeshGraphNet | Data-only | Data + BC | Physics-informed |
 |---|---|---|---|---|---|
-| Velocity rel. $L^2$, mesh 0 / 1 | | 0.160 / 0.215 | 0.161 / 0.214 | 0.159 / 0.214 | **0.120 / 0.099** |
-| $v$ rel. $L^2$, mesh 0 / 1 | | 0.444 / 0.626 | 0.443 / 0.624 | 0.443 / 0.628 | **0.236 / 0.234** |
-| Velocity $H^1$ error, mesh 0 / 1 | | 0.385 / 0.482 | 0.356 / 0.455 | 0.338 / 0.447 | **0.254 / 0.251** |
-| Pressure rel. $L^2$, mesh 0 / 1 | | 0.217 / 0.100 | 0.224 / 0.100 | 0.216 / 0.102 | 0.203 / 0.104 |
-| Gauge-free pressure error, mesh 0 / 1 | | 0.187 / 0.094 | 0.190 / 0.094 | 0.185 / 0.094 | 0.170 / 0.095 |
-| Inlet level (reference 0.889 / 0.752) | | 0.695 / 0.694 | 0.690 / 0.693 | 0.695 / 0.692 | 0.711 / 0.685 |
-| Weak momentum residual ($10^{-3}$) | 5.1 / 5.3 | 13.0 / 14.5 | 12.1 / 13.8 | 11.7 / 13.6 | 3.2 / 6.0 |
-| Weak continuity residual | 0.21 / 0.20 | 0.60 / 0.80 | 0.56 / 0.77 | 0.55 / 0.76 | 0.09 / 0.11 |
-| No-slip RMS, polygon ($10^{-3}$) | 0 | 7.1 / 5.6 | 8.7 / 6.3 | **0.65 / 1.5** | 41.5 / 39.9 |
-| No-slip RMS, walls ($10^{-3}$) | 0 | 1.8 / 1.8 | 2.1 / 1.6 | 0.24 / 1.4 | 8.3 / 6.7 |
-| Inlet RMS ($10^{-3}$) | 0 | 7.1 / 5.6 | 6.0 / 4.9 | 0.30 / 1.3 | 1.2 / 1.5 |
+| Velocity rel. $L^2$ | | 0.233 | 0.233 | 0.232 | **0.136** |
+| $v$ rel. $L^2$ | | 0.665 | 0.665 | 0.665 | **0.307** |
+| Velocity $H^1$ error | | 0.518 | 0.485 | 0.467 | **0.299** |
+| Pressure rel. $L^2$ | | 0.334 | 0.335 | 0.334 | **0.257** |
+| Gauge-free pressure error | | 0.286 | 0.286 | 0.287 | **0.181** |
+| Inlet level, mean abs. error (reference mean 0.741) | | 0.233 | 0.233 | 0.233 | 0.195 |
+| Weak momentum residual ($10^{-3}$) | 4.5 | 17.3 | 16.6 | 16.3 | 6.1 |
+| Weak continuity residual | 0.174 | 0.764 | 0.731 | 0.713 | 0.079 |
+| No-slip RMS, polygon ($10^{-3}$) | 0 | 7.6 | 10.5 | **1.4** | 45.8 |
+| No-slip RMS, walls ($10^{-3}$) | 0 | 1.8 | 2.2 | 0.6 | 8.0 |
+| Inlet RMS ($10^{-3}$) | 0 | 6.0 | 5.2 | 0.8 | 1.7 |
+
+Paired change of the physics-informed fit, ten meshes (bootstrap 95 % interval of the mean per-mesh relative change; two-sided sign test):
+
+| Metric | Against MeshGraphNet | Against the data-only control |
+|---|---|---|
+| Velocity rel. $L^2$ | −37.7 % [−54.8, −19.3], 9/10, p = 0.021 | −37.8 % [−54.8, −19.8], 9/10, p = 0.021 |
+| Velocity $H^1$ error | −42.5 % [−51.2, −31.8], 10/10, p = 0.002 | −38.4 % [−47.5, −28.0], 10/10, p = 0.002 |
+| Pressure rel. $L^2$ | −15.6 % [−26.5, −4.9], 9/10, p = 0.021 | −15.6 % [−26.6, −4.8], 7/10, p = 0.34 |
+| Gauge-free pressure error | −24.8 % [−42.7, −7.5], 8/10, p = 0.11 | −24.8 % [−42.6, −7.5], 8/10, p = 0.11 |
+| Inlet level abs. error | +16.9 % [−28, +87], 6/10, p = 0.75 (means 0.233 → 0.195) | +17.1 % [−28, +89], 6/10, p = 0.75 |
+| No-slip RMS, polygon | **+550 %** [+442, +668], 0/10 | +378 % [+292, +466], 0/10 |
+| No-slip RMS, walls | +342 % [+220, +519], 0/10 | +269 % [+170, +386], 0/10 |
+| Inlet RMS | −71.5 % [−81.2, −59.7], 10/10 | −67.7 % [−77.7, −55.7], 10/10 |
+
+The inlet-level mean of relative changes is dominated by mesh 4, where the MeshGraphNet level error is 0.008; the mean absolute error falls from 0.233 to 0.195, but the improvement is not consistent across meshes (6 of 10).
 
 ### 4.3 Answers to the five questions
 
-**A. Accuracy.** On meshes 0 and 1 the velocity error falls from 0.160 and 0.215 to 0.120 and 0.099 (relative $L^2$), and the $H^1$ error from 0.385 and 0.482 to 0.254 and 0.251. Pressure changes by −6.6 % and +3.8 %. These are two meshes of an undertrained surrogate; G1 tests whether they generalise, with decision rules fixed in advance.
+**A. Accuracy.** Over ten meshes the velocity error falls by 38 % on average (0.233 to 0.136), on 9 of 10 meshes, and the $H^1$ error by 43 % on all ten. This meets the pre-registered criterion for generalisation across this test set. Pressure improves by 16 % (9 of 10 meshes), mostly in shape (gauge-free error −25 %) rather than level (inlet level error improved on 6 of 10). The effect is measured on an undertrained surrogate; its size on a well-trained one (G2) is unknown and could be smaller, since there is less error to remove.
 
-**B. Physical consistency.** Interior residuals fall, by the nodal and the weak measures alike, and the continuity residual falls below the reference's own floor on both meshes (0.09 and 0.11 against 0.21 and 0.20). That is below the interpolation floor of a vertex-only field, so it is not evidence that the field is closer to the solution (section 2.3). Boundary conditions get worse: no-slip on the polygon rises sixfold, from 0.007 to 0.041 (14 % of the inlet velocity scale 0.3).
+**B. Physical consistency.** Interior residuals fall on all ten meshes, by the nodal and the weak measures alike (weak momentum −66 %, weak continuity −89 %). The continuity residual falls below the reference's own floor (mean 0.079 against 0.174), which is below the interpolation floor of a vertex-only field, so it is not evidence that the field is closer to the solution (section 2.3). Boundary conditions get worse on every mesh: no-slip on the polygon rises about sixfold, from 0.0076 to 0.046 (15 % of the inlet velocity scale 0.3), and on the walls about fourfold. Only the inlet condition improves.
 
-**C. More than smoothing?** Yes for velocity, on the two meshes where it can be tested. Refitting the same network with the same seed and iterations to the MeshGraphNet prediction alone leaves the velocity $L^2$ error unchanged on all ten meshes (mean change +0.1 %, interval −0.4 to +0.7 %), and the soft boundary penalties alone change it by −0.7 %. The data-only fit does lower the $H^1$ error by 7 %: it removes nodal noise in the gradients, not error. The physics-informed fit lowers the $L^2$ error by 25 % and 54 % and the $H^1$ error by 34 % and 48 %. The difference is attributable to the PDE terms. With two meshes it is a measured effect on those meshes, not a population estimate.
+**C. More than smoothing?** Yes, for velocity and the $H^1$ error, on ten meshes. Refitting the same network with the same seed and iterations to the MeshGraphNet prediction alone leaves the velocity $L^2$ error unchanged (mean change +0.1 %, interval −0.4 to +0.7 %), and the soft boundary penalties alone change it by −0.7 %. The data-only fit lowers the $H^1$ error by 7 %: it removes nodal noise in the gradients, not error. Against this control the physics-informed fit lowers the velocity $L^2$ error by 38 % [−55, −20] on 9 of 10 meshes and the $H^1$ error by 38 % on 10 of 10. The difference is attributable to the PDE terms. Against the same control the pressure gain (−16 %) is less consistent (7 of 10 meshes, sign test p = 0.34).
 
 **D. Why no-slip deteriorates.** Not because of the soft penalty. With the same penalties (weight 10) and no PDE terms, the no-slip error falls by 80 % on the polygon and 67 % on the walls, on ten of ten meshes. It deteriorates only when the strong-form PDE terms are added. Two mechanisms are consistent with this: the PDE terms are node means over a mesh refined around the polygon, so they dominate there; and at the polygon corners the exact pressure and velocity gradients are singular, so the strong-form residual cannot be satisfied near them and trades against the boundary values. The hard-constraint variant (G6), which removes the trade-off by construction, is implemented and tested but not run.
 
-**E. Why pressure barely moves.** The inlet level is unchanged by every variant run so far (0.711 and 0.685 against 0.889 and 0.752 in the reference). The pressure-recovery experiment (section 3.2) shows that the momentum equation and the outlet condition, solved globally, would move the level in the right direction from the MeshGraphNet velocity (correlation 0.94 over 100 meshes), while the pressure data term holds it at the MeshGraphNet value. The prediction is falsifiable with `outlet_free_p` (G5): with the pressure data weight at 0 and the outlet condition imposed, the inlet level should move toward the reference. One caveat applies before running it: the strong-form momentum term is a local constraint on $\nabla p$, and a coordinate network may propagate the outlet level upstream much more slowly than the global FEM solve does.
+**E. Why pressure barely moves.** The inlet level barely moves. Over ten meshes the fitted level has correlation 0.81 with the reference but slope 0.13 (the MeshGraphNet: correlation −0.10, slope 0.0002): the PDE terms move it in the right direction by about an eighth of the required amount, and the pre-registered falsification threshold (slope ≥ 0.5) is not reached. The controls leave it unchanged. The pressure-recovery experiment (section 3.2) shows that the momentum equation and the outlet condition, solved globally, would move the level in the right direction from the MeshGraphNet velocity (correlation 0.94 over 100 meshes), while the pressure data term holds it at the MeshGraphNet value. The prediction is falsifiable with `outlet_free_p` (G5): with the pressure data weight at 0 and the outlet condition imposed, the inlet level should move toward the reference. One caveat applies before running it: the strong-form momentum term is a local constraint on $\nabla p$, and a coordinate network may propagate the outlet level upstream much more slowly than the global FEM solve does.
 
 ## 5. Cost against the finite-element method
 
@@ -183,12 +209,12 @@ Source: `scripts/benchmark_costs.py`, [`costs.json`](../results/validation/costs
 | MeshGraphNet inference, CPU, 3 threads | 0.40 s | 126 MB | velocity 0.21, pressure 0.34 (100 meshes) | measured |
 | MeshGraphNet inference, MPS | 0.19 s | not measured | as above | stored |
 | Data-only fit, 10,000 iterations, CPU, 3 threads | 120 s | 87 MB | unchanged from the MeshGraphNet | measured, 10 runs |
-| Physics-informed fit, 10,000 iterations, MPS | 1,690 s | not measured | velocity 0.11 (2 meshes) | stored |
+| Physics-informed fit, 10,000 iterations, MPS | **336 s** (median of 10 meshes; 326 to 1,942 s) | not measured | velocity 0.136, pressure 0.257 (10 meshes) | stored |
 | Physics-informed fit, CPU, 3 threads | about 2,960 s | 486 MB | | extrapolated from 40 timed iterations |
 
 One-off costs of the surrogate: 2,308 s of MeshGraphNet training on MPS (local configuration) plus the 100 training solutions (31 s at the measured solve time).
 
-**Amortised surrogate inference against a one-off solve.** At this mesh size the solver is not the bottleneck it is assumed to be: one direct solve on one CPU thread is faster than MeshGraphNet inference on three, and within a factor of 1.6 of inference on the GPU of this laptop. On the CPU the surrogate never recovers its training cost. On the laptop GPU it saves 0.11 s per geometry, so the 2,308 s of training (plus 31 s of training data) is recovered after about 20,000 geometries, each predicted with a velocity error of about 0.21 where the solve is exact. The physics-informed fit costs about 5,500 solves per geometry and reaches a velocity error of 0.11 where the solve is exact.
+**Amortised surrogate inference against a one-off solve.** At this mesh size the solver is not the bottleneck it is assumed to be: one direct solve on one CPU thread is faster than MeshGraphNet inference on three, and within a factor of 1.6 of inference on the GPU of this laptop. On the CPU the surrogate never recovers its training cost. On the laptop GPU it saves 0.11 s per geometry, so the 2,308 s of training (plus 31 s of training data) is recovered after about 20,000 geometries, each predicted with a velocity error of about 0.21 where the solve is exact. The physics-informed fit costs about 1,100 solves per geometry (336 s on MPS against 0.31 s on one CPU thread; different hardware, so the ratio is a cost on this machine, not a like-for-like speed comparison) and reaches a velocity error of 0.136 where the solve is exact. The median is used because four of the ten runs shared the accelerator with other jobs or spanned a system sleep (meshes 0, 1, 4, 5: 1,942, 1,437, 1,437 and 980 s); the six others took 326 to 341 s. The earlier figure of 1,690 s was the mean of meshes 0 and 1.
 
 **Where a learned surrogate could still be worthwhile** (not tested here): much larger 3-D meshes, where direct solves scale superlinearly in time and memory; many-query settings that need gradients with respect to geometry; or problems without a cheap, trusted solver. This 2-D Stokes problem with a direct solver is none of these.
 
@@ -196,8 +222,6 @@ One-off costs of the surrogate: 2,308 s of MeshGraphNet training on MPS (local c
 
 | Run | Blocker on 2026-11-06 | Command | Estimated cost |
 |---|---|---|---|
-| G1: upstream physics stage on test meshes 2 to 9 (decision rules fixed in [`EXPERIMENT_GAPS.md`](EXPERIMENT_GAPS.md)) | Shared MPS lock held by another project's training sweep; load average 6 to 8 on 11 cores; disk 98 % full (12 GiB free, ample for this run) | `python scripts/run_study.py --config local --resume` then `python scripts/results.py publish runs/local`, `python scripts/physics_stage_checks.py` | about 4.5 h MPS on an idle machine; 12 to 17 h on the CPU |
-| G4 completion against the physics stage | needs G1 for meshes 2 to 9 | none beyond G1 | none |
 | G5 `outlet`, `outlet_free_p`, meshes 0 and 1 | MPS lock | `python scripts/run_controls.py --config local --variant outlet_free_p --samples 0,1 --device mps` (and `--variant outlet`) | about 0.5 h per mesh and variant on MPS |
 | G6 `hard_bc`, meshes 0 and 1 | MPS lock | `python scripts/run_controls.py --config local --variant hard_bc --samples 0,1 --device mps` | about 0.6 h per mesh on MPS |
 | G12 architecture experiment | MPS lock | section 3.3 | about 7 h MPS |
@@ -230,7 +254,7 @@ Seeds: MeshGraphNet `seed: 0`; coordinate networks `seed + 1000 + index` for eve
 ## 8. Limitations
 
 * **Undertrained surrogate.** Every learned result uses the local MeshGraphNet (1.6 % of the upstream iterations). The receptive-field blindness is architectural and holds at any training length (it is exact: zero response beyond 15 hops); the size of the other errors, and the effect of the physics-informed step on a well-trained surrogate, are unknown until G2.
-* **Two meshes for the upstream physics-informed fit.** All its paired results have n = 2. The controls have n = 10, but their comparison with the physics fit is limited to meshes 0 and 1.
+* **Ten test meshes.** G1 and the controls have n = 10; the intervals are wide (velocity −55 % to −19 %) and a sign test on ten meshes cannot reach p < 0.002. The 100-mesh evaluation (section 3.2) covers the MeshGraphNet only.
 * **One seed per mesh** for every coordinate-network fit (G3). The controls share the seed of the upstream run, which removes initialisation as a confounder but does not measure seed variance.
 * **Vertex-only evaluation.** No residual computed from vertex values certifies accuracy (section 2.3). Errors against the Taylor-Hood reference are the primary evidence throughout.
 * **Hard-BC variant collocation.** `hard_bc` collocates the PDE at all nodes except the polygon, where the distance function is singular and the ansatz fixes the velocity; the upstream loss also uses the polygon nodes. This difference will have to be stated with its result.
@@ -239,7 +263,7 @@ Seeds: MeshGraphNet `seed: 0`; coordinate networks `seed + 1000 + index` for eve
 
 ## 9. Remaining research questions
 
-1. Does the PDE-driven velocity improvement hold across the ten meshes (G1), and on a well-trained surrogate (G2)?
+1. Does the PDE-driven velocity improvement, established on ten meshes of the local surrogate (G1), hold on a well-trained surrogate (G2)?
 2. Does a global latent recover the inlet level at 1.3 % extra parameters, and by how much more than seed noise (G12)?
 3. Does removing the pressure data term let the outlet condition fix the level inside the coordinate network (G5), as the FEM pressure recovery suggests it should?
 4. Does exact boundary imposition (G6) keep the velocity gain while removing the no-slip loss?

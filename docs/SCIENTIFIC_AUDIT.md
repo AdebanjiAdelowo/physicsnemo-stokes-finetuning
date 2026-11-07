@@ -182,7 +182,7 @@ The comparison also lacks a control that separates the PDE terms from the refitt
 
 | Claim (README or portfolio) | Verdict |
 |---|---|
-| Physics-informed fine-tuning reduces velocity error and interior residuals | **Supported for 2 meshes of an undertrained model**. Not established for the NVIDIA schedule or the other 8 meshes |
+| Physics-informed fine-tuning reduces velocity error and interior residuals | **Supported for 2 meshes of an undertrained model**. Not established for the NVIDIA schedule or the other 8 meshes. *Update 2026-11-07: G1 extended this to all 10 meshes (9/10 improve, −37.7 % [−54.8, −19.3]); see `docs/VALIDATION.md`, section 4.2* |
 | "The fine-tuned field ends closer to the reference than the prediction it was fitted to" | Supported (both meshes) |
 | Residuals fall "to the resolution of the metric" | Supported; the floor is now explained by the P2-P1 reference (section 2) |
 | Pressure changes little because no outlet term sets the level | **Corrected**: the data-driven outlet pressure is already right; the upstream level is wrong because of the receptive field, and the data term preserves it |

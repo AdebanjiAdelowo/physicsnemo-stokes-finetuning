@@ -8,27 +8,26 @@ The model, the dataset pipeline, the Stokes residual and both training procedure
 
 ## Results
 
-The experiment uses 100 training meshes and 40 epochs on Apple MPS. Physics-informed optimisation and paired evaluation cover test meshes 0 and 1. The configuration specifies ten test meshes; these results cover two. The residual checks additionally use 20 test meshes. Machine-readable coverage is recorded in [`results/local/summary.json`](results/local/summary.json).
+The experiment uses 100 training meshes and 40 epochs on Apple MPS. Physics-informed optimisation and paired evaluation cover the ten configured test meshes. The residual checks additionally use 20 test meshes. Machine-readable coverage is recorded in [`results/local/summary.json`](results/local/summary.json).
 
 ### Reduced local study
 
-The before/after comparison uses `configs/local.yaml`: the MeshGraphNet saw 4,000 training iterations instead of the 250,000 of the NVIDIA configuration, so the data-driven baseline is weak, and the physics-informed stage (unchanged from upstream, 10,000 iterations) was completed on test meshes 0 and 1 only. The table is the mean over those two meshes; it does not describe the NVIDIA configuration. Source: [`results/local/summary.csv`](results/local/summary.csv).
+The before/after comparison uses `configs/local.yaml`: the MeshGraphNet saw 4,000 training iterations instead of the 250,000 of the NVIDIA configuration, so the data-driven baseline is weak. The physics-informed stage is unchanged from upstream (10,000 iterations per mesh). The table gives means over the ten test meshes and, for each metric, the bootstrap 95 % interval of the mean per-mesh relative change. It does not describe the NVIDIA configuration. Source: [`results/local/summary.csv`](results/local/summary.csv).
 
-| Metric | Reference floor | Data-driven | Physics fine-tuned | Change | Meshes improved |
+| Metric | Reference floor | Data-driven | Physics fine-tuned | Mean per-mesh change [95 % interval] | Meshes improved |
 |---|---:|---:|---:|---:|---:|
-| Velocity relative $L^2$ error | | 0.188 | 0.109 | −41.8 % | 2/2 |
-| $u$ relative $L^2$ error | | 0.161 | 0.102 | −37.1 % | 2/2 |
-| $v$ relative $L^2$ error | | 0.535 | 0.235 | −56.0 % | 2/2 |
-| Pressure relative $L^2$ error | | 0.159 | 0.154 | −3.3 % | 1/2 |
-| Total $(u, v, p)$ relative $L^2$ error | | 0.175 | 0.145 | −16.7 % | 2/2 |
-| Momentum residual, RMS | 0.365 | 0.898 | 0.292 | −67.5 % | 2/2 |
-| Divergence residual, RMS | 0.125 | 0.610 | 0.063 | −89.6 % | 2/2 |
-| Boundary residual (inlet and no-slip), RMS | $10^{-16}$ | 0.0033 | 0.0155 | +365 % | 0/2 |
-| of which inlet | | 0.0063 | 0.0014 | −78.7 % | 2/2 |
-| of which no-slip | | 0.0028 | 0.0163 | +478 % | 0/2 |
-| Outlet pressure, RMS (not in the loss) | $5 \times 10^{-7}$ | 0.0062 | 0.0072 | +16.2 % | 1/2 |
+| Velocity relative $L^2$ error | | 0.233 | 0.136 | −37.7 % [−54.8, −19.3] | 9/10 |
+| $u$ relative $L^2$ error | | 0.203 | 0.126 | −33.1 % [−52.6, −12.1] | 7/10 |
+| $v$ relative $L^2$ error | | 0.665 | 0.307 | −52.6 % [−62.1, −42.3] | 10/10 |
+| Pressure relative $L^2$ error | | 0.334 | 0.257 | −15.6 % [−26.5, −4.9] | 9/10 |
+| Total $(u, v, p)$ relative $L^2$ error | | 0.303 | 0.221 | −28.8 % [−37.3, −19.6] | 10/10 |
+| Momentum residual, RMS | 0.322 | 0.960 | 0.318 | −67.4 % [−78.5, −52.9] | 10/10 |
+| Divergence residual, RMS | 0.112 | 0.672 | 0.052 | −92.0 % [−93.0, −90.8] | 10/10 |
+| Inlet residual, RMS | $10^{-16}$ | 0.0060 | 0.0017 | −71.5 % [−81.2, −59.7] | 10/10 |
+| No-slip residual, RMS | $10^{-16}$ | 0.0030 | 0.0173 | +483 % [+393, +601] | 0/10 |
+| Outlet pressure, RMS (not in the loss) | $6 \times 10^{-7}$ | 0.0062 | 0.0141 | +128 % [+41, +224] | 3/10 |
 
-Residuals are nodal, with least-squares mesh derivatives; "reference floor" is the same operator applied to the FEniCS solution on the same two meshes. The exact automatic-differentiation residual of the fine-tuned networks is 0.018 (momentum) and 0.011 (divergence).
+Residuals are nodal, with least-squares mesh derivatives; "reference floor" is the same operator applied to the FEniCS solution on the same meshes. The decision rule for this ten-mesh comparison (at least 9 of 10 meshes improved and an interval entirely below zero for the velocity error) was fixed before meshes 2 to 9 were run; it is met. Per mesh, the velocity change ranges from −75 % to +11 % (mesh 7 got worse; meshes 6 and 9 changed by less than 4 %).
 
 ![Before and after: prediction errors and residuals](figures/local_comparison.png)
 
@@ -38,25 +37,25 @@ Residuals are nodal, with least-squares mesh derivatives; "reference floor" is t
 
 ![Error of the fine-tuning network during its iterations](figures/local_finetune_history.png)
 
-What these two meshes show, for a weak data-driven baseline:
+What the ten meshes show, for a weak data-driven baseline:
 
-* **Velocity improves.** The velocity error falls on both meshes, most for the transverse component $v$, which the undertrained MeshGraphNet predicts worst. The fine-tuned field ends closer to the reference than the prediction it was fitted to: the PDE and boundary terms move it away from its data target in the right direction. The recorded histories show further reduction toward the end of the 10,000 iterations.
-* **Pressure changes little.** The mean pressure error falls by 3.3 %, with opposite changes on the two meshes (0.217 to 0.203 on mesh 0, 0.100 to 0.104 on mesh 1). The error is a level shift upstream of the polygon: downstream of it and at the outlet both fields agree with the reference. The MeshGraphNet cannot predict that level. Its 15 message-passing layers do not reach from the polygon to the inlet (18 to 23 mesh edges away), so it predicts the same inlet pressure, 0.694 to 0.696, for all ten test geometries, while the reference ranges from 0.41 to 1.60. The momentum equation constrains only $\nabla p$, and the pressure data term then holds the fine-tuned level at the MeshGraphNet value; it moves by less than 0.02. See [`docs/SCIENTIFIC_AUDIT.md`](docs/SCIENTIFIC_AUDIT.md), section 3.1.
-* **PDE residuals drop to the resolution of the metric.** The nodal momentum residual falls from 2.5 times the reference floor to about the floor (0.21 and 0.38 against 0.39 and 0.34 on the two meshes), and the divergence residual to half its floor. Values near or below the reference residual are limited by mesh differentiation error. They show a reduction under this discrete operator, but do not establish that the fine-tuned field satisfies the continuous PDE more accurately than the reference.
-* **No-slip gets worse.** The MeshGraphNet receives the boundary marker as an input and reproduces the wall values to 0.003; the coordinate network enforces them only through a penalty and ends at 0.016, about 5 % of the inlet velocity scale. The inlet profile, which has the same penalty weight on far fewer nodes, improves.
+* **Velocity improves.** The velocity error falls on 9 of 10 meshes, most for the transverse component $v$ (10 of 10), which the undertrained MeshGraphNet predicts worst. The fine-tuned field ends closer to the reference than the prediction it was fitted to: the PDE and boundary terms move it away from its data target in the right direction.
+* **Pressure improves less, and mostly in shape.** The pressure error falls by 16 % on average. The dominant error is a level shift upstream of the polygon, which the MeshGraphNet cannot predict: its 15 message-passing layers do not reach from the polygon to the inlet, so it predicts the same inlet pressure, 0.694 to 0.696, for all ten test geometries, while the reference ranges from 0.41 to 1.60. After fine-tuning the inlet level follows the reference with correlation 0.81 but slope 0.13, so it moves about an eighth of the way. See [`docs/SCIENTIFIC_AUDIT.md`](docs/SCIENTIFIC_AUDIT.md), section 3.1, and [`docs/VALIDATION.md`](docs/VALIDATION.md), section 4.
+* **PDE residuals drop to the resolution of the metric.** The nodal momentum residual falls from three times the reference floor to the floor, and the divergence residual to half its floor. Values near or below the reference residual are limited by mesh differentiation error. They show a reduction under this discrete operator, but do not establish that the fine-tuned field satisfies the continuous PDE more accurately than the reference.
+* **No-slip gets worse on every mesh.** The MeshGraphNet receives the boundary marker as an input and reproduces the wall values to 0.003; the coordinate network enforces them only through a penalty and ends at 0.017, about 6 % of the inlet velocity scale. The inlet profile, which has the same penalty weight on far fewer nodes, improves.
 
-This is a trade: lower interior residuals and velocity error against a looser no-slip condition and a small change in pressure error. These two meshes do not establish the effect for a MeshGraphNet trained with the NVIDIA settings. `configs/full.yaml` defines that larger comparison.
+This is a trade: lower interior residuals and velocity and pressure errors against a looser no-slip condition. The ten meshes do not establish the effect for a MeshGraphNet trained with the NVIDIA settings. `configs/full.yaml` defines that larger comparison. The earlier two-mesh version of this table is kept in [`results/local_2mesh`](results/local_2mesh).
 
 ### Compute
 
 | | Data-driven stage | Physics-informed stage |
 |---|---|---|
 | Parameters | 2,531,587 | 49,923 per test mesh |
-| Local study, Apple M3 Pro (MPS) | 2,308 s for 4,000 iterations | 1,690 s per mesh for 10,000 iterations (mean of 2) |
+| Local study, Apple M3 Pro (MPS) | 2,308 s for 4,000 iterations | 336 s per mesh for 10,000 iterations (median of 10; 326 to 1,942 s) |
 | Inference | 0.19 s per mesh | one optimisation per mesh; no reusable model |
 | CUDA time and peak memory | Not measured | Not measured |
 
-The local timings include contention from other jobs on the same machine and should not be treated as isolated hardware benchmarks. At these rates the physics-informed step on one test mesh takes about three quarters of the time of the whole reduced MeshGraphNet training, and it has to be repeated for every new geometry.
+The local timings include contention from other jobs on the same machine and should not be treated as isolated hardware benchmarks. At these rates the physics-informed step on one test mesh takes about a seventh of the time of the whole reduced MeshGraphNet training, and it has to be repeated for every new geometry.
 
 **Classical baseline.** The physics-informed step uses the same inputs as a finite-element solver: the mesh, the equations and the boundary data. A Taylor-Hood P2-P1 solve on the same mesh (`src/stokes_ft/fem.py`) takes 0.5 to 0.65 s on the CPU and reproduces the reference to a relative error of $3 \times 10^{-10}$ or less on all ten test meshes ([`results/audit_checks.json`](results/audit_checks.json)). On this problem neither learned stage is competitive with the solver, and the study measures the effect of the physics-informed step on a learned prediction, not an alternative to solving the PDE.
 
@@ -66,10 +65,10 @@ A second study adds controls and diagnostics that do not depend on the training 
 
 * **The inlet pressure level is a global property of the obstacle (VERIFIED).** Over all 1000 dataset files it ranges from 0.30 to 3.53 and correlates 0.89 with a zero-parameter lubrication estimate of the channel resistance; a line fitted on the 800 training files predicts the 200 held-out levels with RMSE 0.121, against 0.265 for a predictor that cannot see the geometry. In 99.4 % of files the inlet lies beyond the 15-hop receptive field.
 * **The MeshGraphNet is blind to it on 100 test meshes (LOCAL/REDUCED).** Its predicted inlet level has slope 0.00006 against the reference. The pressure implied by its own velocity, through the momentum equation and the outlet condition solved with the Taylor-Hood discretisation, correlates 0.94 with the reference level: the velocity carries the information that the 15-hop pressure head cannot propagate. Parameter-matched receptive-field variants (a global latent, and shared-weight double depth) are defined in `configs/arch.yaml`.
-* **The velocity gain is not a smoothing effect (LOCAL/REDUCED).** The same coordinate network with the same seed and iterations, fitted to the MeshGraphNet prediction without physics terms, leaves the velocity error unchanged on ten meshes (+0.1 %, 95 % interval −0.4 to +0.7 %). On meshes 0 and 1 the physics-informed fit lowers it by 25 % and 54 %.
-* **The no-slip loss comes from the PDE terms, not the penalty (LOCAL/REDUCED).** With the same boundary penalties and no PDE terms, the no-slip error on the polygon falls by 80 % (ten of ten meshes); with the PDE terms it rises sixfold.
-* **Residuals do not certify accuracy.** A residual of the Taylor-Hood equations, which includes the outlet condition, separates the MeshGraphNet from the reference more clearly than the nodal residual, but the physics-informed field still falls below the reference's own floor while its velocity error is 25 %. Errors against the finite-element reference are the primary evidence.
-* **Cost per new geometry.** A Taylor-Hood solve takes 0.31 s on one CPU thread and is exact; MeshGraphNet inference takes 0.40 s on three CPU threads and 0.19 s on the laptop GPU at a velocity error of 0.21; the physics-informed fit takes 1,690 s on the laptop GPU, about 5,500 solves.
+* **The velocity gain is not a smoothing effect (LOCAL/REDUCED).** The same coordinate network with the same seed and iterations, fitted to the MeshGraphNet prediction without physics terms, leaves the velocity error unchanged on ten meshes (+0.1 %, 95 % interval −0.4 to +0.7 %). Against that control the physics-informed fit lowers it by 38 % (interval −55 to −20 %, 9 of 10 meshes).
+* **The no-slip loss comes from the PDE terms, not the penalty (LOCAL/REDUCED).** With the same boundary penalties and no PDE terms, the no-slip error on the polygon falls by 80 % (ten of ten meshes); with the PDE terms it rises about sixfold, on ten of ten meshes.
+* **Residuals do not certify accuracy.** A residual of the Taylor-Hood equations, which includes the outlet condition, separates the MeshGraphNet from the reference more clearly than the nodal residual, but the physics-informed field still falls below the reference's own floor while its velocity error is 14 %. Errors against the finite-element reference are the primary evidence.
+* **Cost per new geometry.** A Taylor-Hood solve takes 0.31 s on one CPU thread and is exact; MeshGraphNet inference takes 0.40 s on three CPU threads and 0.19 s on the laptop GPU at a velocity error of 0.21; the physics-informed fit takes 336 s on the laptop GPU (median of ten meshes), about 1,100 solves, at a velocity error of 0.136.
 
 ![Inlet pressure level against the geometry and the MeshGraphNet](figures/validation/inlet_pressure_level.png)
 
@@ -253,8 +252,8 @@ Every study directory records the timestamp, repository commit and dirty state, 
 
 ## Limitations
 
-* **The before/after comparison is reduced and partial.** It rests on two test meshes and a MeshGraphNet trained for 1.6 % of the upstream iterations on 100 meshes. Two samples are insufficient for reliable population-level uncertainty estimates. The reported results do not cover NVIDIA's full training schedule or CUDA hardware.
-* **One seed.** The fine-tuning network depends on its random Fourier matrix and initialisation; the sensitivity to that draw was not measured.
+* **The before/after comparison is reduced.** It rests on ten test meshes and a MeshGraphNet trained for 1.6 % of the upstream iterations on 100 meshes. Ten meshes give wide intervals (velocity change −55 % to −19 %), and a better-trained surrogate leaves less error for the physics-informed step to remove. The reported results do not cover NVIDIA's full training schedule or CUDA hardware.
+* **One seed per mesh.** The fine-tuning network depends on its random Fourier matrix and initialisation; the sensitivity to that draw was not measured.
 * **Nodal residuals have a floor.** The least-squares mesh operator assigns the finite-element reference a momentum residual of about 0.3. Residuals below that level are not evidence of better physics, and the automatic-differentiation residual exists for the coordinate network only, so the two stages cannot be compared with an exact operator.
 * **The physics-informed step never sees the reference, and is not a surrogate.** It regularises one prediction on one mesh; its cost is a full optimisation per geometry. Its benefit is bounded by the information in the PDE, the two boundary terms and the MeshGraphNet prediction: the outlet condition and hence the pressure level are not constrained.
 * **Upstream choices are kept as they are.** The loss weights, the 10,000 iterations, the constant learning rate and the soft boundary penalties are NVIDIA's; no tuning or sweep was done, and the second upstream variant (`pi_fine_tuning_gnn.py`) was not run.
@@ -263,7 +262,7 @@ Every study directory records the timestamp, repository commit and dirty state, 
 
 * **The MeshGraphNet's receptive field is smaller than the domain.** With 15 message-passing layers, 60 to 69 % of the nodes, including the whole inlet, are beyond the reach of the polygon. Perturbing the polygon inputs of the trained model changes its output there by exactly zero. This limits the pressure level for any training schedule, not only the reduced one.
 
-Possible extensions, with commands and costs in [`docs/EXPERIMENT_GAPS.md`](docs/EXPERIMENT_GAPS.md): the remaining eight local fine-tunings; the full CUDA study; several fine-tuning seeds; a data-only refit of the coordinate network as a control for the physics terms; a lower pressure data weight or an outlet term (the MeshGraphNet outlet pressure is already within 0.006 of the reference, so an outlet term alone is expected to change little); hard enforcement of the wall condition; a message-passing depth or multiscale graph that covers the channel; the mesh-based upstream variant, which keeps the boundary marker as an input.
+Possible extensions, with commands and costs in [`docs/EXPERIMENT_GAPS.md`](docs/EXPERIMENT_GAPS.md): the full CUDA study; several fine-tuning seeds; a lower pressure data weight or an outlet term (the MeshGraphNet outlet pressure is already within 0.006 of the reference, so an outlet term alone is expected to change little); hard enforcement of the wall condition; a message-passing depth or multiscale graph that covers the channel; the mesh-based upstream variant, which keeps the boundary marker as an input.
 
 ## Attribution
 
