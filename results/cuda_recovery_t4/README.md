@@ -38,3 +38,19 @@ Criterion version 2 was fixed and pushed (`e0c57f7`) before its first execution:
 Training loss after the resume differs from the reference by +0.33 %, +0.06 %, +0.01 % (epochs 4 to 6), inside the repeats' range (up to +0.45 %). The validation u error is the volatile series in every run: the two independent session-one references of the two tests differ from each other by 2.4 % at epoch 5. Whether the 5.32 % is a rare excursion of CUDA non-determinism or a small effect of resumption cannot be decided from these runs.
 
 On the CPU with one thread, where training is deterministic, a run paused after an epoch and resumed is bit-identical to the uninterrupted run in every history value and every final weight (`tests/test_checkpoint.py::test_resumed_run_is_bit_identical_on_a_deterministic_device`). That establishes that the checkpoint restores everything the training trajectory depends on; it does not by itself settle the CUDA question, which a test with deterministic CUDA algorithms would. (With two CPU threads two identical runs already differ at about 1e-8 in the first epoch: multi-threaded reductions are not bit-reproducible either.)
+
+## Deterministic retest with criterion version 3: PASSED
+
+Criterion version 3 was fixed and pushed (`ee57d64`) before its first execution. Both sessions ran `scripts/recovery_check.py --deterministic` (deterministic CUDA algorithms, `CUBLAS_WORKSPACE_CONFIG=:4096:8`, deterministic cuDNN) in two separate private Kaggle executions on Tesla T4s (`stokes-recovery3-a/b-ee57d64`, 2026-11-08; 111 tests passed in each; no unsupported-operation error). Session two received session one's state only through its persisted output (`/kaggle/input/notebooks/adebanjiadelowo/stokes-recovery3-a-ee57d64/`). Evidence: `recovery_check_v3_deterministic.json`, `v3_state/`, `v3_session_*_log_excerpt.txt`.
+
+| Criterion version 3 | Result |
+|---|---|
+| Restored from the persisted output; tar and checkpoint checksums verified | yes (checkpoints of epochs 3 and 2) |
+| Corruption drill | detected ("checksum mismatch in checkpoint.0.3.pt"), resumed from epoch 2 |
+| Incompatibility drill | refused ("fingerprint differs in ['config_sha256']") |
+| Resumed from the verified checkpoint of epoch 3 | yes |
+| Resumed run bit-identical to the reference: every stored history value except wall-clock seconds, every final weight | **yes** |
+| Three repeats bit-identical to the reference | yes (all three) |
+| **Verdict** | **PASSED** |
+
+Criteria versions 1 and 2, computed on the same runs, also pass (all differences 0). Together with the earlier non-deterministic results, this shows that the 2.31 % and 5.32 % differences of the first two tests came from CUDA non-determinism, not from the checkpoint: once non-determinism is removed, resumption across sessions reproduces the uninterrupted run exactly. The full study itself runs with the default (non-deterministic) algorithms of the upstream configuration; deterministic mode was used for this test only.

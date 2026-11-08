@@ -1,0 +1,28 @@
+{
+  "run": "recovery_resumed",
+  "tar": "state-recovery_resumed.tar",
+  "sha256": "ef0f42e60d009f9225f6ea9e0ac6959bc1bf6dfe2c4cc1e8c6001a270f8d8b65",
+  "bytes": 61491200,
+  "status": {
+    "state": "paused",
+    "stage": "train",
+    "epochs_completed": 3,
+    "reason": "training paused after epoch 3 of 6",
+    "stages_requested": [
+      "train"
+    ],
+    "written_unix": 1794126824.6104064
+  },
+  "checkpoints": [
+    {
+      "manifest": "manifest.0.3.json",
+      "ok": true,
+      "reason": "ok"
+    },
+    {
+      "manifest": "manifest.0.2.json",
+      "ok": true,
+      "reason": "ok"
+    }
+  ]
+}

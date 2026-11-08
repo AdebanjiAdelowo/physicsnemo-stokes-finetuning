@@ -1,0 +1,30 @@
+{
+  "run": "recovery_reference",
+  "tar": "state-recovery_reference.tar",
+  "sha256": "78b9e214b283adeb3e4e10bb5d034382c787a47f6237f7a4192c5900634f317e",
+  "bytes": 92221440,
+  "status": {
+    "state": "complete",
+    "stages_requested": [
+      "train"
+    ],
+    "written_unix": 1794126859.759177
+  },
+  "checkpoints": [
+    {
+      "manifest": "manifest.0.6.json",
+      "ok": true,
+      "reason": "ok"
+    },
+    {
+      "manifest": "manifest.0.4.json",
+      "ok": true,
+      "reason": "ok"
+    },
+    {
+      "manifest": "manifest.0.2.json",
+      "ok": true,
+      "reason": "ok"
+    }
+  ]
+}

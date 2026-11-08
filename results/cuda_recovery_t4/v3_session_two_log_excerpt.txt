@@ -1,0 +1,39 @@
+111 passed in 70.43s (0:01:10)
+$ python scripts/session_state.py unpack /kaggle/input/notebooks/adebanjiadelowo/stokes-recovery3-a-ee57d64/state-recovery_resumed.tar runs
+$ python scripts/session_state.py unpack /kaggle/input/notebooks/adebanjiadelowo/stokes-recovery3-a-ee57d64/state-recovery_reference.tar runs
+$ python scripts/recovery_check.py second --deterministic
+study 'recovery_resumed' on cuda, commit ee57d646ce409b506d95b68459abe07a7ba02852, dirty: False
+resumed from verified checkpoint of epoch 3
+epoch 4/6 loss 4.957e-01 val u 0.588 v 0.948 p 0.440 (4.9 s)
+epoch 5/6 loss 4.772e-01 val u 0.590 v 0.941 p 0.424 (4.9 s)
+epoch 6/6 loss 4.601e-01 val u 0.567 v 0.936 p 0.421 (4.9 s)
+study 'recovery_repeat' on cuda, commit ee57d646ce409b506d95b68459abe07a7ba02852, dirty: False
+epoch 1/6 loss 7.379e-01 val u 0.773 v 0.995 p 0.534 (5.0 s)
+epoch 2/6 loss 5.971e-01 val u 0.657 v 0.998 p 0.422 (5.0 s)
+epoch 3/6 loss 5.299e-01 val u 0.637 v 0.969 p 0.436 (5.1 s)
+epoch 4/6 loss 4.957e-01 val u 0.588 v 0.948 p 0.440 (5.1 s)
+epoch 5/6 loss 4.772e-01 val u 0.590 v 0.941 p 0.424 (5.2 s)
+epoch 6/6 loss 4.601e-01 val u 0.567 v 0.936 p 0.421 (5.3 s)
+study 'recovery_repeatb' on cuda, commit ee57d646ce409b506d95b68459abe07a7ba02852, dirty: False
+epoch 1/6 loss 7.379e-01 val u 0.773 v 0.995 p 0.534 (5.4 s)
+epoch 2/6 loss 5.971e-01 val u 0.657 v 0.998 p 0.422 (5.5 s)
+epoch 3/6 loss 5.299e-01 val u 0.637 v 0.969 p 0.436 (5.6 s)
+epoch 4/6 loss 4.957e-01 val u 0.588 v 0.948 p 0.440 (5.7 s)
+epoch 5/6 loss 4.772e-01 val u 0.590 v 0.941 p 0.424 (5.9 s)
+epoch 6/6 loss 4.601e-01 val u 0.567 v 0.936 p 0.421 (5.9 s)
+study 'recovery_repeatc' on cuda, commit ee57d646ce409b506d95b68459abe07a7ba02852, dirty: False
+epoch 1/6 loss 7.379e-01 val u 0.773 v 0.995 p 0.534 (5.7 s)
+epoch 2/6 loss 5.971e-01 val u 0.657 v 0.998 p 0.422 (5.6 s)
+epoch 3/6 loss 5.299e-01 val u 0.637 v 0.969 p 0.436 (5.5 s)
+epoch 4/6 loss 4.957e-01 val u 0.588 v 0.948 p 0.440 (5.5 s)
+epoch 5/6 loss 4.772e-01 val u 0.590 v 0.941 p 0.424 (5.5 s)
+epoch 6/6 loss 4.601e-01 val u 0.567 v 0.936 p 0.421 (5.5 s)
+  "message": "checkpoint manifest.0.3.json not usable (checksum mismatch in checkpoint.0.3.pt); trying an older one",
+  "resumed_line": "resumed from verified checkpoint of epoch 2",
+ "criterion_v1": {
+ "criterion_v2": {
+ "criterion_v3": {
+ "decision": "criterion_v3",
+criterion v1 (reported): passed; criterion v2: passed; criterion v3 (bit-identity): PASSED; decision: criterion_v3
+RECOVERY CHECK PASSED
+RECOVERY TEST, SECOND SESSION COMPLETE
