@@ -1,0 +1,28 @@
+111 passed in 64.99s (0:01:04)
+data-driven stage: 2247779 parameters, 6 iterations per epoch, epochs 0 to 2 on cuda
+predictions written for 2 test meshes, 32.3 ms per mesh
+sample 0: 20 iterations in 0.8 s, rel L2 u 0.775 v 1.000 p 0.948
+sample 1: 20 iterations in 0.6 s, rel L2 u 0.723 v 1.059 p 0.934
+data-driven stage: 2247779 parameters, 6 iterations per epoch, epochs 1 to 2 on cuda
+DEVICE CHECKS PASSED
+data-driven stage: 2531587 parameters, 500 iterations per epoch, epochs 0 to 1 on cuda
+predictions written for 10 test meshes, 37.3 ms per mesh
+sample 7: 200 iterations in 6.5 s, rel L2 u 0.224 v 0.831 p 0.639
+data-driven stage: 94.8 ms per iteration, peak 1153 MB -> 6.59 h for 250000 iterations
+projected 7.5 h for training and fine-tuning; 8.3 h available in this session
+study 'full' on cuda, commit ee57d646ce409b506d95b68459abe07a7ba02852, dirty: False
+data-driven stage: 2531587 parameters, 500 iterations per epoch, epochs 0 to 500 on cuda
+predictions written for 10 test meshes, 39.7 ms per mesh
+sample 0: 10000 iterations in 315.8 s, rel L2 u 0.061 v 0.116 p 0.085
+sample 1: 10000 iterations in 315.7 s, rel L2 u 0.054 v 0.135 p 0.063
+sample 2: 10000 iterations in 315.3 s, rel L2 u 0.039 v 0.174 p 0.055
+sample 3: 10000 iterations in 316.2 s, rel L2 u 0.045 v 0.226 p 0.205
+sample 4: 10000 iterations in 316.0 s, rel L2 u 0.043 v 0.179 p 0.069
+sample 5: 10000 iterations in 317.6 s, rel L2 u 0.080 v 0.261 p 0.105
+sample 6: 10000 iterations in 317.9 s, rel L2 u 0.226 v 0.348 p 0.349
+sample 7: 10000 iterations in 315.4 s, rel L2 u 0.074 v 0.238 p 0.224
+sample 8: 10000 iterations in 316.5 s, rel L2 u 0.100 v 0.188 p 0.139
+sample 9: 10000 iterations in 316.7 s, rel L2 u 0.042 v 0.129 p 0.136
+status: {'state': 'complete', 'stages_requested': ['train', 'predict', 'finetune', 'evaluate'], 'written_unix': 1794158266.7265377}
+STEP D COMPLETE.
+Elapsed: 8.34 h. Steps A to C: done. Step D: done.

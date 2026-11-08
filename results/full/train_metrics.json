@@ -1,0 +1,19 @@
+{
+  "stage": "data_driven",
+  "parameter_count": 2531587,
+  "epochs": 500,
+  "iterations": 250000,
+  "train_seconds": 25770.553930816965,
+  "seconds_per_iteration": 0.10308221572326785,
+  "final_train_loss": 0.010315559829585255,
+  "final_val_rel_l2": {
+    "u": 0.2280910775065422,
+    "v": 0.3177851617336273,
+    "p": 0.4723544389009476
+  },
+  "peak_cuda_memory_mb": 1153.443359375,
+  "resumed": false,
+  "resumed_from_epoch": 0,
+  "resumed_from_verified_checkpoint": null,
+  "status": "complete"
+}

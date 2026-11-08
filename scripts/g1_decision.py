@@ -33,13 +33,13 @@ SECONDARY = ["rel_l2_u", "rel_l2_v", "rel_l2_p", "rel_l2_total", "res_momentum",
              "bc_inflow", "bc_noslip", "bc_outflow_pressure"]
 
 
-def decide(before: np.ndarray, after: np.ndarray) -> dict:
+def decide(before: np.ndarray, after: np.ndarray, scope: str = "local, undertrained surrogate only") -> dict:
     u = paired_uncertainty(before, after)
     improved = int((after < before).sum())
     low, high = u["relative_change_mean_ci95"]
     generalises = len(before) == 10 and improved >= 9 and high < 0
     return {"meshes": len(before), "improved": improved, "uncertainty": u,
-            "conclusion": "GENERALISES across this test set (local, undertrained surrogate only)" if generalises
+            "conclusion": f"GENERALISES across this test set ({scope})" if generalises
             else "GENERALISATION NOT ESTABLISHED: report per-mesh results, keep the two-mesh scoping"}
 
 
@@ -62,7 +62,9 @@ def main() -> None:
     if meshes != list(range(10)):
         raise SystemExit(f"G1 needs all 10 meshes evaluated; found {meshes}")
     get = lambda stage, key: np.array([float(by[(i, stage)][key]) for i in meshes])  # noqa: E731
-    primary = decide(get("data_driven", "rel_l2_velocity"), get("physics_finetuned", "rel_l2_velocity"))
+    status = json.loads((run / "study_metadata.json").read_text()).get("result_status", "")
+    scope = "local, undertrained surrogate only" if status.startswith("LOCAL") else f"{status} study"  # label only
+    primary = decide(get("data_driven", "rel_l2_velocity"), get("physics_finetuned", "rel_l2_velocity"), scope)
 
     levels = {"reference": [], "data_driven": [], "physics_finetuned": []}
     for i in meshes:
@@ -82,7 +84,7 @@ def main() -> None:
         secondary[key] = entry
     records = [json.loads((run / "finetune" / f"finetune_{i}.json").read_text()) for i in meshes]
     out = {
-        "rules_fixed_at_commit": RULE_COMMIT, "run": args.run, "meshes": meshes,
+        "rules_fixed_at_commit": RULE_COMMIT, "run": args.run, "result_status": status, "meshes": meshes,
         "primary_velocity_rel_l2": primary | {"per_mesh": {"data_driven": get("data_driven", "rel_l2_velocity").tolist(),
                                                             "physics_finetuned": get("physics_finetuned", "rel_l2_velocity").tolist()}},
         "falsification_inlet_level": falsification(ref, np.array(levels["physics_finetuned"]))

@@ -1,6 +1,7 @@
 {
   "rules_fixed_at_commit": "57926cb",
   "run": "runs/local",
+  "result_status": "LOCAL/REDUCED",
   "meshes": [
     0,
     1,

@@ -1,0 +1,33 @@
+{
+  "run": "full",
+  "tar": "state-full.tar",
+  "sha256": "692f22e7d25da80c51d5db3725e656f4dc9ba47060fd9418c86c311ce4ba2b2d",
+  "bytes": 98856960,
+  "status": {
+    "state": "complete",
+    "stages_requested": [
+      "train",
+      "predict",
+      "finetune",
+      "evaluate"
+    ],
+    "written_unix": 1794158266.7265377
+  },
+  "checkpoints": [
+    {
+      "manifest": "manifest.0.500.json",
+      "ok": true,
+      "reason": "ok"
+    },
+    {
+      "manifest": "manifest.0.475.json",
+      "ok": true,
+      "reason": "ok"
+    },
+    {
+      "manifest": "manifest.0.450.json",
+      "ok": true,
+      "reason": "ok"
+    }
+  ]
+}
