@@ -182,11 +182,52 @@ def architecture(out):
     return _save(fig, out, "architecture.png")
 
 
+def full_vs_local(out):
+    loc, full = load("surrogate_local_test100.json"), load("surrogate_full_test100.json")
+    ps = load("physics_stage_full.json")
+    fig, axes = plt.subplots(1, 3, figsize=(12.5, 3.9))
+    ax = axes[0]
+    ref = np.array([r["ref_p_inlet"] for r in full["per_mesh"]])
+    lim = (0, max(ref.max(), 1.0) * 1.05)
+    ax.plot(lim, lim, color=GRID, lw=1.2, zorder=0)
+    for data, key, name, color, marker in ((loc, "pred_p_inlet", "Local MeshGraphNet", COLORS["data_driven"], "o"),
+                                           (full, "pred_p_inlet", "Full MeshGraphNet", COLORS["physics_finetuned"], "s"),
+                                           (full, "recovered_p_inlet", "Recovered from full velocity (FEM)", RECOVERED, "^")):
+        ax.scatter([r["ref_p_inlet"] for r in data["per_mesh"]], [r[key] for r in data["per_mesh"]], s=14, color=color,
+                   marker=marker, edgecolors="white", linewidths=0.5, label=name, zorder=3)
+    ax.set_xlim(lim)
+    ax.set_ylim(lim)
+    ax.set_xlabel("Reference inlet pressure level")
+    ax.set_ylabel("Inlet pressure level")
+    ax.set_title(f"100 test meshes: r = {loc['inlet_pressure_level']['correlation']:.2f}, "
+                 f"{full['inlet_pressure_level']['correlation']:.2f}, {full['inlet_pressure_level']['recovered_correlation']:.2f}")
+    ax.legend(loc="upper left", fontsize=7)
+    rows = ps["per_mesh"]
+    series = {"data_driven": ("Full MeshGraphNet", COLORS["data_driven"], "o"),
+              "control_data_only": ("Data-only control", "#1baf7a", "^"),
+              "physics_finetuned": ("Physics-informed fit", COLORS["physics_finetuned"], "s")}
+    for ax, (key, label) in zip(axes[1:], (("rel_l2_velocity", "Velocity relative L2"), ("rel_l2_p", "Pressure relative L2"))):
+        for k, (stage, (name, color, marker)) in enumerate(series.items()):
+            pts = sorted((r["index"], r[key]) for r in rows if r["stage"] == stage)
+            i, v = zip(*pts)
+            ax.scatter(np.array(i) + (k - 1) * 0.15, v, s=24, color=color, marker=marker, edgecolors="white",
+                       linewidths=0.6, label=name, zorder=3)
+        ax.set_xticks(range(10))
+        ax.set_xlabel("Test mesh (full study)")
+        ax.set_title(label)
+        ax.set_ylim(bottom=0)
+    axes[1].legend(loc="upper left", fontsize=7)
+    fig.suptitle("Full CUDA study (500 meshes, 500 epochs): velocity improves, the pressure level does not",
+                 fontweight="bold", fontsize=10)
+    fig.tight_layout()
+    return _save(fig, out, "full_vs_local.png")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", default="figures/validation")
     out = ROOT / parser.parse_args().out
-    for fn in (inlet_level, controls, fields, costs, architecture):
+    for fn in (inlet_level, controls, fields, costs, architecture, full_vs_local):
         try:
             print(fn(out))
         except (TypeError, FileNotFoundError, KeyError) as error:
