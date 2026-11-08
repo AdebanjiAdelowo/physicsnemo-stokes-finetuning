@@ -1,0 +1,18 @@
+109 passed in 61.54s (0:01:01)
+$ python scripts/session_state.py unpack /kaggle/input/notebooks/adebanjiadelowo/stokes-recovery-a-f906395/state-recovery_resumed.tar runs
+$ python scripts/session_state.py unpack /kaggle/input/notebooks/adebanjiadelowo/stokes-recovery-a-f906395/state-recovery_reference.tar runs
+study 'recovery_resumed' on cuda, commit f90639531c129e03d03ec1c538d90766d66ff8a6, dirty: False
+resumed from verified checkpoint of epoch 3
+epoch 4/6 loss 4.965e-01 val u 0.587 v 0.951 p 0.439 (4.6 s)
+epoch 5/6 loss 4.782e-01 val u 0.598 v 0.941 p 0.425 (4.6 s)
+epoch 6/6 loss 4.613e-01 val u 0.566 v 0.937 p 0.422 (4.6 s)
+study 'recovery_repeat' on cuda, commit f90639531c129e03d03ec1c538d90766d66ff8a6, dirty: False
+epoch 1/6 loss 7.377e-01 val u 0.771 v 0.995 p 0.533 (4.7 s)
+epoch 2/6 loss 5.976e-01 val u 0.658 v 0.995 p 0.424 (4.7 s)
+epoch 3/6 loss 5.293e-01 val u 0.634 v 0.971 p 0.436 (4.7 s)
+epoch 4/6 loss 4.958e-01 val u 0.589 v 0.952 p 0.440 (4.7 s)
+epoch 5/6 loss 4.778e-01 val u 0.597 v 0.941 p 0.424 (4.8 s)
+epoch 6/6 loss 4.606e-01 val u 0.567 v 0.937 p 0.421 (4.8 s)
+  "message": "checkpoint manifest.0.3.json not usable (checksum mismatch in checkpoint.0.3.pt); trying an older one",
+  "resumed_line": "resumed from verified checkpoint of epoch 2",
+RECOVERY CHECK FAILED

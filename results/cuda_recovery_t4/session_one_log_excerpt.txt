@@ -1,0 +1,17 @@
+109 passed in 60.05s (0:01:00)
+study 'recovery_resumed' on cuda, commit f90639531c129e03d03ec1c538d90766d66ff8a6, dirty: False
+epoch 1/6 loss 7.377e-01 val u 0.772 v 0.995 p 0.541 (4.9 s)
+epoch 2/6 loss 5.976e-01 val u 0.658 v 0.998 p 0.423 (4.5 s)
+epoch 3/6 loss 5.299e-01 val u 0.621 v 0.968 p 0.437 (4.5 s)
+paused after epoch 3 of 6; verified checkpoint written
+PAUSED: training paused after epoch 3 of 6. Continue with --resume in another session.
+study 'recovery_reference' on cuda, commit f90639531c129e03d03ec1c538d90766d66ff8a6, dirty: False
+epoch 1/6 loss 7.376e-01 val u 0.773 v 0.995 p 0.537 (4.7 s)
+epoch 2/6 loss 5.973e-01 val u 0.657 v 0.998 p 0.423 (4.6 s)
+epoch 3/6 loss 5.296e-01 val u 0.636 v 0.967 p 0.437 (4.6 s)
+epoch 4/6 loss 4.951e-01 val u 0.589 v 0.948 p 0.440 (4.6 s)
+epoch 5/6 loss 4.772e-01 val u 0.593 v 0.941 p 0.425 (4.7 s)
+epoch 6/6 loss 4.604e-01 val u 0.568 v 0.937 p 0.422 (4.7 s)
+  "state": "paused",
+  "reason": "training paused after epoch 3 of 6",
+RECOVERY TEST, FIRST SESSION COMPLETE
