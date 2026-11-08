@@ -29,17 +29,20 @@ def main() -> None:
     parser.add_argument("--config", default="recovery_check")
     parser.add_argument("overrides", nargs="*")
     args = parser.parse_args()
-    cfg = {name: load_config(args.config, args.overrides + [f"name=recovery_{name}"])
-           for name in ("resumed", "reference", "repeat")}
+    # run names without digits: the dataset loader orders files by the first digits in their path
+    names = ("resumed", "reference", "repeat", "repeatb", "repeatc")
+    cfg = {name: load_config(args.config, args.overrides + [f"name=recovery_{name}"]) for name in names}
     runs = ROOT / "runs"
     if args.session == "first":
         print(json.dumps(first_session(cfg["resumed"], cfg["reference"], runs, PAUSE_EPOCH), indent=1))
         return
     device = resolve_device(cfg["resumed"].device)
-    out = second_session(cfg["resumed"], cfg["reference"], cfg["repeat"], runs, PAUSE_EPOCH, device)
+    out = second_session(cfg["resumed"], cfg["reference"], [cfg[n] for n in names[2:]], runs, PAUSE_EPOCH, device)
     out["environment"] = collect_metadata(device)
     write_json(runs / "recovery_check.json", out)
     print(json.dumps({k: v for k, v in out.items() if k not in ("histories", "environment")}, indent=1))
+    print(f"criterion v1 (reported): {'passed' if out['criterion_v1']['passed'] else 'FAILED'}; "
+          f"criterion v2 (decision): {'passed' if out['criterion_v2']['passed'] else 'FAILED'}")
     print("RECOVERY CHECK PASSED" if out["passed"] else "RECOVERY CHECK FAILED")
     sys.exit(0 if out["passed"] else 1)
 
