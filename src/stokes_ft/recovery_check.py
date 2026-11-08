@@ -27,7 +27,17 @@ Criterion version 2 (fixed before its first execution, after version 1 failed; t
 the pass/fail decision): both drills behave as stated; ``resumed`` restarts from the verified
 checkpoint of ``pause_epoch``; and over the epochs after the pause only, the largest relative
 difference of ``resumed`` from ``reference`` is below ``TOLERANCE`` or at most ``SPREAD_FACTOR``
-(1.5) times the largest such difference of the ``REPEATS`` (3) uninterrupted repeats.
+(1.5) times the largest such difference of the ``REPEATS`` (3) uninterrupted repeats. FAILED on
+CUDA (2026-11-08, ``results/cuda_recovery_t4``), at the volatile epoch-5 validation u error.
+
+Criterion version 3 (fixed before its first execution, after version 2 failed; the decision when
+the sessions run with deterministic algorithms, ``deterministic=True``): with
+``torch.use_deterministic_algorithms(True)`` and the cuBLAS workspace setting in both sessions,
+non-determinism is removed, so the drills and verified resumption must behave as stated and the
+resumed run must be **bit-identical** to the reference: every stored history value except the
+wall-clock seconds, and every weight of the final checkpoint. If it is not, but the repeats are
+bit-identical to each other and all differ from the reference, the difference lies between the
+machines of the two sessions and the result is INCONCLUSIVE; otherwise it is FAILED.
 """
 
 import csv
@@ -38,8 +48,11 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from physicsnemo.utils import load_checkpoint
+
 from . import checkpoint
 from .engine import train_data_driven
+from .model import build_meshgraphnet
 from .study import run_study
 
 TOLERANCE = 1e-2
@@ -60,6 +73,20 @@ def max_rel_diff(a: np.ndarray, b: np.ndarray, from_epoch: int = 0) -> float:
     return float(np.max(np.abs(a[from_epoch:] - b[from_epoch:]) / np.maximum(np.abs(b[from_epoch:]), 1e-30)))
 
 
+def stored_rows(run_dir: Path) -> list[dict]:
+    """The history exactly as stored (strings), without the wall-clock seconds."""
+    with open(Path(run_dir) / "history.csv") as f:
+        return [{k: v for k, v in r.items() if k != "seconds"} for r in csv.DictReader(f)]
+
+
+def final_weights_equal(cfg, a: Path, b: Path) -> bool:
+    models = [build_meshgraphnet(cfg), build_meshgraphnet(cfg)]
+    for model, run_dir in zip(models, (a, b)):
+        load_checkpoint(str(Path(run_dir) / "checkpoints" / "data_driven"), models=model, epoch=cfg.epochs)
+    sa, sb = (m.state_dict() for m in models)
+    return sa.keys() == sb.keys() and all(torch.equal(sa[k], sb[k]) for k in sa)
+
+
 def first_session(resumed_cfg, reference_cfg, runs_root: Path, pause_epoch: int) -> dict:
     run_study(resumed_cfg, stages=["train"], runs_root=runs_root, stop_after_epoch=pause_epoch)
     run_study(reference_cfg, stages=["train"], runs_root=runs_root)
@@ -75,7 +102,8 @@ def _drill_copy(runs_root: Path, source: str, name: str) -> Path:
     return dst
 
 
-def second_session(resumed_cfg, reference_cfg, repeat_cfgs, runs_root: Path, pause_epoch: int, device) -> dict:
+def second_session(resumed_cfg, reference_cfg, repeat_cfgs, runs_root: Path, pause_epoch: int, device,
+                   deterministic: bool = False) -> dict:
     runs_root = Path(runs_root)
     ckpt = runs_root / resumed_cfg.name / "checkpoints" / "data_driven"
     restored = [m.name for m in checkpoint.manifests(ckpt)]
@@ -133,5 +161,18 @@ def second_session(resumed_cfg, reference_cfg, repeat_cfgs, runs_root: Path, pau
                       "repeats": [h.tolist() for h in repeat_h]},
         "gpu_name": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
     }
-    out["passed"] = criterion_v2["passed"]
+    ref_dir, res_dir = runs_root / reference_cfg.name, runs_root / resumed_cfg.name
+    rep_dirs = [runs_root / c.name for c in repeat_cfgs]
+    identical = stored_rows(res_dir) == stored_rows(ref_dir) and final_weights_equal(resumed_cfg, res_dir, ref_dir)
+    repeats_identical = all(stored_rows(d) == stored_rows(rep_dirs[0]) for d in rep_dirs[1:])
+    repeats_differ = all(stored_rows(d) != stored_rows(ref_dir) for d in rep_dirs)
+    verdict = "PASSED" if mechanics and identical else \
+        "INCONCLUSIVE" if mechanics and repeats_identical and repeats_differ else "FAILED"
+    out["criterion_v3"] = {"deterministic_algorithms": deterministic, "resumed_bit_identical_to_reference": identical,
+                           "repeats_bit_identical_to_each_other": repeats_identical,
+                           "repeats_all_differ_from_reference": repeats_differ,
+                           "repeats_bit_identical_to_reference": [stored_rows(d) == stored_rows(ref_dir) for d in rep_dirs],
+                           "verdict": verdict}
+    out["decision"] = "criterion_v3" if deterministic else "criterion_v2"
+    out["passed"] = verdict == "PASSED" if deterministic else criterion_v2["passed"]
     return out

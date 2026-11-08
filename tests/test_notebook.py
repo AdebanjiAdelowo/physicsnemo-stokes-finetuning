@@ -108,3 +108,12 @@ def test_recovery_notebook_uses_the_same_setup_and_two_stages():
 def test_both_notebooks_check_out_the_same_commit():
     ref = re.compile(r'^REF = "([0-9a-f]{40})"', re.M)
     assert ref.search(_code()[0]).group(1) == ref.search(_recovery_code()[0]).group(1)
+
+
+def test_recovery_notebook_passes_the_deterministic_flag_to_both_sessions():
+    code = _recovery_code()
+    assert re.search(r"^DETERMINISTIC = True\b", code[0], re.M)
+    stage = code[-1]
+    assert 'FLAG = " --deterministic" if DETERMINISTIC else ""' in stage
+    assert '"python scripts/recovery_check.py first" + FLAG' in stage
+    assert '"python scripts/recovery_check.py second" + FLAG' in stage

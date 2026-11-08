@@ -26,6 +26,9 @@ def _losses(run_dir):
 def runs(tiny_root):
     """An uninterrupted 3-epoch run and the same run paused after epoch 1, then resumed."""
     root, overrides = tiny_root
+    # one thread: multi-threaded CPU reductions are not bit-reproducible, and one test needs bit identity
+    threads = torch.get_num_threads()
+    torch.set_num_threads(1)
     base = overrides + ["epochs=3", "lr_decay_rate=0.9"]
     full = load_config("smoke", base + ["name=ckpt_full"])
     paused = load_config("smoke", base + ["name=ckpt_paused"])
@@ -34,6 +37,7 @@ def runs(tiny_root):
     status_after_pause = json.loads((paused_dir / "status.json").read_text())
     metrics_after_pause = (paused_dir / "train_metrics.json").exists()
     run_study(paused, stages=["train"], resume=True, runs_root=root / "runs")
+    torch.set_num_threads(threads)
     return root, full, full_dir, paused, paused_dir, status_after_pause, metrics_after_pause
 
 
@@ -135,7 +139,7 @@ def test_session_state_round_trip_and_refusals(runs, tmp_path):
 
 
 def test_resumed_run_is_bit_identical_on_a_deterministic_device(runs):
-    """On the CPU training is deterministic, so pausing and resuming must not change a single bit:
+    """Single-threaded CPU training is deterministic, so pausing and resuming must not change a bit:
     every stored history value and every final weight equals the uninterrupted run's."""
     from physicsnemo.utils import load_checkpoint
 

@@ -9,6 +9,8 @@ from stokes_ft.session_state import pack, unpack
 
 def test_recovery_across_simulated_sessions(tiny_root, tmp_path):
     root, overrides = tiny_root
+    threads = torch.get_num_threads()
+    torch.set_num_threads(1)  # deterministic CPU reductions, for the bit-identity criterion
     cfg = {name: load_config("smoke", overrides + ["epochs=5", "training.checkpoint_every=2", f"name=recovery_{name}"])
            for name in ("resumed", "reference", "repeat", "repeatb", "repeatc")}
     first = root / "sessionone"
@@ -29,3 +31,7 @@ def test_recovery_across_simulated_sessions(tiny_root, tmp_path):
     assert result["criterion_v2"]["epochs_compared"] == [4, 5]
     assert len(result["criterion_v2"]["repeats_vs_reference_after_pause"]) == 3
     assert result["criterion_v1"]["passed"] and result["criterion_v2"]["passed"] and result["passed"]
+    # on the CPU training is deterministic: the bit-identity criterion must hold as well
+    assert result["criterion_v3"]["resumed_bit_identical_to_reference"]
+    assert result["criterion_v3"]["verdict"] == "PASSED"
+    torch.set_num_threads(threads)
