@@ -1,7 +1,7 @@
 """Controlled comparison of the physics-informed stage and its variants, written to
 results/validation/physics_stage.json.
 
-    python scripts/physics_stage_checks.py [--run runs/local] [--config local]
+    python scripts/physics_stage_checks.py [--run runs/local] [--config local] [--out results/validation/physics_stage.json]
 
 For every test mesh of the run and every field available on it (reference, MeshGraphNet,
 upstream physics-informed fit, and each completed variant in ``controls/``), three groups of
@@ -26,7 +26,7 @@ import numpy as np
 from _bootstrap import ROOT
 from stokes_ft.config import load_config
 from stokes_ft.data import boundary_masks, read_sample
-from stokes_ft.evaluate import paired_uncertainty
+from stokes_ft.evaluate import STATUS, paired_uncertainty
 from stokes_ft.metrics import field_errors
 from stokes_ft.physics import nodal_residuals, residual_norms
 from stokes_ft.provenance import collect_metadata, write_json
@@ -60,6 +60,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--run", default="runs/local")
     parser.add_argument("--config", default="local")
+    parser.add_argument("--out", default="results/validation/physics_stage.json")
     args = parser.parse_args()
     cfg = load_config(args.config)
     run_dir = ROOT / args.run
@@ -112,10 +113,11 @@ def main() -> None:
                          "device": sorted({r["device"] for r in rec}),
                          "seconds_per_mesh_mean": float(np.mean([r["seconds"] for r in rec])) if rec else None}
     out = {"environment": collect_metadata(torch.device("cpu")), "run": args.run,
-           "status": "LOCAL/REDUCED: MeshGraphNet of configs/local.yaml (100 training meshes, 40 epochs)",
+           "status": STATUS.get(cfg.name, "UNLABELLED") + f": MeshGraphNet of configs/{args.config}.yaml "
+                     f"({cfg.num_training_samples} training meshes, {cfg.epochs} epochs)",
            "stages": stages, "means_over_available_meshes": means, "comparisons": comparisons,
            "control_runs": records, "per_mesh": rows}
-    write_json(ROOT / "results" / "validation" / "physics_stage.json", out)
+    write_json(ROOT / args.out, out)
     for s in stages:
         m = means[s]
         print(f"{s:<28} n={len(m['meshes']):>2} vel {m['rel_l2_velocity']:.3f} p {m['rel_l2_p']:.3f} H1 {m['h1semi_velocity']:.3f} "

@@ -1,7 +1,7 @@
 """Apply the G1 decision rules, fixed in docs/EXPERIMENT_GAPS.md at commit 57926cb before any
 mesh 2 to 9 was fine-tuned, to the completed local study. Written to results/validation/g1_decision.json.
 
-    python scripts/g1_decision.py [--run runs/local]
+    python scripts/g1_decision.py [--run runs/local] [--out results/validation/g1_decision.json]
 
 Primary endpoint: velocity relative L2 error, fine-tuned against data-driven, paired per mesh,
 over all 10 meshes including 0 and 1.
@@ -52,6 +52,7 @@ def falsification(ref_level: np.ndarray, tuned_level: np.ndarray) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--run", default="runs/local")
+    parser.add_argument("--out", default="results/validation/g1_decision.json")  # output path only; no rule
     args = parser.parse_args()
     run = ROOT / args.run
     with open(run / "per_sample.csv") as f:
@@ -90,7 +91,7 @@ def main() -> None:
         "finetune_runs": [{"index": r["index"], "seed": r["seed"], "iterations": r["iterations"], "seconds": r["seconds"],
                            "final_loss_finite": bool(np.isfinite(r["final"]["loss_total"]))} for r in records],
     }
-    write_json(ROOT / "results" / "validation" / "g1_decision.json", out)
+    write_json(ROOT / args.out, out)
     print(json.dumps({k: out[k] for k in ("primary_velocity_rel_l2", "falsification_inlet_level")}, indent=1, default=str)[:3000])
 
 
