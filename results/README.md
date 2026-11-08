@@ -26,7 +26,8 @@ Studies:
 |---|---|---|
 | `local` | `configs/local.yaml`: 100 training meshes, 40 epochs, Apple MPS; fine-tuning as upstream, completed and evaluated on all 10 configured test meshes (`summary.json`: `partial: false`); `controls/` holds the fields and records of the `data_only` and `data_bc` controls (`docs/VALIDATION.md`, section 4) | LOCAL/REDUCED |
 | `local_2mesh` | the `local` study as first published, with test meshes 0 and 1 only; kept for comparison | LOCAL/REDUCED |
-| `full` | `configs/full.yaml`: upstream settings, 10 test meshes, CUDA | PENDING |
+| `full` | `configs/full.yaml`: upstream settings (500 training meshes, 500 epochs), fine-tuning on 10 test meshes; one Kaggle Tesla T4 session, code `ee57d64`; `controls/data_only` holds the data-only control (CPU); `state-full.tar.json` and `kaggle_log_excerpt.txt` record the session | CUDA/FULL |
+| `cuda_probe_t4`, `cuda_recovery_t4` | CUDA smoke test, timing probe and the cross-session recovery tests (two failed criteria, then a passing deterministic test) | pipeline checks, not results |
 | `official` | `configs/official.yaml`: upstream settings, test mesh 7 only | NOT RUN (it is sample 7 of `full`) |
 
 Units: `rel_l2_*` are relative $L^2$ errors against the FEniCS reference in physical units, as fractions. `res_*` are root mean squares over interior nodes of the Stokes residuals computed with least-squares mesh derivatives; `autodiff_*` are the same residuals of the fine-tuning network by automatic differentiation. `bc_*` are root mean square boundary mismatches. `val_rel_l2_*` in `history.csv` refer to the standardised fields, as in the upstream training script. Times are wall-clock seconds with the device synchronised. Memory fields are CUDA peak allocations and are empty on other devices.

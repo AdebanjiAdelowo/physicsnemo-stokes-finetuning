@@ -8,7 +8,30 @@ The model, the dataset pipeline, the Stokes residual and both training procedure
 
 ## Results
 
-The experiment uses 100 training meshes and 40 epochs on Apple MPS. Physics-informed optimisation and paired evaluation cover the ten configured test meshes. The residual checks additionally use 20 test meshes. Machine-readable coverage is recorded in [`results/local/summary.json`](results/local/summary.json).
+Two training budgets are compared on the same split. The full study uses NVIDIA's schedule (500 training meshes, 500 epochs) on a Tesla T4; the reduced local study uses 100 training meshes and 40 epochs on Apple MPS. Both apply the unchanged physics-informed step to the same ten test meshes. Machine-readable coverage is recorded in [`results/full/summary.json`](results/full/summary.json) and [`results/local/summary.json`](results/local/summary.json).
+
+### Full study (NVIDIA schedule, Tesla T4)
+
+`configs/full.yaml`: 500 training meshes, 500 epochs (250,000 iterations), seed 0, then 10,000 physics-informed iterations on each of ten test meshes; one Kaggle Tesla T4. Source: [`results/full`](results/full) and [`docs/VALIDATION.md`](docs/VALIDATION.md), section 10.
+
+| Ten test meshes, means | MeshGraphNet | Data-only refit (control) | Physics-informed fit | Physics fit against control, meshes improved |
+|---|---:|---:|---:|---:|
+| Velocity relative $L^2$ error | 0.137 | 0.135 | 0.084 | −40.3 % [−52.3, −26.4], 9/10 |
+| Pressure relative $L^2$ error | 0.360 | 0.358 | 0.143 | −61.5 % [−70.4, −50.0], 10/10 |
+| Velocity $H^1$ error | 0.467 | 0.397 | 0.240 | −39.5 %, 10/10 |
+| Inlet pressure level, mean absolute error | 0.229 | 0.230 | 0.112 | −50.2 %, 9/10 |
+| No-slip RMS on the obstacle | 0.0047 | 0.0074 | 0.0459 | +535 %, 0/10 |
+
+Intervals are bootstrap 95 % intervals of the mean per-mesh relative change. The data-only refit uses the same network, seed and iterations without physics or boundary terms, so the gains of the physics-informed fit are attributable to the PDE terms.
+
+* **More training improves velocity, not pressure.** On the same 100 test meshes, the full MeshGraphNet reaches a velocity error of 0.121 against 0.210 for the local one (better on 93 of 100 meshes), but a pressure error of 0.369 against 0.337 (better on 41 of 100). Its predicted inlet pressure level now varies between geometries but follows the reference only weakly (correlation 0.20). The validation pressure error is lowest at epoch 68 and rises afterwards while the training loss keeps falling.
+* **The missing pressure information is in the velocity.** One Taylor-Hood pressure solve from the full MeshGraphNet's velocity gives a pressure error of 0.074 on the same 100 meshes, five times lower than the network's own pressure, with an inlet-level correlation of 0.96.
+* **The physics-informed step helps more at full scale, at the same cost to the boundary.** It lowers velocity error by about 40 % at both budgets and pressure error by 62 % here (16 % at the reduced budget), and it worsens the no-slip condition on every mesh at both budgets.
+* **Cost.** Training took 7.16 h on the T4 (103 ms per iteration, 1.15 GB peak memory); inference takes 0.04 s per mesh on the T4 and 0.29 s on three CPU threads; the physics-informed fit takes 316 s per mesh on the T4. A Taylor-Hood solve takes 0.31 s on one CPU thread and is exact.
+
+![Full study against the reduced study](figures/validation/full_vs_local.png)
+
+![Training history of the full study](figures/full_training_history.png)
 
 ### Reduced local study
 
@@ -44,7 +67,7 @@ What the ten meshes show, for a weak data-driven baseline:
 * **PDE residuals drop to the resolution of the metric.** The nodal momentum residual falls from three times the reference floor to the floor, and the divergence residual to half its floor. Values near or below the reference residual are limited by mesh differentiation error. They show a reduction under this discrete operator, but do not establish that the fine-tuned field satisfies the continuous PDE more accurately than the reference.
 * **No-slip gets worse on every mesh.** The MeshGraphNet receives the boundary marker as an input and reproduces the wall values to 0.003; the coordinate network enforces them only through a penalty and ends at 0.017, about 6 % of the inlet velocity scale. The inlet profile, which has the same penalty weight on far fewer nodes, improves.
 
-This is a trade: lower interior residuals and velocity and pressure errors against a looser no-slip condition. The ten meshes do not establish the effect for a MeshGraphNet trained with the NVIDIA settings. `configs/full.yaml` defines that larger comparison. The earlier two-mesh version of this table is kept in [`results/local_2mesh`](results/local_2mesh).
+This is a trade: lower interior residuals and velocity and pressure errors against a looser no-slip condition. The full study above repeats this comparison with the NVIDIA settings. The earlier two-mesh version of this table is kept in [`results/local_2mesh`](results/local_2mesh).
 
 ### Compute
 
@@ -53,7 +76,7 @@ This is a trade: lower interior residuals and velocity and pressure errors again
 | Parameters | 2,531,587 | 49,923 per test mesh |
 | Local study, Apple M3 Pro (MPS) | 2,308 s for 4,000 iterations | 336 s per mesh for 10,000 iterations (median of 10; 326 to 1,942 s) |
 | Inference | 0.19 s per mesh | one optimisation per mesh; no reusable model |
-| CUDA time and peak memory | Not measured | Not measured |
+| Full study, Tesla T4 | 25,771 s for 250,000 iterations, 1,153 MB peak | 316 s per mesh for 10,000 iterations |
 
 The local timings include contention from other jobs on the same machine and should not be treated as isolated hardware benchmarks. At these rates the physics-informed step on one test mesh takes about a seventh of the time of the whole reduced MeshGraphNet training, and it has to be repeated for every new geometry.
 
@@ -219,7 +242,7 @@ Changes to the upstream procedure, all in the reproducibility layer: a seed (ups
 
 ### GPU run
 
-`kaggle/run_cuda.ipynb` is a thin launcher: it checks out an exact 40-character commit, verifies `HEAD` and a clean tree, prints the GPU and software versions, downloads and verifies the dataset, runs the tests and a CUDA smoke study, and measures one training epoch and 200 fine-tuning iterations. From that probe it projects the runtime of `configs/full.yaml` and starts the full study only if `RUN_FULL = True` and the projection fits the stated session budget; otherwise it reports the numbers and changes nothing. It stores the MeshGraphNet checkpoint, the ten fine-tuning networks and the result files as archives. To integrate a finished run:
+`kaggle/run_cuda.ipynb` is a thin launcher: it checks out an exact 40-character commit, verifies `HEAD` and a clean tree, prints the GPU and software versions, downloads and verifies the dataset, runs the tests and a CUDA smoke study, and measures one training epoch and 200 fine-tuning iterations. From that probe it projects the runtime of `configs/full.yaml` and starts the full study only if `RUN_FULL = True`. The study runs with a time limit: if it cannot finish within the session, it pauses at a safe point with a verified checkpoint and the run directory is saved as `state-full.tar`, from which a later session continues ([`docs/CUDA_SESSIONS.md`](docs/CUDA_SESSIONS.md)). It stores the MeshGraphNet checkpoint, the ten fine-tuning networks and the result files as archives. To integrate a finished run:
 
 ```bash
 python scripts/results.py publish physicsnemo-stokes-finetuning-full.zip
@@ -231,10 +254,10 @@ NVIDIA states no reference hardware, GPU memory requirement or training time for
 | Device | Evidence and feasibility |
 |---|---|
 | Apple M3 Pro, 18 GiB unified memory | CPU smoke and reduced MPS training and fine-tuning were executed. The remaining eight local fine-tunings project to 3.75 hours from the two measured meshes. |
-| Kaggle T4 or P100, 16 GB | No measurements. Run the launcher smoke and memory probe before assessing the full schedule; the installed PyTorch/CUDA build must support the selected GPU. |
+| Kaggle Tesla T4, 15 GB | Full study measured: 7.16 h of training at 1.15 GB peak memory, 316 s per fine-tuned mesh, 8.34 h for the whole session including set-up and checks. Current PyTorch CUDA builds do not support the P100. |
 | Other single NVIDIA GPU | The same probe determines memory use and projected session time; parameter count alone does not predict graph activation memory. |
 
-The launcher stops before full training if the measured projection exceeds the session budget. It does not change epochs, data size, architecture or seeds to fit.
+The launcher never changes epochs, data size, architecture or seeds to fit a session; it pauses and continues instead.
 
 ## Repository layout
 
@@ -255,17 +278,18 @@ Every study directory records the timestamp, repository commit and dirty state, 
 
 ## Limitations
 
-* **The before/after comparison is reduced.** It rests on ten test meshes and a MeshGraphNet trained for 1.6 % of the upstream iterations on 100 meshes. Ten meshes give wide intervals (velocity change −55 % to −19 %), and a better-trained surrogate leaves less error for the physics-informed step to remove. The reported results do not cover NVIDIA's full training schedule or CUDA hardware.
+* **Ten fine-tuned test meshes.** The physics-informed comparisons rest on ten test meshes at each budget, which gives wide intervals; the MeshGraphNets are also evaluated on 100 test meshes.
+* **One training run per budget.** The full study is a single run of the upstream schedule, which overfits this split; the final checkpoint is used, as upstream does.
 * **One seed per mesh.** The fine-tuning network depends on its random Fourier matrix and initialisation; the sensitivity to that draw was not measured.
 * **Nodal residuals have a floor.** The least-squares mesh operator assigns the finite-element reference a momentum residual of about 0.3. Residuals below that level are not evidence of better physics, and the automatic-differentiation residual exists for the coordinate network only, so the two stages cannot be compared with an exact operator.
 * **The physics-informed step never sees the reference, and is not a surrogate.** It regularises one prediction on one mesh; its cost is a full optimisation per geometry. Its benefit is bounded by the information in the PDE, the two boundary terms and the MeshGraphNet prediction: the outlet condition and hence the pressure level are not constrained.
 * **Upstream choices are kept as they are.** The loss weights, the 10,000 iterations, the constant learning rate and the soft boundary penalties are NVIDIA's; no tuning or sweep was done, and the second upstream variant (`pi_fine_tuning_gnn.py`) was not run.
-* **Runs are seeded but not bit-for-bit reproducible**, and the pinned PhysicsNeMo commit is a development snapshot (2.3.0a0) of the main branch.
+* **Runs are seeded but not bit-for-bit reproducible** (scatter-add on CUDA and multi-threaded CPU reductions are not deterministic), and the pinned PhysicsNeMo commit is a development snapshot (2.3.0a0) of the main branch.
 * **Dataset provenance.** The reference solver settings (element type, mesh generation) are not documented upstream beyond "FEniCS", and the NGC entry states no licence.
 
-* **The MeshGraphNet's receptive field is smaller than the domain.** With 15 message-passing layers, 60 to 69 % of the nodes, including the whole inlet, are beyond the reach of the polygon. Perturbing the polygon inputs of the trained model changes its output there by exactly zero. This limits the pressure level for any training schedule, not only the reduced one.
+* **The MeshGraphNet's receptive field is smaller than the domain.** With 15 message-passing layers, 60 to 69 % of the nodes, including the whole inlet, are beyond the reach of the polygon. Perturbing the polygon inputs of the trained model changes its output there by exactly zero. This limits the pressure level for any training schedule; the full study confirms it.
 
-Possible extensions, with commands and costs in [`docs/EXPERIMENT_GAPS.md`](docs/EXPERIMENT_GAPS.md): the full CUDA study; several fine-tuning seeds; the hard-constraint and outlet variants on all ten test meshes; a global pressure solve inside the physics-informed fit; a longer training schedule or attention pooling for the global latent, or a multiscale graph; the mesh-based upstream variant, which keeps the boundary marker as an input.
+Possible extensions, with commands and costs in [`docs/EXPERIMENT_GAPS.md`](docs/EXPERIMENT_GAPS.md): model selection on the validation pressure error; the global-latent architecture at the full budget; a hybrid of MeshGraphNet velocity and a finite-element pressure solve; several fine-tuning seeds; the hard-constraint and outlet variants on all ten test meshes; a global pressure solve inside the physics-informed fit; a longer training schedule or attention pooling for the global latent, or a multiscale graph; the mesh-based upstream variant, which keeps the boundary marker as an input.
 
 ## Attribution
 

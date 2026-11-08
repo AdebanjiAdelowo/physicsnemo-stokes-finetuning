@@ -10,7 +10,7 @@ Branch `research/validation-2026-11`, based on `57926cb`. Every number here come
 |---|---|
 | **VERIFIED** | Exact or analytic check, independent of training (FEM identity, manufactured solutions, dataset scans) |
 | **LOCAL/REDUCED** | Measured with the MeshGraphNet of `configs/local.yaml` (100 training meshes, 40 epochs: 1.6 % of the upstream iterations) |
-| **FULL** | Measured with `configs/full.yaml` (500 meshes, 500 epochs, CUDA). **No result in this repository has this label** |
+| **FULL** (`CUDA/FULL` in the result files) | Measured with `configs/full.yaml` (500 meshes, 500 epochs, CUDA). Section 10 only |
 | **PENDING** | Defined, implemented and tested, not executed; the command and cost are given |
 
 ## 1. Problem and reference (VERIFIED)
@@ -272,11 +272,10 @@ Completed on 2026-11-07, on MPS behind the shared accelerator lock (`scripts/mps
 
 | Pending run | Blocker | Command | Estimated cost |
 |---|---|---|---|
-| G2 full CUDA study | no CUDA device here; the Kaggle launcher can only check out a commit that exists on GitHub, and this branch is not pushed | `kaggle/run_cuda.ipynb` with `REF` set to the pushed commit; steps B and C (smoke test, timing and memory probe) run before any full study, and step D refuses to start if the projection exceeds the session budget | no probe exists yet; a projection from the MPS rates is not a substitute and is not given |
 | G5/G6 variants on meshes 2 to 9 (optional; would turn section 4.4 into a ten-mesh paired comparison) | none; not run in this session | `python scripts/run_controls.py --config local --variant hard_bc --samples 2,3,4,5,6,7,8,9 --device mps` (and `outlet`, `outlet_free_p`), then `python scripts/physics_stage_checks.py` | about 70 min (`hard_bc`) and 45 min (each outlet variant) on an idle MPS |
 | G3 fine-tuning seed sensitivity | needs a `finetune_seed` override (not implemented) | none yet | about 6 min per mesh and seed on MPS |
 
-The CUDA smoke test, device checks and timing probe **ran** on a Kaggle Tesla T4 on 2026-11-07 (code `71e7c79`; [`results/cuda_probe_t4`](../results/cuda_probe_t4/README.md)): all passed; 93.3 ms per training iteration and 32.4 ms per fine-tuning iteration, projecting about 7.7 h for the full study. These are timing and pipeline checks: **no CUDA scientific result exists yet**, and the full study (G2) has not been started.
+The CUDA smoke test, device checks and timing probe **ran** on a Kaggle Tesla T4 on 2026-11-07 (code `71e7c79`; [`results/cuda_probe_t4`](../results/cuda_probe_t4/README.md)): all passed; 93.3 ms per training iteration and 32.4 ms per fine-tuning iteration, projecting about 7.7 h for the full study. These are timing and pipeline checks. The cross-session recovery test and the full study (G2) were completed on 2026-11-08 (section 10).
 
 ## 7. Reproduction
 
@@ -306,19 +305,101 @@ Seeds: MeshGraphNet `seed: 0`; coordinate networks `seed + 1000 + index` for eve
 
 ## 8. Limitations
 
-* **Undertrained surrogate.** Every learned result uses the local MeshGraphNet (1.6 % of the upstream iterations). The receptive-field blindness is architectural and holds at any training length (it is exact: zero response beyond 15 hops); the size of the other errors, and the effect of the physics-informed step on a well-trained surrogate, are unknown until G2.
+* **Undertrained surrogate (sections 1 to 9).** Those learned results use the local MeshGraphNet (1.6 % of the upstream iterations). Section 10 repeats the central comparisons with the upstream schedule; the architecture arms and the hard-BC and outlet variants were not repeated at full scale.
+* **Full study: one training run, overfitted at the end.** One seed of the upstream schedule; the validation pressure error is lowest at epoch 68 and the velocity errors at epoch 172, and the final checkpoint is used as upstream does (section 10.1). Ten validation meshes.
 * **Ten test meshes.** G1 and the controls have n = 10; the intervals are wide (velocity −55 % to −19 %) and a sign test on ten meshes cannot reach p < 0.002. The 100-mesh evaluation (section 3.2) covers the MeshGraphNet only.
 * **One seed per mesh** for every coordinate-network fit (G3). The controls share the seed of the upstream run, which removes initialisation as a confounder but does not measure seed variance.
 * **Vertex-only evaluation.** No residual computed from vertex values certifies accuracy (section 2.3). Errors against the Taylor-Hood reference are the primary evidence throughout.
 * **Hard-BC variant collocation.** `hard_bc` collocates the PDE at all nodes except the polygon, where the distance function is singular and the ansatz fixes the velocity; the upstream loss also uses the polygon nodes. Its results (section 4.4) therefore differ from the upstream fit in two ways, the constraint and the collocation set.
 * **Two meshes for the hard-BC and outlet variants**, and three seeds per architecture arm. The architecture rule compares against the range of three baseline seeds, a lenient threshold.
 * **Timings** come from a machine shared with other sessions and differ between devices and thread counts; ratios of order 10 or more are robust, factors of 2 are not.
-* **No CUDA result** of any kind exists in this repository.
+* **CUDA results** come from Kaggle Tesla T4s with torch 2.15.0 and CUDA 13.2 (local results: Apple MPS and CPU, torch 2.14.1); costs on different hardware are not compared as like for like.
 
 ## 9. Remaining research questions
 
-1. Does the PDE-driven velocity improvement, established on ten meshes of the local surrogate (G1), hold on a well-trained surrogate (G2)?
-2. The global latent ranks the inlet level correctly (correlation 0.81) but moves it by under 2 % of the required amount. Is that a training-budget effect or a limit of mean pooling (G2, or an attention-pooled variant)?
+1. ~~Does the PDE-driven velocity improvement hold on a well-trained surrogate (G2)?~~ Yes on ten meshes (section 10.3). Does it hold on a larger test population, and with several fine-tuning seeds (G3)?
+2. The global latent ranks the inlet level correctly (correlation 0.81) but moves it by under 2 % of the required amount at the local budget. The full-budget baseline does not solve the level (section 10.2); the global latent at the full budget, with early stopping on the validation pressure, is untested.
 3. Removing the pressure data term did not let the outlet condition fix the level in the coordinate network (G5, two meshes). Does a weak-form or global pressure solve inside the fit do so, as the FEM pressure recovery suggests?
 4. Exact boundary imposition (G6) removed the no-slip loss but kept the velocity gain on only one of two meshes. Does that hold on ten meshes, and does a distance function with a smoother corner behaviour help?
 5. At what mesh size, if any, does surrogate inference become cheaper than the direct solve on this hardware?
+6. The full MeshGraphNet's velocity carries the inlet level (pressure recovered from it by one Taylor-Hood momentum solve: error 0.074, correlation 0.96), but its pressure head does not. Is a hybrid, MeshGraphNet velocity plus a global FEM pressure solve, the better use of the surrogate on this problem?
+
+## 10. Full CUDA study (FULL, 2026-11-08)
+
+`configs/full.yaml`: the upstream settings of `configs/official.yaml` (500 training meshes, 500 epochs, batch 1, learning rate 1e-4 decaying to 1e-6, seed 0, the same 800/100/100 split) and the unchanged physics-informed stage (10,000 iterations) on test meshes 0 to 9. Private Kaggle kernel `stokes-full-ee57d64-s1`, one Tesla T4 (15,360 MiB), torch 2.15.0+cu132, CUDA 13.2, PhysicsNeMo 2.3.0a0 (`b45a5c8`), code `ee57d64` with a clean tree; 111 tests and the device checks passed in the session. Results: [`results/full`](../results/full), [`g1_decision_full.json`](../results/validation/g1_decision_full.json), [`surrogate_full_test100.json`](../results/validation/surrogate_full_test100.json), [`physics_stage_full.json`](../results/validation/physics_stage_full.json); figures [`full_vs_local.png`](../figures/validation/full_vs_local.png), [`full_training_history.png`](../figures/full_training_history.png), [`full_comparison.png`](../figures/full_comparison.png).
+
+The run finished in one session (8.34 h wall-clock including set-up, tests and the probe; no pause or resumption). The cross-session continuation it could have used was validated beforehand on CUDA: [`results/cuda_recovery_t4`](../results/cuda_recovery_t4/README.md) and [`CUDA_SESSIONS.md`](CUDA_SESSIONS.md). Two earlier recovery tests failed their numerical criteria (CUDA non-determinism) and are kept as failed; the third, deterministic test passed with bit-identical results across sessions.
+
+### 10.1 Training
+
+| | Value |
+|---|---|
+| Training time | 25,771 s (7.16 h), 103 ms per iteration, 51.6 s per epoch (median) |
+| Peak GPU memory | 1,153 MB |
+| Training loss | 0.577 (epoch 1), 0.132 (100), 0.023 (300), 0.0103 (500) |
+| Validation relative L2 (normalised fields, 10 meshes), epoch 500 | u 0.228, v 0.318, p 0.472 |
+| Best validation | u 0.205 and v 0.277 at epoch 172; p 0.335 at epoch 68 |
+| Inference, T4 | 39.7 ms per mesh |
+
+The training loss falls 56-fold while the validation errors stop improving near epoch 100 to 170 and the validation pressure error rises by 41 % from its minimum: the upstream schedule overfits this split. The final checkpoint is evaluated, as upstream does; no early stopping was added.
+
+### 10.2 The full MeshGraphNet on the same 100 test meshes as the local one
+
+| | Local (section 3.2) | Full | Paired, full against local |
+|---|---|---|---|
+| Velocity relative L2 | 0.210 | **0.121** | better on 93/100; mean change −37.7 % [−41.5, −33.7] |
+| Velocity $H^1$ error | 0.509 | 0.462 | better on 67/100 |
+| Pressure relative L2 | 0.337 | **0.369** | better on 41/100; +52 % [+33, +73]; Wilcoxon p = 0.027 |
+| Gauge-free pressure error | 0.288 | 0.329 | better on 37/100 |
+| No-slip RMS, polygon | 0.0076 | 0.0045 | better on 96/100 |
+| Outlet pressure RMS | 0.0062 | 0.0010 | |
+| Weak momentum residual ($10^{-3}$; reference 4.5) | 17.7 | 55.5 | |
+| Inlet level: slope, correlation, RMS error | 0.0001, 0.03, 0.237 | 0.10, 0.20, **0.252** | |
+| Standard deviation of the predicted inlet level (reference 0.235) | 0.0005 | 0.120 | |
+| Pressure recovered from its velocity (Taylor-Hood momentum and outlet condition): relative L2; inlet slope, correlation | 0.182; 0.37, 0.94 | **0.074**; 0.68, 0.96 | |
+| Inference, CPU 3 threads | 0.46 s | 0.29 s | |
+
+**Q1. Does full-scale training overcome the pressure-information bottleneck? No.** The full MeshGraphNet halves the velocity error but its pressure is worse than the local model's on 59 of 100 meshes, in level and in shape (gauge-free error). Its inlet level now varies between geometries (standard deviation 0.12 instead of 0.0005), but the variation barely follows the reference (correlation 0.20) and its RMS error is larger than that of the local model's constant: with 15 message-passing layers the inlet still cannot see the obstacle (section 3.1), and the variation comes from inputs within reach of the inlet, which carry little information about the resistance. The information is in its velocity: one Taylor-Hood pressure solve from that velocity gives a pressure error of 0.074, five times lower than the network's own, with inlet-level correlation 0.96. The overfitting of section 10.1 and the receptive field are separate causes of the pressure error and were not separated here.
+
+### 10.3 Physics-informed stage on the full model (ten meshes)
+
+The pre-registered G1 rule (commit `57926cb`), applied unchanged: velocity relative L2 improves on **9 of 10** meshes, mean change **−41.2 % [−53.0, −27.5]**, sign test p = 0.021, Wilcoxon p = 0.004: **generalises across this test set**. The inlet-level falsification test (slope ≥ 0.5 and correlation ≥ 0.8 would contradict the receptive-field explanation): slope 0.475, correlation 0.96, **not contradicted**, narrowly.
+
+A data-only control on the full model (same network, seed rule and 10,000 iterations, no physics or boundary terms; CPU) changes velocity by −1.4 % and pressure by −0.7 %. Means over the ten meshes, and paired changes of the physics-informed fit against the control:
+
+| Metric | Full MeshGraphNet | Data-only control | Physics-informed fit | Physics fit against control |
+|---|---|---|---|---|
+| Velocity rel. $L^2$ | 0.137 | 0.135 | **0.084** | −40.3 % [−52.3, −26.4], 9/10 |
+| Velocity $H^1$ error | 0.467 | 0.397 | **0.240** | −39.5 %, 10/10 |
+| Pressure rel. $L^2$ | 0.360 | 0.358 | **0.143** | −61.5 % [−70.4, −50.0], 10/10 |
+| Gauge-free pressure error | 0.324 | 0.323 | **0.101** | −68.5 %, 10/10 |
+| Inlet level, mean abs. error | 0.229 | 0.230 | **0.112** | −50.2 % [−71.7, −22.4], 9/10 |
+| Weak momentum residual ($10^{-3}$; reference 4.5) | 58.6 | 58.0 | 5.4 | −89.9 %, 10/10 |
+| Weak continuity residual (reference 0.174) | 0.681 | 0.629 | 0.080 | −87.4 %, 10/10 |
+| No-slip RMS, polygon | 0.0047 | 0.0074 | **0.0459** | **+535 %, 0/10** |
+| No-slip RMS, walls | 0.0019 | 0.0026 | 0.0059 | +119 %, 0/10 |
+| Inlet RMS | 0.0049 | 0.0052 | 0.0015 | −71.1 %, 10/10 |
+| Time per mesh | | 61 to 147 s (CPU) | 316 s (T4) | |
+
+Mesh 6, the geometry with the highest inlet level (1.60), is the one mesh where velocity does not improve (0.222 to 0.234).
+
+**Q2. Does physics-informed fine-tuning still improve velocity across test meshes? Yes**, by about 40 % on 9 of 10 meshes, at both training budgets, and the matched control attributes the gain to the PDE terms. At the full budget it also improves pressure on all ten meshes (−62 % against the control), much more than at the local budget (−16 %), because the full model's pressure is rough (nodal momentum residual 3.87 against 0.96) and the momentum equation corrects it.
+
+**Q3. Does fine-tuning still worsen no-slip accuracy? Yes**: on the polygon by a factor of about 10 against the full MeshGraphNet (0.0047 to 0.046), on all ten meshes, and on the walls by a factor of 3. With a better MeshGraphNet the deterioration is larger in relative terms; the absolute value (about 15 % of the inlet velocity scale) is the same as at the local budget.
+
+### 10.4 Cost and the comparison with the finite-element method
+
+Hardware differs between rows; latencies are per new geometry and the one-off training cost is listed separately.
+
+| Method | Hardware | Per geometry | Velocity / pressure error (10 meshes) |
+|---|---|---|---|
+| Taylor-Hood P2-P1 solve | CPU, 1 thread | **0.31 s** | exact (below $10^{-9}$) |
+| Full MeshGraphNet inference | T4 / CPU 3 threads | 0.040 s / 0.29 s | 0.137 / 0.360 |
+| Full MeshGraphNet + one Taylor-Hood pressure solve from its velocity | CPU | about 0.6 s | 0.121 / 0.074 (100 meshes) |
+| Physics-informed fit on the full MeshGraphNet | T4 | 316 s | 0.084 / 0.143 |
+| One-off: full training | T4 | 25,771 s (plus 500 training solutions, about 155 s of FEM) | |
+
+**Q5. Can the learned approach compete with FEM? Not on this problem.** The solver is exact at 0.31 s on one CPU thread. The full MeshGraphNet is faster per geometry on the GPU (0.04 s) but has 12 to 14 % velocity and 36 % pressure error; on the GPU it saves 0.27 s per geometry, so the 7.16 h of training is recovered only after about 95,000 geometries (on the CPU it saves about 0.02 s and is never recovered in practice). The physics-informed fit costs about 1,000 solves per geometry and remains far from exact. The cheapest accurate learned pipeline measured here is a hybrid: MeshGraphNet velocity followed by one FEM pressure solve, which reaches 0.074 pressure error at about twice the cost of the full FEM solve, still worse than solving.
+
+**Q4. Is the global-latent architecture still worth investigating? As a hypothesis, yes, with a changed design.** At the local budget it carried the inlet level (correlation 0.81) but did not use it (slope 0.016). At the full budget the baseline overfits and its 15-hop pressure head still does not track the level, while its velocity does. A full-budget test of the global latent, with model selection on the validation pressure error, is the direct follow-up; it is not established that it would succeed.
+
