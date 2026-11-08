@@ -132,3 +132,23 @@ def test_session_state_round_trip_and_refusals(runs, tmp_path):
         f.write(b"x")
     with pytest.raises(RuntimeError, match="does not match its sidecar"):
         unpack(tar, tmp_path / "third_session")
+
+
+def test_resumed_run_is_bit_identical_on_a_deterministic_device(runs):
+    """On the CPU training is deterministic, so pausing and resuming must not change a single bit:
+    every stored history value and every final weight equals the uninterrupted run's."""
+    from physicsnemo.utils import load_checkpoint
+
+    from stokes_ft.model import build_meshgraphnet
+
+    _, full, full_dir, paused, paused_dir, *_ = runs
+
+    def rows(run_dir):
+        with open(run_dir / "history.csv") as f:
+            return [{k: v for k, v in r.items() if k != "seconds"} for r in csv.DictReader(f)]
+
+    assert rows(paused_dir) == rows(full_dir)
+    a, b = build_meshgraphnet(full), build_meshgraphnet(paused)
+    load_checkpoint(str(full_dir / "checkpoints" / "data_driven"), models=a, epoch=full.epochs)
+    load_checkpoint(str(paused_dir / "checkpoints" / "data_driven"), models=b, epoch=paused.epochs)
+    assert all(torch.equal(x, y) for x, y in zip(a.state_dict().values(), b.state_dict().values()))

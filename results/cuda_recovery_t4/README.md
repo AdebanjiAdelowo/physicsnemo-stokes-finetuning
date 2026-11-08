@@ -23,3 +23,18 @@ Relative difference from the reference, largest over the four series (training l
 | 4 to 6 (after the resume in session two) | 0.77 % | 0.76 % |
 
 The 2.31 % arises at epoch 3, before the interruption, in a stretch where the "resumed" run was ordinary uninterrupted training in the same session as the reference: it is run-to-run variation of a single validation number under non-deterministic CUDA scatter-add, not an effect of recovery. After the resume the resumed run is as close to the reference as an independent repeat. The criterion was nevertheless not met as written: it included the epochs before the pause and estimated the run-to-run spread from one repeat. It is reported as a failure and was not changed after the fact.
+
+## Retest with criterion version 2: also FAILED
+
+Criterion version 2 was fixed and pushed (`e0c57f7`) before its first execution: only the epochs after the pause, run-to-run spread from three uninterrupted repeats, pass if the resumed run's largest relative difference from the reference is below 1e-2 or at most 1.5 times the largest repeat difference. Two further separate executions (`stokes-recovery2-a/b-e0c57f7`, 109 tests passed in each; `recovery_check_v2.json`). The mechanics passed again (restore from persisted output, corruption fallback to epoch 2, incompatible configuration refused, resume from the verified epoch-3 checkpoint).
+
+| Epochs 4 to 6, largest relative difference from the reference | Value |
+|---|---|
+| Resumed run | **5.32 %** (validation u error, epoch 5) |
+| Repeats 1, 2, 3 | 2.46 %, 1.46 %, 1.03 % (all also at the validation u error, epoch 5) |
+| Threshold | 3.69 % |
+| **Outcome** | **FAILED** |
+
+Training loss after the resume differs from the reference by +0.33 %, +0.06 %, +0.01 % (epochs 4 to 6), inside the repeats' range (up to +0.45 %). The validation u error is the volatile series in every run: the two independent session-one references of the two tests differ from each other by 2.4 % at epoch 5. Whether the 5.32 % is a rare excursion of CUDA non-determinism or a small effect of resumption cannot be decided from these runs.
+
+On the CPU, where training is deterministic, a run paused after an epoch and resumed is bit-identical to the uninterrupted run in every history value and every final weight (`tests/test_checkpoint.py::test_resumed_run_is_bit_identical_on_a_deterministic_device`). That establishes that the checkpoint restores everything the training trajectory depends on; it does not by itself settle the CUDA question, which a test with deterministic CUDA algorithms would.
