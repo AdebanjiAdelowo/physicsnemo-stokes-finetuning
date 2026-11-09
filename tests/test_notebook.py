@@ -2,7 +2,14 @@
 
 import ast
 import json
+import os
 import re
+import shlex
+import shutil
+import tarfile
+import zipfile
+
+import pytest
 
 from stokes_ft.config import CONFIG_DIR, REPO_ROOT, load_config
 
@@ -52,6 +59,66 @@ def test_order_of_steps():
     positions = [text.index(item) for item in order]
     assert positions == sorted(positions)
     assert text.count("tree_is_clean()") >= 3
+
+
+@pytest.mark.parametrize(("stages", "output"), [
+    ("train", "train_metrics.json"),
+    ("predict", "predictions/graph_0.vtp"),
+    ("train,predict", "predict_metrics.json"),
+    ("evaluate", "summary.json"),
+    ("evaluate", None),
+])
+def test_completed_subset_packages_only_its_outputs(tmp_path, monkeypatch, stages, output):
+    monkeypatch.syspath_prepend(str(REPO_ROOT / "scripts"))
+    from results import package
+    from stokes_ft.session_state import pack
+
+    run_dir = tmp_path / "runs" / "full_select"
+    run_dir.mkdir(parents=True)
+    (run_dir / "status.json").write_text(json.dumps({
+        "state": "complete", "stages_requested": stages.split(","),
+    }))
+    if output:
+        path = run_dir / output
+        path.parent.mkdir(exist_ok=True)
+        path.write_text("{}")
+
+    def sh(command, cwd):
+        args = shlex.split(command)
+        if args[1] == "scripts/run_study.py":
+            return
+        if args[1] == "scripts/session_state.py":
+            pack(cwd / args[3], cwd / args[4])
+        elif args[1] == "scripts/results.py":
+            package(cwd / args[3])
+        else:
+            assert args[0] == "cp", command
+            shutil.copyfile(cwd / args[1], cwd / args[2])
+
+    scope = {
+        "RUN_FULL": True, "STAGES": stages, "CONFIG": run_dir.name,
+        "REPO": tmp_path, "WORK": tmp_path, "full_projection_h": 1.0,
+        "hours_left": lambda: 2.0, "sh": sh,
+        "os": os, "json": json,
+    }
+    cell = next(cell for cell in _code() if "session_state.py pack" in cell)
+    if output is None:
+        with pytest.raises(SystemExit, match="has no summary.json; run the evaluate stage first"):
+            exec(cell, scope)
+        assert (tmp_path / "state-full_select.tar").is_file()
+        assert not scope["full_done"]
+        return
+    exec(cell, scope)
+
+    assert scope["full_done"]
+    with tarfile.open(tmp_path / "state-full_select.tar") as archive:
+        assert f"full_select/{output}" in archive.getnames()
+    result = tmp_path / "physicsnemo-stokes-finetuning-full_select.zip"
+    if stages == "evaluate":
+        with zipfile.ZipFile(result) as archive:
+            assert "full_select/summary.json" in archive.namelist()
+    else:
+        assert not result.exists()
 
 
 def test_ref_must_be_a_full_sha():
