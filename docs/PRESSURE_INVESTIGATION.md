@@ -192,7 +192,7 @@ The FEM recovery columns compare the same mass-weighted pressure norm before and
 
 ### 9.5 Next experiment
 
-Compare a full-budget global-latent MeshGraphNet with the existing 15-hop architecture on the same split and three matched seeds. Apply the same validation-only checkpoint criteria to both arms. Use held-out pressure error, inlet slope and inlet RMS to test whether explicit global context improves both inlet calibration and field accuracy, with velocity error measured alongside them. This isolates the remaining inlet-level problem while measuring how much the checkpoint effects vary across seeds.
+Compare a full-budget global-latent MeshGraphNet with the existing 15-hop architecture on the same split and three matched seeds. Apply the same validation-only checkpoint criteria to both arms. Use held-out pressure error, inlet slope and inlet RMS to test whether explicit global context improves both inlet calibration and field accuracy, with velocity error measured alongside them. This isolates the remaining inlet-level problem while measuring how much the checkpoint effects vary across seeds. See the [pre-registered experiment and feasibility plan](FULL_ARCH_EXPERIMENT.md).
 
 ## 10. Remaining uncertainties
 
