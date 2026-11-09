@@ -1,4 +1,4 @@
-# Proposed (not run): the full study with validation-based checkpoint selection. Identical to
+# Full training schedule with validation-based checkpoint selection. Identical to
 # configs/full.yaml except that, after every epoch, the weights that minimise each selection
 # criterion of src/stokes_ft/selection.py (velocity, pressure, joint) on the validation split are
 # kept in checkpoints/selected/. Training itself is unchanged.

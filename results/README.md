@@ -1,6 +1,6 @@
 # Results
 
-Tracked result files. Each study directory is a copy of a run directory without its checkpoints and `.vtp` files, written by `python scripts/results.py publish <run directory or archive>`.
+Tracked result files. Published study directories contain summaries and measurements from `python scripts/results.py publish <run directory or archive>`. Dedicated diagnostic directories contain inference and analysis outputs.
 
 | Path | Content |
 |---|---|
@@ -10,6 +10,7 @@ Tracked result files. Each study directory is a copy of a run directory without 
 | `validation/surrogate_local_test100.json` | `scripts/evaluate_surrogate.py`: the local MeshGraphNet on the first 100 test meshes (CPU), errors, weak residuals, inlet level and the pressure recovered from its velocity |
 | `validation/physics_stage.json` | `scripts/physics_stage_checks.py`: reference, MeshGraphNet, physics-informed fit and every control on the ten local test meshes; solution errors, nodal and weak residuals, per-boundary mismatches, paired comparisons |
 | `validation/costs.json` | `scripts/benchmark_costs.py`: time and peak memory per new geometry of the Taylor-Hood solve, MeshGraphNet inference and the coordinate-network fits, with measured and extrapolated values marked |
+| [`checkpoint_selection/`](checkpoint_selection/) | Artifact verification, the 500-epoch validation history, per-mesh diagnostics for epochs 68, 135, 148 and 500, and the pre-registered decision with paired uncertainty. The held-out set contains 100 meshes. See the [pressure investigation](../docs/PRESSURE_INVESTIGATION.md#9-validation-based-checkpoint-selection) |
 | `<study>/study_metadata.json` | per session: timestamp, git commit and dirty state, device, GPU, package versions; resolved configuration, seed, dataset checksum and simulation numbers used |
 | `<study>/summary.json` | means over the test meshes per stage, paired change from data-driven to fine-tuned, compute record |
 | `<study>/summary.csv` | the comparison table |

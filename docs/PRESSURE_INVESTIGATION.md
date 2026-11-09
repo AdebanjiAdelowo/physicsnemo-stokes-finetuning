@@ -1,6 +1,6 @@
 # Why the full MeshGraphNet predicts velocity better than pressure (November 2026)
 
-Follow-up to [`VALIDATION.md`](VALIDATION.md), section 10. Every analysis here uses existing weights and outputs on the CPU; no model was trained. Labels: **COMPLETED** (computed and committed), **PROPOSED** (designed, not run), **BLOCKED** (cannot be done with what exists).
+Follow-up to [`VALIDATION.md`](VALIDATION.md), section 10. The diagnostics use existing weights and outputs on the CPU. The separate `full_select` training run and its CPU evaluation are described in section 9.
 
 Sources: `scripts/pressure_diagnostics.py` and `scripts/boundary_diagnostics.py`; results in `results/validation/pressure_diag_*.json` and `boundary_diag_*.json`.
 
@@ -17,8 +17,9 @@ Steady Stokes flow, $-\nu\Delta\mathbf u + \nabla p = 0$, $\nabla\cdot\mathbf u 
 |---|---|---|
 | Full (`runs/full`, from the Kaggle checkpoint archive) | epochs **450, 475, 500** (the newest three are kept; all verify against their manifests) | 10 |
 | Local (`runs/local`) | epoch 40 | 10 |
+| Full with validation selection (`runs/full_select`, from the recovered Kaggle state archive) | regular epochs **450, 475, 500** and selected epochs **68, 135, 148** | None requested |
 
-The validation pressure error of the full run was lowest at epoch 68 and the validation velocity errors at epoch 172 (`results/full/history.csv`). **Those weights do not exist.** Evaluating early or validation-selected checkpoints is **BLOCKED** without retraining; nothing here reconstructs or infers them. Epochs 450, 475 and 500 differ by less than 1 % on every measure below, so selecting among them is uninformative.
+The original full run's validation pressure error was lowest at epoch 68 and its validation velocity errors at epoch 172 (`results/full/history.csv`). Its retained epochs 450, 475 and 500 differ by less than 1 % on every measure below. Section 9 evaluates the early checkpoints retained by the separate `full_select` run.
 
 ## 3. Pressure-error decomposition (COMPLETED)
 
@@ -118,43 +119,84 @@ On the 100 test meshes the recovered pressure has relative error 0.074 (inlet sl
 
 All uncertainty reported so far is **across test geometries**, for one trained network per budget: bootstrap intervals and sign tests over 10 or 100 meshes describe how a fixed model varies between geometries, not how results vary between independent training runs. The 100 test meshes are not 100 seeds. The only seed-level evidence is the local architecture comparison (3 seeds per arm; baseline pressure error range 0.334 to 0.337).
 
-**Proposed multi-seed design.** Three seeds (0, 1, 2) of the full schedule with checkpoint selection (`configs/full_select.yaml`), training and prediction only; evaluation by `pressure_diagnostics.py` on the train, validation and the same 100 test meshes for each of the four candidate checkpoints. Report each metric as the mean over seeds with the seed range, and treat a difference between selection rules as real only if it exceeds the seed range (the rule of the architecture comparison). Cost from the measured T4 rate (103 ms per iteration, 7.16 h per run): about 7.4 h of T4 per seed including set-up, 22 h for three seeds; three sessions of the validated pause-and-continue mechanism or three parallel kernels, against a weekly quota of about 30 h.
+**Proposed multi-seed design.** Add seeds 1 and 2 to the completed seed-0 baseline in section 9. Evaluate the same four candidate checkpoints on the same train, validation and 100 test meshes for each seed. Report the paired checkpoint effects across seeds alongside the intervals across geometries. The additional training is about 15 T4-hours at the measured rate.
 
-## 8. Proposed experiments, ranked (PROPOSED)
+## 8. Experiment sequence
 
 One change per experiment; matched split, seeds, budget and evaluation (`scripts/pressure_diagnostics.py` on train, validation and the same 100 test meshes).
 
 | Rank | Experiment | Question it isolates | Cost (T4, measured rates) | Expected value |
 |---|---|---|---|---|
-| 1 | **Validation-based checkpoint selection** (`configs/full_select.yaml`; criteria fixed in `src/stokes_ft/selection.py`), seed 0, training and prediction | Does stopping before memorisation (validation pressure minimum near epoch 68) lower the test pressure error, and what does it cost in velocity? Training is unchanged, so the only difference from the existing run is which weights are evaluated | one session, about 7.4 h | **High**: directly tests the overfitting mechanism of section 4; cheapest; the existing run is its matched control |
+| 1 | **Validation-based checkpoint selection** (`configs/full_select.yaml`; criteria fixed in `src/stokes_ft/selection.py`), seed 0 | Does stopping near the validation pressure minimum lower held-out pressure error, and what does it cost in velocity? | 7.35 h T4 training, plus CPU evaluation | **Completed** in section 9. The final checkpoint of the same run is the matched comparison |
 | 2 | Global latent at the full budget, with the same selection | Does global information let the level generalise instead of being memorised? | about 9.7 h (1.33 times the baseline epoch time measured locally); two sessions | High, if rank 1 confirms memorisation; compare against rank 1, not against the existing run |
-| 3 | Multi-seed replication of rank 1 (section 7a) | Is the selection effect larger than seed variation? | about 22 h | Required before any claim from rank 1 is generalised |
+| 3 | Multi-seed replication of rank 1 (section 7a) | Is the selection effect larger than seed variation? | about 15 h for two additional seeds | Required before any claim from rank 1 is generalised |
 | 4 | Physics-informed fit with PDE collocation excluded within three edge lengths of polygon corners (on the existing full MeshGraphNet) | Is the no-slip deterioration caused by the corner singularity? | 10 meshes × about 5.3 min = 0.9 h on a T4, or about 1 h on the local MPS | Medium; cheap; one change; directly tests section 7 |
 | 5 | Pressure-gradient supervision (loss on $\nabla p$ through the mesh operator) | Does it remove the node-scale noise (gradient error 5.3)? It does not address the level | about 7.4 h | Medium-low |
 | 6 | Pressure-loss weighting or a separate pressure decoder | Capacity or balance | about 7.4 h each | **Low**: section 5 rejects capacity and finds no imbalance at the end of training |
 
 Not proposed as an experiment because it is already measured: the hybrid of MeshGraphNet velocity and one finite-element pressure solve (section 6).
 
-## 9. Recommended next experiment
+## 9. Validation-based checkpoint selection
 
-**Rank 1**: the full schedule with checkpoint selection, seed 0, on one Tesla T4:
+### 9.1 Run and evaluation
 
-```text
-kaggle/run_cuda.ipynb with REF set to the commit containing configs/full_select.yaml, and step D running
-python scripts/run_study.py --config full_select --resume --stages train,predict --max-hours <budget>
-```
+Seed 0 completed 500 epochs and 250,000 updates on a Tesla T4 at commit `9105b9539ac7ec09ba32cd2bb2ec7bc9b8ee4c77`. The notebook reported a packaging error after the requested training and prediction stages finished. The recovered state archive matched its SHA-256 sidecar and all 41 files matched the restored copy. The three regular checkpoint manifests verified against the resolved training configuration, split lists, saved normalisation, seed and 2,531,587-parameter architecture. The selected weights matched the archive, and their records matched the minima over all 500 validation rows. Selection used ten validation geometries and the fixed velocity, pressure and joint scores, with ties going to the earlier epoch.
 
-then, on the CPU, for each of `checkpoints/selected/{velocity,pressure,joint}` and the final epoch, `scripts/pressure_diagnostics.py` on train:500, validation:10 and test:100. The notebook currently runs `--config full`; running rank 1 needs a parameter for the configuration name and an approved push, so it is **not started**.
+The ten recovered predictions were from epoch 500, for simulation numbers 1, 14, 41, 63, 64, 75, 82, 93, 95 and 97 in the held-out split. The offline comparison used fresh CPU inference for each checkpoint on the same 100 held-out geometries, 500 training geometries and ten validation geometries. It used the original training normalisation and checked the local dataset against the published archive SHA-256. Each prediction used graph geometry and boundary markers. Reference fields entered the metrics. The ten saved CUDA predictions and the new CPU predictions agree to within $1.25\times10^{-6}$ in relative pressure error and $1.46\times10^{-7}$ in relative velocity error. The evaluation used inference and diagnostic solves.
 
-Predictions fixed now, before it runs:
+The [artifact verification](../results/checkpoint_selection/verification.json) records hashes, validation minima and the prediction manifest. The tracked [validation history](../results/checkpoint_selection/validation_history.csv) preserves the original rows with LF line endings. The [result directory](../results/checkpoint_selection/) contains the individual measurements and the [decision record](../results/checkpoint_selection/selection_decision.json).
 
-* if memorisation drives the test pressure error, the pressure-selected checkpoint has a lower test pressure error than the final one **and** a smaller train/test pressure ratio than 3.4;
-* if the receptive field is the binding limit, its test inlet-level correlation stays below 0.5 whatever the selection;
-* the velocity-selected checkpoint has a test velocity error within 10 % of the final one's (0.121).
+### 9.2 Pre-registered rules
+
+The operational rules are fixed in `scripts/selection_decision.py` at commit `6dd0e7f`. H1 requires a lower absolute held-out pressure error than the same run's epoch 500 and a test/train pressure ratio below 3.4, the original full-study threshold. The observed change in gap relative to the same run's epoch 500 is also reported. H2 requires inlet correlation below 0.5 for all four checkpoints. H3 requires the mean velocity error to be within 10% of the same run's final checkpoint.
+
+### 9.3 Held-out accuracy and pressure generalisation
+
+Velocity and pressure relative $L^2$ are means of per-mesh nodal errors in physical units. The pressure gap is the mean test error minus the mean training error. The inlet slope is an ordinary least-squares fit with an intercept, and inlet RMS is computed across the 100 geometry-level inlet means. The original full study is a separate training run on the same splits and schedule.
+
+| Checkpoint | Test velocity | Test pressure | Train pressure | Pressure gap | Test/train | Inlet $r$ | Inlet slope | Inlet RMS | Gradient error | Gauge-free pressure |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Pressure, epoch 68 | 0.1319 | **0.2694** | 0.2822 | −0.0128 | 0.955 | 0.029 | 0.0001 | 0.237 | 2.514 | 0.238 |
+| Velocity, epoch 135 | **0.1106** | 0.2782 | 0.2731 | 0.0051 | 1.019 | −0.023 | −0.0002 | 0.246 | 2.776 | 0.251 |
+| Joint, epoch 148 | 0.1119 | 0.2789 | 0.2717 | 0.0072 | 1.027 | −0.088 | −0.0008 | 0.250 | 3.076 | 0.251 |
+| Final, epoch 500 | 0.1188 | 0.3643 | 0.1106 | 0.2537 | 3.293 | 0.261 | 0.1380 | 0.245 | 5.067 | 0.326 |
+| Original full, epoch 500 | 0.1205 | 0.3689 | 0.1083 | 0.2606 | 3.406 | 0.197 | 0.1009 | 0.252 | 5.331 | 0.329 |
+
+| Candidate vs. final | Mean pressure change [95% CI] | Pressure improved | Mean velocity change [95% CI] | Velocity improved |
+|---|---:|---:|---:|---:|
+| Pressure | −0.0949 [−0.1126, −0.0781] | 89/100 | +0.0131 [0.0076, 0.0184] | 29/100 |
+| Velocity | −0.0861 [−0.1029, −0.0701] | 88/100 | −0.0082 [−0.0116, −0.0049] | 70/100 |
+| Joint | −0.0854 [−0.1017, −0.0699] | 90/100 | −0.0069 [−0.0100, −0.0039] | 67/100 |
+
+The intervals use 10,000 seeded percentile bootstrap draws. Each draw resamples whole geometries with shared indices across checkpoints. The gap intervals resample training and test geometries separately while retaining checkpoint pairing within each split. These are pointwise intervals for a fixed training run with seed 0. Independent training runs are required to estimate seed variability.
+
+- **H1 supported.** Epoch 68 lowers mean held-out pressure error by 26.0% and the pressure gap by 0.2664 [95% CI −0.2870, −0.2466 for the signed change]. The test/train ratio is 0.955, below 3.4. Its training inlet correlation is 0.098 versus 0.990 at epoch 500. The smaller gap reflects both a higher training error and a lower held-out error.
+- **H2 supported.** The highest held-out inlet correlation is 0.261 at epoch 500 [95% CI 0.054, 0.458]. The early checkpoints have near-zero slopes and predict nearly constant inlet levels. This agrees with the receptive-field explanation and the previous obstacle perturbation test in section 4.
+- **H3 supported.** Epoch 135 reduces mean velocity error by 6.9% relative to epoch 500 [95% CI −9.5%, −4.2% for the signed change]. It falls within the pre-registered 10% band.
+
+The verdicts and their inputs match a replay of the frozen script at `6dd0e7f`. See the [decision record](../results/checkpoint_selection/selection_decision.json) and the [error comparison figure](../figures/checkpoint_selection/checkpoint_errors.png).
+
+### 9.4 Remaining pressure errors
+
+| Checkpoint | Upstream squared error share | Predicted/reference gradient norm | Weak momentum | Weak continuity | FEM pressure $L^2$, direct → recovered | Recovered inlet $r$ |
+|---|---:|---:|---:|---:|---:|---:|
+| Pressure, 68 | 88.8% | 2.665 | 0.0341 | 0.575 | 0.260 → 0.086 | 0.969 |
+| Velocity, 135 | 90.5% | 2.936 | 0.0381 | 0.588 | 0.267 → 0.066 | 0.965 |
+| Joint, 148 | 91.0% | 3.217 | 0.0386 | 0.596 | 0.266 → 0.069 | 0.963 |
+| Final, 500 | 94.0% | 5.168 | 0.0549 | 0.646 | 0.339 → 0.073 | 0.959 |
+| Original full, 500 | 93.7% | | 0.0555 | 0.641 | 0.342 → 0.074 | 0.964 |
+
+Upstream level error remains dominant. The change in inlet RMS at epoch 68 is −0.008 [95% CI −0.041, 0.023] versus epoch 500. Correlation with the lubrication estimate of obstacle resistance is −0.030, −0.115, −0.154 and 0.257 in epoch order, versus 0.885 for the reference inlet. All three selected checkpoints have smoother pressure by the FEM gradient norm and lower weak momentum residuals. At epoch 68 the gradient error falls on all 100 meshes, while the mean gradient norm still exceeds the reference norm by a factor of 2.67.
+
+The FEM recovery columns compare the same mass-weighted pressure norm before and after recovery. On every checkpoint, the recovery from predicted velocity improves pressure and raises inlet correlation to 0.959–0.969. Its correlation with the lubrication estimate is 0.882–0.901. The result reproduces the earlier full study's recovery behaviour and shows that the velocity contains geometry-dependent information the direct pressure prediction largely misses. The reference-velocity floor comes from the existing full-study measurements on the same geometries. See the [inlet pressure figure](../figures/checkpoint_selection/inlet_checkpoint_comparison.png).
+
+### 9.5 Next experiment
+
+Compare a full-budget global-latent MeshGraphNet with the existing 15-hop architecture on the same split and three matched seeds. Apply the same validation-only checkpoint criteria to both arms. Use held-out pressure error, inlet slope and inlet RMS to test whether explicit global context improves both inlet calibration and field accuracy, with velocity error measured alongside them. This isolates the remaining inlet-level problem while measuring how much the checkpoint effects vary across seeds.
 
 ## 10. Remaining uncertainties
 
 * One training run per budget; no statement here is about variation between training runs.
-* Pre-epoch-450 behaviour (when memorisation sets in, whether the gradient balance changed) is inferred from the logged validation curve only; no weights exist.
+* The early checkpoints sample three points in the training trajectory. Loss-gradient balance at these epochs and the exact onset of memorisation remain unmeasured.
 * The memorisation mechanism is established by exclusion (exact zero receptive-field response plus near-perfect training-set levels); which local mesh features carry the signature was not identified.
 * The link between the no-slip violation and the lower recovered pressure (section 6) is a supported hypothesis.

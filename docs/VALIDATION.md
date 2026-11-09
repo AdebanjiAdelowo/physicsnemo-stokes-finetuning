@@ -2,7 +2,7 @@
 
 Continuation of the [scientific audit](SCIENTIFIC_AUDIT.md). It asks when a learned graph surrogate of this Stokes problem is accurate, physically consistent and worth its cost compared with the finite-element method, and it separates what was measured from what remains proposed.
 
-Branch `research/validation-2026-11`, based on `57926cb`. Every number here comes from a file in [`results/validation/`](../results/validation/), produced by a script named next to it. Historical results (`results/audit_checks.json`, `results/physics_checks.json`) were not modified. `results/local/` was republished once, after G1 added meshes 2 to 9 to the same run; its mesh 0 and 1 rows are unchanged and the two-mesh version is kept in `results/local_2mesh/`.
+Branch `research/validation-2026-11`, based on `57926cb`. Measurements are in [`results/validation/`](../results/validation/) and [`results/checkpoint_selection/`](../results/checkpoint_selection/). Historical results (`results/audit_checks.json`, `results/physics_checks.json`) were not modified. `results/local/` was republished once, after G1 added meshes 2 to 9 to the same run; its mesh 0 and 1 rows are unchanged and the two-mesh version is kept in `results/local_2mesh/`.
 
 ## Status labels
 
@@ -402,4 +402,38 @@ Hardware differs between rows; latencies are per new geometry and the one-off tr
 **Q5. Can the learned approach compete with FEM? Not on this problem.** The solver is exact at 0.31 s on one CPU thread. The full MeshGraphNet is faster per geometry on the GPU (0.04 s) but has 12 to 14 % velocity and 36 % pressure error; on the GPU it saves 0.27 s per geometry, so the 7.16 h of training is recovered only after about 95,000 geometries (on the CPU it saves about 0.02 s and is never recovered in practice). The physics-informed fit costs about 1,000 solves per geometry and remains far from exact. The cheapest accurate learned pipeline measured here is a hybrid: MeshGraphNet velocity followed by one FEM pressure solve, which reaches 0.074 pressure error at about twice the cost of the full FEM solve, still worse than solving.
 
 **Q4. Is the global-latent architecture still worth investigating? As a hypothesis, yes, with a changed design.** At the local budget it carried the inlet level (correlation 0.81) but did not use it (slope 0.016). At the full budget the baseline overfits and its 15-hop pressure head still does not track the level, while its velocity does. A full-budget test of the global latent, with model selection on the validation pressure error, is the direct follow-up; it is not established that it would succeed.
+
+## 11. Checkpoint selection on the full schedule
+
+The separate `full_select` study completed its 500-epoch training schedule on a Tesla T4 with seed 0. CPU inference evaluated the three validation-selected checkpoints and epoch 500 on the same 100 held-out meshes. The 500 training meshes and ten validation meshes were evaluated with the same relative field-error definitions. See the [pressure investigation](PRESSURE_INVESTIGATION.md#9-validation-based-checkpoint-selection) for selection provenance, the comparison with the original full study, and the pressure diagnostics.
+
+Epoch 68 reduces mean held-out pressure error from 0.3643 to 0.2694. Epoch 135 has the lowest mean velocity error at 0.1106 and a pressure error of 0.2782. All three pre-registered hypotheses are supported for this run. Direct inlet correlations stay below 0.5, while FEM recovery from the predicted velocity reaches 0.959–0.969 across the four checkpoints. The intervals in the [decision record](../results/checkpoint_selection/selection_decision.json) quantify variability across geometries for seed 0.
+
+The notebook archives resumable state for training-only and prediction-only runs. Evaluation runs also package their summary and report a clear error if it is missing. The complete offline CPU suite passed 129 tests, including stage-specific packaging checks.
+
+To reproduce the analysis from the recovered run and dataset, execute the commands below from the repository root. The diagnostics keep the run directory read-only and write per-mesh records to a fresh directory.
+
+```bash
+out=$(mktemp -d)
+python scripts/verify_selection_run.py \
+  --archive runs/kaggle_full_select_s1/state-full_select.tar --output "$out/verification.json"
+for checkpoint in pressure:68 velocity:135 joint:148 data_driven:500; do
+  criterion=${checkpoint%:*}
+  case "$criterion" in
+    data_driven) directory=data_driven ;;
+    *) directory="selected/$criterion" ;;
+  esac
+  OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=2 VECLIB_MAXIMUM_THREADS=2 \
+    python scripts/pressure_diagnostics.py --run runs/full_select --config full_select \
+      --checkpoint "$directory" --epoch "${checkpoint#*:}" --splits test:100,validation:10,train:500 \
+      --selection-evaluation --threads 2 --output-dir "$out"
+done
+python scripts/verify_selection_run.py \
+  --archive runs/kaggle_full_select_s1/state-full_select.tar --output "$out/verification.json" \
+  --final-diagnostics "$out/pressure_diag_full_select_e500.json"
+python scripts/selection_decision.py --results-dir "$out"
+python scripts/plot_selection.py --results-dir "$out" --out "$out/figures"
+```
+
+The CPU evaluation uses the nodal relative field norms for the decision rules. Test diagnostics additionally use the Taylor-Hood P1 pressure mass and stiffness matrices, and the weak momentum and continuity operators applied to the vertex-interpolated fields. FEM pressure recovery uses each checkpoint's predicted velocity. The reference-velocity recovery floor on these meshes is already recorded in the original full-study diagnostics.
 
