@@ -205,6 +205,8 @@ def main() -> None:
     parser.add_argument("--run", required=True)
     parser.add_argument("--config", required=True)
     parser.add_argument("--epoch", type=int, required=True)
+    parser.add_argument("--checkpoint", default="data_driven",
+                        help="checkpoint directory under <run>/checkpoints: data_driven, or selected/<criterion>")
     parser.add_argument("--splits", default="test:100")
     parser.add_argument("--gradients", type=int, default=0)
     parser.add_argument("--perturbation", type=int, default=0, help="receptive-field check on the first N test meshes")
@@ -223,12 +225,12 @@ def main() -> None:
     lubrication = {r["number"]: r["dp_lubrication"] for r in geo["per_file"]}
 
     model = build_meshgraphnet(cfg)
-    epoch = load_checkpoint(str(run_dir / "checkpoints" / "data_driven"), models=model, epoch=args.epoch, device="cpu")
+    epoch = load_checkpoint(str(run_dir / "checkpoints" / args.checkpoint), models=model, epoch=args.epoch, device="cpu")
     if epoch != args.epoch:
         raise SystemExit(f"checkpoint of epoch {args.epoch} not found (loaded {epoch})")
     model.eval()
     out = {"environment": collect_metadata(torch.device("cpu")), "run": str(run_dir.relative_to(ROOT)), "config": args.config,
-           "epoch": epoch, "splits": {}}
+           "checkpoint": args.checkpoint, "epoch": epoch, "splits": {}}
     for item in filter(None, args.splits.split(",")):
         name, count = item.split(":")
         numbers = used[name][: int(count)]
@@ -253,7 +255,8 @@ def main() -> None:
             print(f"{n:24s} l2 {v['l2_p']:.3f} gauge-free {v['l2_p_gauge_free']:.3f} grad {v['grad_p']:.3f} "
                   f"upstream {v['share_upstream']:.2f} inlet err {v['inlet_error']:+.3f} slope {v['inlet_slope']:.2f} r {v['inlet_correlation']:.2f}")
     suffix = "" if out["splits"] else "_perturbation" if args.perturbation else "_finetuned"
-    path = ROOT / "results" / "validation" / f"pressure_diag_{run_dir.name}_e{epoch}{suffix}.json"
+    tag = "" if args.checkpoint == "data_driven" else "_" + args.checkpoint.replace("/", "_")
+    path = ROOT / "results" / "validation" / f"pressure_diag_{run_dir.name}{tag}_e{epoch}{suffix}.json"
     write_json(path, out)
     print(path)
 
