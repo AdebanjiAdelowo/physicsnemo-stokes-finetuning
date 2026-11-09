@@ -27,15 +27,17 @@ def test_full_study_is_off_by_default_and_resumable():
     code = _code()
     assert re.search(r"^RUN_FULL = False\b", code[0], re.M)
     assert re.search(r"^RESUME = False\b", code[0], re.M)
-    cells = [c for c in code if "--config full --resume" in c]
+    assert re.search(r'^CONFIG = "full"', code[0], re.M)
+    assert re.search(r'^STAGES = "train,predict,finetune,evaluate"', code[0], re.M)
+    cells = [c for c in code if "--config {CONFIG} --resume" in c]
     assert len(cells) == 1
     cell = cells[0]
     # the step starts only behind `is not True`; the session limit pauses the run, it never reduces the config
     assert "if RUN_FULL is not True:" in cell
-    assert cell.index("if RUN_FULL is not True:") < cell.index("--config full --resume")
+    assert cell.index("if RUN_FULL is not True:") < cell.index("--config {CONFIG} --resume")
     assert "--max-hours {budget:.2f}" in cell and "was not reduced" in cell
     # the state is packed in a finally block, also when the study fails
-    assert cell.index("finally:") < cell.index("session_state.py pack runs/full")
+    assert cell.index("finally:") < cell.index("session_state.py pack runs/{CONFIG}")
     restore = [c for c in code if "session_state.py unpack" in c]
     assert len(restore) == 1 and restore[0].startswith("if RESUME:")
     assert "assert len(found) == 1" in restore[0]
@@ -45,8 +47,8 @@ def test_order_of_steps():
     text = "\n".join(_code())
     order = ['"checkout", "--quiet", REF', "assert head == REF", "pip install -q -r requirements.txt", "prepare_data.py",
              "pytest", "session_state.py unpack", "--config smoke device=cuda", "device_checks.py",
-             "name=full_probe", "--config full --resume", "session_state.py pack runs/full",
-             "results.py package runs/full", "results.py bundle runs/full"]
+             "selection_smoke.py", "name=full_probe", "--config {CONFIG} --resume", "session_state.py pack runs/{CONFIG}",
+             "results.py package runs/{CONFIG}", "results.py bundle runs/{CONFIG}"]
     positions = [text.index(item) for item in order]
     assert positions == sorted(positions)
     assert text.count("tree_is_clean()") >= 3
@@ -74,7 +76,7 @@ def test_projection_matches_the_full_config():
 
 def test_archive_names():
     text = "\n".join(_code())
-    for name in ("full", "full-checkpoints", "full-figures"):
+    for name in ("{CONFIG}", "{CONFIG}-checkpoints", "{CONFIG}-figures"):
         assert f"physicsnemo-stokes-finetuning-{name}.zip" in text
 
 
