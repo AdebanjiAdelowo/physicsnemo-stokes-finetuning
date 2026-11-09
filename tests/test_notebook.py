@@ -186,3 +186,24 @@ def test_recovery_notebook_passes_the_deterministic_flag_to_both_sessions():
     assert 'FLAG = " --deterministic" if DETERMINISTIC else ""' in stage
     assert '"python scripts/recovery_check.py first" + FLAG' in stage
     assert '"python scripts/recovery_check.py second" + FLAG' in stage
+
+
+def test_architecture_probe_notebook_has_only_the_private_bounded_entry_point():
+    folder = REPO_ROOT / "kaggle" / "full_arch_probe"
+    meta = json.loads((folder / "kernel-metadata.json").read_text())
+    assert meta["is_private"] and meta["enable_gpu"] and meta["enable_internet"]
+    assert meta["machine_shape"] == "NvidiaTeslaT4"
+    assert all(not meta[k] for k in ("dataset_sources", "competition_sources", "kernel_sources", "model_sources"))
+    nb = json.loads((folder / meta["code_file"]).read_text())
+    code = []
+    for cell in nb["cells"]:
+        if cell["cell_type"] == "code":
+            source = "".join(cell["source"])
+            ast.parse(source)
+            assert not cell["outputs"]
+            code.append(source)
+    assert re.search(r'^REF = "[0-9a-f]{40}"$', code[0], re.M)
+    assert "head == REF and tree_is_clean()" in code[0]
+    assert next(c for c in _code() if "RAPIDS_IMPORTS" in c) == code[1]
+    assert code[-1].index("prepare_data.py") < code[-1].index("full_arch_probe.py")
+    assert "run_study.py" not in "\n".join(code)
