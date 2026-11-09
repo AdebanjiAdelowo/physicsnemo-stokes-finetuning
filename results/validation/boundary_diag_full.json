@@ -1,0 +1,702 @@
+{
+  "run": "runs/full",
+  "config": "full",
+  "corner_degrees": 30.0,
+  "near_edges": 3.0,
+  "weights": {
+    "u": 1,
+    "v": 1,
+    "p": 1,
+    "u_in": 10,
+    "v_in": 10,
+    "u_noslip": 10,
+    "v_noslip": 10,
+    "mom_u": 1,
+    "mom_v": 1,
+    "cont": 10
+  },
+  "summary": {
+    "interior_share_near_polygon": 0.04999447699329353,
+    "polygon_nodes": 33.3,
+    "interior_nodes": 2942.4,
+    "location": {
+      "data_only": {
+        "rms_near_corners": 0.008073868573411823,
+        "rms_elsewhere": 0.005161824039254123,
+        "rms_all": 0.007360086663828926,
+        "share_of_squared_error_near_corners": 0.8329510444996672,
+        "share_of_nodes_near_corners": 0.696803648230959
+      },
+      "meshgraphnet": {
+        "rms_near_corners": 0.004719548342887435,
+        "rms_elsewhere": 0.00445980620474921,
+        "rms_all": 0.00466804065393475,
+        "share_of_squared_error_near_corners": 0.7275455364567474,
+        "share_of_nodes_near_corners": 0.696803648230959
+      },
+      "physics_finetuned": {
+        "rms_near_corners": 0.05431557287965737,
+        "rms_elsewhere": 0.019837251482096235,
+        "rms_all": 0.04586346683261378,
+        "share_of_squared_error_near_corners": 0.9409785330179373,
+        "share_of_nodes_near_corners": 0.696803648230959
+      }
+    },
+    "loss_balance": {
+      "first": {
+        "data": 0.21745101234409958,
+        "inlet": 0.6577743939160428,
+        "noslip": 0.05258873731509084,
+        "pde": 0.3033270018175244
+      },
+      "last": {
+        "data": 0.013198156240832759,
+        "inlet": 1.9571374028970467e-05,
+        "noslip": 0.0029095522040734068,
+        "pde": 0.002012198827287648
+      }
+    }
+  },
+  "per_mesh": [
+    {
+      "index": 0,
+      "nodes": 3254,
+      "interior": 2898,
+      "polygon": 36,
+      "wall": 257,
+      "inlet": 32,
+      "outlet": 31,
+      "corners": 4,
+      "median_polygon_edge": 0.019028999396778642,
+      "near_radius": 0.05708699819033593,
+      "interior_share_near_polygon": 0.07418909592822637,
+      "location": {
+        "meshgraphnet": {
+          "rms_near_corners": 0.003946797899871742,
+          "rms_elsewhere": 0.004378163249600034,
+          "rms_all": 0.004046632653856518,
+          "share_of_squared_error_near_corners": 0.7398739626240763,
+          "share_of_nodes_near_corners": 0.7777777777777778
+        },
+        "physics_finetuned": {
+          "rms_near_corners": 0.04032141845426403,
+          "rms_elsewhere": 0.011897474692502382,
+          "rms_all": 0.03599971807183513,
+          "share_of_squared_error_near_corners": 0.9757283742909741,
+          "share_of_nodes_near_corners": 0.7777777777777778
+        },
+        "data_only": {
+          "rms_near_corners": 0.005960694375016529,
+          "rms_elsewhere": 0.005071843168432046,
+          "rms_all": 0.005775006765525787,
+          "share_of_squared_error_near_corners": 0.8285986954008354,
+          "share_of_nodes_near_corners": 0.7777777777777778
+        }
+      },
+      "loss_balance": {
+        "first_iteration": 1,
+        "last_iteration": 10000,
+        "first": {
+          "data": 0.2761804172769189,
+          "inlet": 0.5945725506171584,
+          "noslip": 0.01263772661332041,
+          "pde": 0.21479628840461373
+        },
+        "last": {
+          "data": 0.009300952391640749,
+          "inlet": 3.534205461619422e-06,
+          "noslip": 0.001833160458772909,
+          "pde": 0.001104094204492867
+        },
+        "terms_last": {
+          "u": 0.0004865700611844659,
+          "v": 0.00010125055996468291,
+          "p": 0.0087131317704916,
+          "u_in": 2.068177167302565e-06,
+          "v_in": 1.4660282943168568e-06,
+          "u_noslip": 0.0012998933380004019,
+          "v_noslip": 0.000533267120772507,
+          "mom_u": 0.0002090479974867776,
+          "mom_v": 0.00016897526802495122,
+          "cont": 0.0007260709389811382
+        }
+      }
+    },
+    {
+      "index": 1,
+      "nodes": 3332,
+      "interior": 2971,
+      "polygon": 41,
+      "wall": 258,
+      "inlet": 31,
+      "outlet": 31,
+      "corners": 3,
+      "median_polygon_edge": 0.01207874540562106,
+      "near_radius": 0.03623623621686318,
+      "interior_share_near_polygon": 0.03433187478963312,
+      "location": {
+        "meshgraphnet": {
+          "rms_near_corners": 0.0030737214672798287,
+          "rms_elsewhere": 0.004881621697468136,
+          "rms_all": 0.004226910050932631,
+          "share_of_squared_error_near_corners": 0.21925427656902155,
+          "share_of_nodes_near_corners": 0.4146341463414634
+        },
+        "physics_finetuned": {
+          "rms_near_corners": 0.058702831089223785,
+          "rms_elsewhere": 0.013954798845665712,
+          "rms_all": 0.039278882268844864,
+          "share_of_squared_error_near_corners": 0.9261149954314681,
+          "share_of_nodes_near_corners": 0.4146341463414634
+        },
+        "data_only": {
+          "rms_near_corners": 0.006679274316813586,
+          "rms_elsewhere": 0.0045824368519928075,
+          "rms_all": 0.0055488637638208705,
+          "share_of_squared_error_near_corners": 0.6007800475499807,
+          "share_of_nodes_near_corners": 0.4146341463414634
+        }
+      },
+      "loss_balance": {
+        "first_iteration": 1,
+        "last_iteration": 10000,
+        "first": {
+          "data": 0.25615260715130717,
+          "inlet": 0.8091118003358133,
+          "noslip": 0.04276983076124452,
+          "pde": 0.32620063005015254
+        },
+        "last": {
+          "data": 0.012267760670511052,
+          "inlet": 1.653183062444441e-05,
+          "noslip": 0.0023571073688799515,
+          "pde": 0.0008055132711888291
+        },
+        "terms_last": {
+          "u": 0.0005443539703264832,
+          "v": 0.00013894503354094923,
+          "p": 0.01158446166664362,
+          "u_in": 1.0419905720482348e-05,
+          "v_in": 6.111924903962063e-06,
+          "u_noslip": 0.0015783323033247143,
+          "v_noslip": 0.0007787750655552372,
+          "mom_u": 0.00019477878231555223,
+          "mom_v": 0.00024066098558250815,
+          "cont": 0.0003700735032907687
+        }
+      }
+    },
+    {
+      "index": 2,
+      "nodes": 3309,
+      "interior": 2953,
+      "polygon": 36,
+      "wall": 258,
+      "inlet": 31,
+      "outlet": 31,
+      "corners": 3,
+      "median_polygon_edge": 0.013317325566344119,
+      "near_radius": 0.03995197669903236,
+      "interior_share_near_polygon": 0.0372502539790044,
+      "location": {
+        "meshgraphnet": {
+          "rms_near_corners": 0.005281034011604921,
+          "rms_elsewhere": 0.0030307837130679363,
+          "rms_all": 0.004365436000130885,
+          "share_of_squared_error_near_corners": 0.7723849056894805,
+          "share_of_nodes_near_corners": 0.5277777777777778
+        },
+        "physics_finetuned": {
+          "rms_near_corners": 0.056591093233494864,
+          "rms_elsewhere": 0.017308239732045358,
+          "rms_all": 0.04279838476912329,
+          "share_of_squared_error_near_corners": 0.9227679670681241,
+          "share_of_nodes_near_corners": 0.5277777777777778
+        },
+        "data_only": {
+          "rms_near_corners": 0.008702603463252554,
+          "rms_elsewhere": 0.0031025688575189356,
+          "rms_all": 0.006672105497058631,
+          "share_of_squared_error_near_corners": 0.8978911302041289,
+          "share_of_nodes_near_corners": 0.5277777777777778
+        }
+      },
+      "loss_balance": {
+        "first_iteration": 1,
+        "last_iteration": 10000,
+        "first": {
+          "data": 0.18170854076743126,
+          "inlet": 0.9346714269486256,
+          "noslip": 0.08244510143413208,
+          "pde": 0.3375694826245308
+        },
+        "last": {
+          "data": 0.003768553855479695,
+          "inlet": 1.8195223461248133e-06,
+          "noslip": 0.0023835213505662978,
+          "pde": 0.000448736176622333
+        },
+        "terms_last": {
+          "u": 0.00036806086427532136,
+          "v": 0.00015108152001630515,
+          "p": 0.0032494114711880684,
+          "u_in": 1.355172258854509e-06,
+          "v_in": 4.6435008727030436e-07,
+          "u_noslip": 0.0013789521472062916,
+          "v_noslip": 0.0010045692033600062,
+          "mom_u": 0.00017561361892148852,
+          "mom_v": 0.00015904738393146545,
+          "cont": 0.00011407517376937903
+        }
+      }
+    },
+    {
+      "index": 3,
+      "nodes": 3329,
+      "interior": 2990,
+      "polygon": 19,
+      "wall": 258,
+      "inlet": 31,
+      "outlet": 31,
+      "corners": 3,
+      "median_polygon_edge": 0.01719993178940094,
+      "near_radius": 0.05159979536820282,
+      "interior_share_near_polygon": 0.0391304347826087,
+      "location": {
+        "meshgraphnet": {
+          "rms_near_corners": 0.005349796513136686,
+          "rms_elsewhere": 0.0035996030760043402,
+          "rms_all": 0.005032177566728686,
+          "share_of_squared_error_near_corners": 0.8922781745759051,
+          "share_of_nodes_near_corners": 0.7894736842105263
+        },
+        "physics_finetuned": {
+          "rms_near_corners": 0.045820555054645905,
+          "rms_elsewhere": 0.016200601777760167,
+          "rms_all": 0.04138566175213712,
+          "share_of_squared_error_near_corners": 0.9677396647466081,
+          "share_of_nodes_near_corners": 0.7894736842105263
+        },
+        "data_only": {
+          "rms_near_corners": 0.007064314394469458,
+          "rms_elsewhere": 0.004420403146609956,
+          "rms_all": 0.006596362330353644,
+          "share_of_squared_error_near_corners": 0.9054587928419162,
+          "share_of_nodes_near_corners": 0.7894736842105263
+        }
+      },
+      "loss_balance": {
+        "first_iteration": 1,
+        "last_iteration": 10000,
+        "first": {
+          "data": 0.17632749862968922,
+          "inlet": 0.9019298647763208,
+          "noslip": 0.04688541986979544,
+          "pde": 0.2555291773751378
+        },
+        "last": {
+          "data": 0.010283494571922347,
+          "inlet": 8.094584700302221e-06,
+          "noslip": 0.0013017352466704324,
+          "pde": 0.001893461638246663
+        },
+        "terms_last": {
+          "u": 0.0007378514274023473,
+          "v": 0.0002474200737196952,
+          "p": 0.009298223070800304,
+          "u_in": 3.5229453487772844e-06,
+          "v_in": 4.5716393515249365e-06,
+          "u_noslip": 0.0006886690971441567,
+          "v_noslip": 0.0006130661495262757,
+          "mom_u": 0.0006621245411224663,
+          "mom_v": 0.00031097407918423414,
+          "cont": 0.0009203630179399624
+        }
+      }
+    },
+    {
+      "index": 4,
+      "nodes": 3289,
+      "interior": 2931,
+      "polygon": 38,
+      "wall": 258,
+      "inlet": 31,
+      "outlet": 31,
+      "corners": 5,
+      "median_polygon_edge": 0.01552565126043556,
+      "near_radius": 0.046576953781306676,
+      "interior_share_near_polygon": 0.05049471170249062,
+      "location": {
+        "meshgraphnet": {
+          "rms_near_corners": 0.004552255319215311,
+          "rms_elsewhere": 0.004037874351991088,
+          "rms_all": 0.004435822150671098,
+          "share_of_squared_error_near_corners": 0.8037470183257024,
+          "share_of_nodes_near_corners": 0.7631578947368421
+        },
+        "physics_finetuned": {
+          "rms_near_corners": 0.056173849545036306,
+          "rms_elsewhere": 0.034986541754354325,
+          "rms_all": 0.05194279817967411,
+          "share_of_squared_error_near_corners": 0.8925490490853997,
+          "share_of_nodes_near_corners": 0.7631578947368421
+        },
+        "data_only": {
+          "rms_near_corners": 0.008421453479902868,
+          "rms_elsewhere": 0.005782879497704603,
+          "rms_all": 0.007876815981553289,
+          "share_of_squared_error_near_corners": 0.8723426575857915,
+          "share_of_nodes_near_corners": 0.7631578947368421
+        }
+      },
+      "loss_balance": {
+        "first_iteration": 1,
+        "last_iteration": 10000,
+        "first": {
+          "data": 0.22628574189729989,
+          "inlet": 0.7680615113349631,
+          "noslip": 0.0375453638844192,
+          "pde": 0.26858694897964597
+        },
+        "last": {
+          "data": 0.010520563228055835,
+          "inlet": 1.9246128601935197e-06,
+          "noslip": 0.0035791334812529385,
+          "pde": 0.0005476211626955774
+        },
+        "terms_last": {
+          "u": 0.0008173863170668483,
+          "v": 0.00015213608276098967,
+          "p": 0.009551040828227997,
+          "u_in": 6.884285141950386e-07,
+          "v_in": 1.2361843459984811e-06,
+          "u_noslip": 0.0020461260282900184,
+          "v_noslip": 0.00153300745296292,
+          "mom_u": 0.00018263062520418316,
+          "mom_v": 0.00012693722965195775,
+          "cont": 0.00023805330783943646
+        }
+      }
+    },
+    {
+      "index": 5,
+      "nodes": 3332,
+      "interior": 2980,
+      "polygon": 32,
+      "wall": 258,
+      "inlet": 31,
+      "outlet": 31,
+      "corners": 3,
+      "median_polygon_edge": 0.018140600436532293,
+      "near_radius": 0.05442180130959688,
+      "interior_share_near_polygon": 0.05906040268456376,
+      "location": {
+        "meshgraphnet": {
+          "rms_near_corners": 0.00612763229196702,
+          "rms_elsewhere": 0.0038970255580517274,
+          "rms_all": 0.005335137589623954,
+          "share_of_squared_error_near_corners": 0.7832452447554435,
+          "share_of_nodes_near_corners": 0.59375
+        },
+        "physics_finetuned": {
+          "rms_near_corners": 0.09712129924126095,
+          "rms_elsewhere": 0.03063689152640211,
+          "rms_all": 0.077342670376527,
+          "share_of_squared_error_near_corners": 0.9362552464469894,
+          "share_of_nodes_near_corners": 0.59375
+        },
+        "data_only": {
+          "rms_near_corners": 0.008603327820007249,
+          "rms_elsewhere": 0.004238870636073758,
+          "rms_all": 0.0071587185862185985,
+          "share_of_squared_error_near_corners": 0.8575629013553273,
+          "share_of_nodes_near_corners": 0.59375
+        }
+      },
+      "loss_balance": {
+        "first_iteration": 1,
+        "last_iteration": 10000,
+        "first": {
+          "data": 0.19975779636297375,
+          "inlet": 0.46455279600195354,
+          "noslip": 0.007209248942672275,
+          "pde": 0.21641904767602682
+        },
+        "last": {
+          "data": 0.02083811370539479,
+          "inlet": 2.731043210246753e-05,
+          "noslip": 0.007143748225644231,
+          "pde": 0.0021177420203457586
+        },
+        "terms_last": {
+          "u": 0.0008303512004204094,
+          "v": 0.0004501449002418667,
+          "p": 0.019557617604732513,
+          "u_in": 2.5732963422342436e-05,
+          "v_in": 1.5774686801250937e-06,
+          "u_noslip": 0.0026913543115369976,
+          "v_noslip": 0.004452393914107233,
+          "mom_u": 0.0009296886855736375,
+          "mom_v": 0.0007305479957722127,
+          "cont": 0.0004575053389999084
+        }
+      }
+    },
+    {
+      "index": 6,
+      "nodes": 3233,
+      "interior": 2861,
+      "polygon": 52,
+      "wall": 258,
+      "inlet": 31,
+      "outlet": 31,
+      "corners": 5,
+      "median_polygon_edge": 0.01558257571903915,
+      "near_radius": 0.046747727157117454,
+      "interior_share_near_polygon": 0.06745893044390074,
+      "location": {
+        "meshgraphnet": {
+          "rms_near_corners": 0.005842197558355983,
+          "rms_elsewhere": 0.0071629355616815655,
+          "rms_all": 0.006330635045408016,
+          "share_of_squared_error_near_corners": 0.5568439377561165,
+          "share_of_nodes_near_corners": 0.6538461538461539
+        },
+        "physics_finetuned": {
+          "rms_near_corners": 0.054176939868875985,
+          "rms_elsewhere": 0.018214588671442704,
+          "rms_all": 0.04509960557335512,
+          "share_of_squared_error_near_corners": 0.9435372000550045,
+          "share_of_nodes_near_corners": 0.6538461538461539
+        },
+        "data_only": {
+          "rms_near_corners": 0.00738477925692978,
+          "rms_elsewhere": 0.008538276994165718,
+          "rms_all": 0.0078033867541668234,
+          "share_of_squared_error_near_corners": 0.5855774516450079,
+          "share_of_nodes_near_corners": 0.6538461538461539
+        }
+      },
+      "loss_balance": {
+        "first_iteration": 1,
+        "last_iteration": 10000,
+        "first": {
+          "data": 0.2814272234681994,
+          "inlet": 0.21663395840732846,
+          "noslip": 0.07387293720967136,
+          "pde": 0.2837440297007561
+        },
+        "last": {
+          "data": 0.03496454987907782,
+          "inlet": 3.962943026181165e-05,
+          "noslip": 0.005335072783054784,
+          "pde": 0.004352966614533216
+        },
+        "terms_last": {
+          "u": 0.0013413430424407125,
+          "v": 0.0004220115370117128,
+          "p": 0.0332011952996254,
+          "u_in": 3.1944462079991354e-05,
+          "v_in": 7.684968181820295e-06,
+          "u_noslip": 0.0028936759917996824,
+          "v_noslip": 0.0024413967912551016,
+          "mom_u": 0.0006897742860019207,
+          "mom_v": 0.00036545476177707314,
+          "cont": 0.003297737566754222
+        }
+      }
+    },
+    {
+      "index": 7,
+      "nodes": 3298,
+      "interior": 2954,
+      "polygon": 24,
+      "wall": 258,
+      "inlet": 31,
+      "outlet": 31,
+      "corners": 4,
+      "median_polygon_edge": 0.015818312392281868,
+      "near_radius": 0.0474549371768456,
+      "interior_share_near_polygon": 0.038930264048747464,
+      "location": {
+        "meshgraphnet": {
+          "rms_near_corners": 0.0032007333568445234,
+          "rms_elsewhere": 0.0016159805933156017,
+          "rms_all": 0.002995409359504938,
+          "share_of_squared_error_near_corners": 0.9514925252202107,
+          "share_of_nodes_near_corners": 0.8333333333333334
+        },
+        "physics_finetuned": {
+          "rms_near_corners": 0.04202676348510484,
+          "rms_elsewhere": 0.03322954357119834,
+          "rms_all": 0.040692847060048276,
+          "share_of_squared_error_near_corners": 0.8888623142026296,
+          "share_of_nodes_near_corners": 0.8333333333333334
+        },
+        "data_only": {
+          "rms_near_corners": 0.010632613331445244,
+          "rms_elsewhere": 0.0022153094360404186,
+          "rms_all": 0.009748247083258485,
+          "share_of_squared_error_near_corners": 0.9913927486114477,
+          "share_of_nodes_near_corners": 0.8333333333333334
+        }
+      },
+      "loss_balance": {
+        "first_iteration": 1,
+        "last_iteration": 10000,
+        "first": {
+          "data": 0.23945552250370383,
+          "inlet": 0.8119466854259372,
+          "noslip": 0.1028126385062933,
+          "pde": 0.3648583358153701
+        },
+        "last": {
+          "data": 0.012863960007962305,
+          "inlet": 1.5965065358614083e-06,
+          "noslip": 0.0015196863387245685,
+          "pde": 0.003089043471845798
+        },
+        "terms_last": {
+          "u": 0.0003199170751031488,
+          "v": 0.00010245064186165109,
+          "p": 0.012441592290997505,
+          "u_in": 1.105217179997453e-06,
+          "v_in": 4.912893558639553e-07,
+          "u_noslip": 0.0010613503400236368,
+          "v_noslip": 0.00045833599870093167,
+          "mom_u": 0.0008157971897162497,
+          "mom_v": 0.00010434690921101719,
+          "cont": 0.0021688993729185313
+        }
+      }
+    },
+    {
+      "index": 8,
+      "nodes": 3263,
+      "interior": 2908,
+      "polygon": 35,
+      "wall": 258,
+      "inlet": 31,
+      "outlet": 31,
+      "corners": 4,
+      "median_polygon_edge": 0.017014064151667396,
+      "near_radius": 0.05104219245500219,
+      "interior_share_near_polygon": 0.058803301237964234,
+      "location": {
+        "meshgraphnet": {
+          "rms_near_corners": 0.005559564417149155,
+          "rms_elsewhere": 0.003534425892498193,
+          "rms_all": 0.005064274243889789,
+          "share_of_squared_error_near_corners": 0.8608333144119956,
+          "share_of_nodes_near_corners": 0.7142857142857143
+        },
+        "physics_finetuned": {
+          "rms_near_corners": 0.04045778284903359,
+          "rms_elsewhere": 0.013155471090043842,
+          "rms_all": 0.034908643637970534,
+          "share_of_squared_error_near_corners": 0.9594231046274896,
+          "share_of_nodes_near_corners": 0.7142857142857143
+        },
+        "data_only": {
+          "rms_near_corners": 0.008367723850330007,
+          "rms_elsewhere": 0.0045688546021212285,
+          "rms_all": 0.007481814876538568,
+          "share_of_squared_error_near_corners": 0.8934550882282157,
+          "share_of_nodes_near_corners": 0.7142857142857143
+        }
+      },
+      "loss_balance": {
+        "first_iteration": 1,
+        "last_iteration": 10000,
+        "first": {
+          "data": 0.15378933353349566,
+          "inlet": 0.28259068261832,
+          "noslip": 0.04912098520435393,
+          "pde": 0.23708230117335916
+        },
+        "last": {
+          "data": 0.00890367798274383,
+          "inlet": 8.817125802806913e-05,
+          "noslip": 0.0018244633974973112,
+          "pde": 0.0032675778784323484
+        },
+        "terms_last": {
+          "u": 0.0006909887306392193,
+          "v": 0.0003044846816919744,
+          "p": 0.007908204570412636,
+          "u_in": 8.369518582185265e-05,
+          "v_in": 4.476072206216486e-06,
+          "u_noslip": 0.001037029578583315,
+          "v_noslip": 0.0007874338189139962,
+          "mom_u": 0.0008834011387079954,
+          "mom_v": 0.0004934410098940134,
+          "cont": 0.0018907357298303396
+        }
+      }
+    },
+    {
+      "index": 9,
+      "nodes": 3318,
+      "interior": 2978,
+      "polygon": 20,
+      "wall": 258,
+      "inlet": 31,
+      "outlet": 31,
+      "corners": 4,
+      "median_polygon_edge": 0.016880298229035993,
+      "near_radius": 0.05064089468710798,
+      "interior_share_near_polygon": 0.040295500335795834,
+      "location": {
+        "meshgraphnet": {
+          "rms_near_corners": 0.004261750593449185,
+          "rms_elsewhere": 0.008459648353813482,
+          "rms_all": 0.004847971878600983,
+          "share_of_squared_error_near_corners": 0.6955020046395207,
+          "share_of_nodes_near_corners": 0.9
+        },
+        "physics_finetuned": {
+          "rms_near_corners": 0.05176319597563347,
+          "rms_elsewhere": 0.008788363159547417,
+          "rms_all": 0.0491854566366224,
+          "share_of_squared_error_near_corners": 0.996807414224686,
+          "share_of_nodes_near_corners": 0.9
+        },
+        "data_only": {
+          "rms_near_corners": 0.008921901445950956,
+          "rms_elsewhere": 0.009096797201881768,
+          "rms_all": 0.008939544999794564,
+          "share_of_squared_error_near_corners": 0.8964509315740187,
+          "share_of_nodes_near_corners": 0.9
+        }
+      },
+      "loss_balance": {
+        "first_iteration": 1,
+        "last_iteration": 10000,
+        "first": {
+          "data": 0.18342544184997678,
+          "inlet": 0.7936726626940072,
+          "noslip": 0.07058812072500587,
+          "pde": 0.5284837763756514
+        },
+        "last": {
+          "data": 0.008269936115539167,
+          "inlet": 7.101357368810568e-06,
+          "noslip": 0.001817893389670644,
+          "pde": 0.0024952318344730884
+        },
+        "terms_last": {
+          "u": 0.0003366525052115321,
+          "v": 0.00010245704470435157,
+          "p": 0.007830826565623283,
+          "u_in": 3.1906171216178336e-06,
+          "v_in": 3.910740247192734e-06,
+          "u_noslip": 0.0014113252109382302,
+          "v_noslip": 0.0004065681787324138,
+          "mom_u": 0.00047149485908448696,
+          "mom_v": 0.00020539920660667121,
+          "cont": 0.0018183377687819302
+        }
+      }
+    }
+  ]
+}
