@@ -124,7 +124,10 @@ def main():
     archive = (ROOT / full.data.raw_dir).parent / DATASET_ARCHIVE
     if sha256_of(archive) != DATASET_SHA256:
         raise SystemExit("the NGC dataset archive does not match the expected SHA-256")
-    with tempfile.TemporaryDirectory(prefix="stokes-architecture-probe-") as tmp:
+    # Keep the workspace below the clone so the relative dataset path has no digits.
+    runs = ROOT / "runs"
+    runs.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="architecture-probe-", dir=runs) as tmp:
         arms = {}
         for arm in ARMS:
             cfg = load_config("full_arch", [
@@ -135,7 +138,8 @@ def main():
     projected = {arm: record["seconds_per_update_after_first_epoch"] * full.num_training_samples * full.epochs / 3600
                  for arm, record in arms.items()}
     report = {"environment": collect_metadata(device), "dataset_sha256": DATASET_SHA256,
-              "arms": arms, "estimated_update_gpu_hours_per_run": projected,
+              "arms": arms, "gpu_total_mib": torch.cuda.get_device_properties(device).total_memory / 2**20,
+              "estimated_update_gpu_hours_per_run": projected,
               "estimated_update_gpu_hours_for_six": 3 * sum(projected.values())}
     write_json(args.output, report)
     print(json.dumps(report, indent=2))
