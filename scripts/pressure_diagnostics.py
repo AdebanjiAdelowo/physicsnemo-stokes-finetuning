@@ -57,19 +57,29 @@ def evaluate_split(cfg, args, run_dir, model, split, numbers, lubrication):
             f = {k: dataset.denormalize(pred[:, j:j + 1], stats[f"{k}_mean"], stats[f"{k}_std"]).numpy().astype(np.float64)
                  for j, k in enumerate("uvp")}
             ref = {k: s[f"ref_{k}"] for k in "uvp"}
-            diag = WeakDiagnostics(s["coords"], s["triangles"], s["marker"], cfg.physics.nu, cfg.physics.u_max)
-            K = pressure_stiffness(diag)
-            recovered = diag.recover_pressure(f["u"], f["v"])
             inlet = s["marker"] == INFLOW
             row = {"number": order[i], "nodes": len(s["coords"])}
             row |= {f"rel_l2_{k}": v for k, v in field_errors(f, ref).items()}
+            row |= {"ref_p_inlet": float(ref["p"][inlet].mean()), "pred_p_inlet": float(f["p"][inlet].mean()),
+                    "dp_lubrication": lubrication.get(order[i])}
+            if args.selection_evaluation and split != "test":
+                rows.append(row)
+                continue
+            diag = WeakDiagnostics(s["coords"], s["triangles"], s["marker"], cfg.physics.nu, cfg.physics.u_max)
+            K = pressure_stiffness(diag)
+            recovered = diag.recover_pressure(f["u"], f["v"])
             row |= {f"pred_{k}": v for k, v in decompose(diag, f["p"], ref["p"], K).items()}
             row |= {f"recovered_{k}": v for k, v in decompose(diag, recovered, ref["p"], K).items()}
-            # floor of the vertex-based measures: pressure recovered from the reference vertex velocity
-            floor = diag.recover_pressure(ref["u"], ref["v"])
-            row |= {f"floor_{k}": v for k, v in decompose(diag, floor, ref["p"], K).items()}
-            row |= {"ref_p_inlet": float(ref["p"][inlet].mean()), "pred_p_inlet": float(f["p"][inlet].mean()),
-                    "recovered_p_inlet": float(recovered[inlet].mean()), "dp_lubrication": lubrication.get(order[i])}
+            row["recovered_p_inlet"] = float(recovered[inlet].mean())
+            if args.selection_evaluation:
+                row |= diag.residuals(f)
+                p = diag.system.pressure_from_vertices(f["p"])
+                p_ref = diag.system.pressure_from_vertices(ref["p"])
+                row["pressure_gradient_norm_ratio"] = float(np.sqrt((p @ (K @ p)) / (p_ref @ (K @ p_ref))))
+            else:
+                # Reference-velocity floor is already measured on the same test meshes for selection.
+                floor = diag.recover_pressure(ref["u"], ref["v"])
+                row |= {f"floor_{k}": v for k, v in decompose(diag, floor, ref["p"], K).items()}
             rows.append(row)
     return rows
 
@@ -78,18 +88,20 @@ def summarise(rows):
     keys = [k for k in rows[0] if k not in ("number", "nodes", "dp_lubrication") and isinstance(rows[0][k], float)]
     out = {k: {"mean": float(np.mean([r[k] for r in rows])), "median": float(np.median([r[k] for r in rows]))} for k in keys}
     ref = np.array([r["ref_p_inlet"] for r in rows])
-    for src in ("pred", "recovered"):
+    sources = [src for src in ("pred", "recovered") if f"{src}_p_inlet" in rows[0]]
+    for src in sources:
         y = np.array([r[f"{src}_p_inlet"] for r in rows])
         out[f"{src}_inlet_level"] = {"slope": float(np.polyfit(ref, y, 1)[0]), "correlation": float(np.corrcoef(ref, y)[0, 1]),
                                      "rms_error": float(np.sqrt(np.mean((y - ref) ** 2))), "std": float(y.std(ddof=1))}
     lub = np.array([r["dp_lubrication"] for r in rows], float)
     if np.isfinite(lub).all():
         out["correlation_with_lubrication_estimate"] = {
-            src: float(np.corrcoef(lub, [r[f"{src}_p_inlet"] for r in rows])[0, 1]) for src in ("ref", "pred", "recovered")}
+            src: float(np.corrcoef(lub, [r[f"{src}_p_inlet"] for r in rows])[0, 1]) for src in ["ref", *sources]}
     out["per_mesh_error_correlation"] = {
-        "velocity_vs_pressure": float(np.corrcoef([r["rel_l2_velocity"] for r in rows], [r["rel_l2_p"] for r in rows])[0, 1]),
-        "velocity_vs_recovered_pressure": float(np.corrcoef([r["rel_l2_velocity"] for r in rows],
-                                                            [r["recovered_l2_p"] for r in rows])[0, 1])}
+        "velocity_vs_pressure": float(np.corrcoef([r["rel_l2_velocity"] for r in rows], [r["rel_l2_p"] for r in rows])[0, 1])}
+    if "recovered" in sources:
+        out["per_mesh_error_correlation"]["velocity_vs_recovered_pressure"] = float(np.corrcoef(
+            [r["rel_l2_velocity"] for r in rows], [r["recovered_l2_p"] for r in rows])[0, 1])
     return out
 
 
@@ -212,6 +224,10 @@ def main() -> None:
     parser.add_argument("--perturbation", type=int, default=0, help="receptive-field check on the first N test meshes")
     parser.add_argument("--finetuned", action="store_true", help="decompose the pressures of the fine-tuned test meshes")
     parser.add_argument("--threads", type=int, default=3)
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "results/validation")
+    parser.add_argument("--selection-evaluation", action="store_true",
+                        help="add test weak residuals and pressure smoothness; reuse the published reference floor "
+                             "and compute only field errors and inlet levels on train and validation")
     parser.add_argument("overrides", nargs="*")
     args = parser.parse_args()
     torch.set_num_threads(args.threads)
@@ -239,10 +255,12 @@ def main() -> None:
         out["splits"][name] = {"meshes": len(rows), "numbers": numbers, "seconds": time.perf_counter() - start,
                                "summary": summarise(rows), "per_mesh": rows}
         sm = out["splits"][name]["summary"]
-        print(f"{name:10s} n={len(rows)} vel {sm['rel_l2_velocity']['mean']:.3f} p {sm['rel_l2_p']['mean']:.3f} "
-              f"gauge-free {sm['pred_l2_p_gauge_free']['mean']:.3f} grad {sm['pred_grad_p']['mean']:.3f} "
-              f"upstream {sm['pred_share_upstream']['mean']:.2f} | recovered p {sm['recovered_l2_p']['mean']:.3f} "
-              f"grad {sm['recovered_grad_p']['mean']:.3f}", flush=True)
+        message = f"{name:10s} n={len(rows)} vel {sm['rel_l2_velocity']['mean']:.3f} p {sm['rel_l2_p']['mean']:.3f}"
+        if "pred_grad_p" in sm:
+            message += (f" gauge-free {sm['pred_l2_p_gauge_free']['mean']:.3f} grad {sm['pred_grad_p']['mean']:.3f}"
+                        f" upstream {sm['pred_share_upstream']['mean']:.2f} | recovered p {sm['recovered_l2_p']['mean']:.3f}"
+                        f" grad {sm['recovered_grad_p']['mean']:.3f}")
+        print(message, flush=True)
     if args.gradients:
         out["gradients"] = gradient_diagnostics(cfg, args, run_dir, model, used["train"][: args.gradients])
         print(json.dumps(out["gradients"], indent=1))
@@ -256,7 +274,7 @@ def main() -> None:
                   f"upstream {v['share_upstream']:.2f} inlet err {v['inlet_error']:+.3f} slope {v['inlet_slope']:.2f} r {v['inlet_correlation']:.2f}")
     suffix = "" if out["splits"] else "_perturbation" if args.perturbation else "_finetuned"
     tag = "" if args.checkpoint == "data_driven" else "_" + args.checkpoint.replace("/", "_")
-    path = ROOT / "results" / "validation" / f"pressure_diag_{run_dir.name}{tag}_e{epoch}{suffix}.json"
+    path = args.output_dir / f"pressure_diag_{run_dir.name}{tag}_e{epoch}{suffix}.json"
     write_json(path, out)
     print(path)
 
