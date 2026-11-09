@@ -4,13 +4,13 @@ import numpy as np
 import pytest
 import torch
 from physicsnemo.utils import load_checkpoint, save_checkpoint
-from torch_geometric.data import Data
+from torch_geometric.data import Batch, Data
 from torch_geometric.utils import to_undirected
 
 from conftest import channel_mesh
 from stokes_ft.audit import hop_distance
 from stokes_ft.config import load_config
-from stokes_ft.data import mesh_edges
+from stokes_ft.data import INFLOW, POLYGON, mesh_edges
 from stokes_ft.model import (GlobalLatentMeshGraphNet, SharedDepthMeshGraphNet, build_meshgraphnet, count_parameters,
                              receptive_field_hops)
 
@@ -138,3 +138,66 @@ def test_no_reference_information_reaches_the_prediction(variant):
         graph.y = torch.randn(n, 3) * 100
         b = model(x, e, graph)
     assert torch.equal(a, b)
+
+
+def marked_channel(nx):
+    mesh = channel_mesh(nx, 3)
+    graph, triangles, _ = line_graph(nx)
+    position = torch.tensor(mesh.points[:, :2], dtype=torch.float32)
+    marker = torch.tensor(mesh["marker"], dtype=torch.long)
+    marker[-5] = POLYGON
+    graph.x = torch.cat((position, torch.nn.functional.one_hot(marker, num_classes=5)), dim=1)
+    source, target = graph.edge_index
+    delta = position[source] - position[target]
+    graph.edge_attr = torch.cat((delta, delta.norm(dim=1, keepdim=True)), dim=1)
+    graph.inlet = marker == INFLOW
+    graph.obstacle = marker == POLYGON
+    return graph, triangles
+
+
+def active_global_model():
+    torch.manual_seed(0)
+    model = build_meshgraphnet(cfg_for("global_latent")).eval()
+    with torch.no_grad():
+        model.global_mlp[-1].weight.normal_(0, 0.05)
+    return model
+
+
+@torch.no_grad()
+def test_obstacle_marker_reaches_inlet_pressure_beyond_baseline_hops():
+    graph, triangles = marked_channel(61)
+    hops = hop_distance(graph.num_nodes, triangles, graph.obstacle.numpy())
+    assert (hops[graph.inlet.numpy()] > 15).all()
+    perturbed = graph.x.clone()
+    perturbed[graph.obstacle, 2:] = torch.tensor([1., 0., 0., 0., 0.])
+    torch.manual_seed(0)
+    baseline = build_meshgraphnet(cfg_for("baseline")).eval()
+    global_model = active_global_model()
+    for model in (baseline, global_model):
+        a = model(graph.x, graph.edge_attr, graph)[graph.inlet, 2]
+        b = model(perturbed, graph.edge_attr, graph)[graph.inlet, 2]
+        if model is baseline:
+            torch.testing.assert_close(a, b, rtol=0, atol=1e-7)
+        else:
+            assert (a - b).abs().max().item() > 1e-5
+
+
+@torch.no_grad()
+def test_global_batch_isolation_and_node_permutation():
+    a, _ = marked_channel(11)
+    b, _ = marked_channel(17)
+    model = active_global_model()
+    batch = Batch.from_data_list([a, b])
+    original = model(batch.x, batch.edge_attr, batch)
+    expected = torch.cat([model(g.x, g.edge_attr, g) for g in (a, b)])
+    torch.testing.assert_close(original, expected, atol=3e-6, rtol=1e-5)
+
+    changed = batch.x.clone()
+    changed[:a.num_nodes] += 2
+    other = model(changed, batch.edge_attr, batch)
+    torch.testing.assert_close(other[a.num_nodes:], original[a.num_nodes:], atol=3e-6, rtol=1e-5)
+
+    permutation = torch.randperm(batch.num_nodes, generator=torch.Generator().manual_seed(17))
+    graph = Data(edge_index=permutation.argsort()[batch.edge_index], batch=batch.batch[permutation])
+    reordered = model(batch.x[permutation], batch.edge_attr, graph)
+    torch.testing.assert_close(reordered, original[permutation], atol=3e-6, rtol=1e-5)
