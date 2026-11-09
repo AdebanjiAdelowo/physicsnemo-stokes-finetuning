@@ -38,7 +38,7 @@ from physicsnemo.utils import load_checkpoint
 from torch.amp import GradScaler, autocast
 from torch_geometric.loader import DataLoader as PyGDataLoader
 
-from . import checkpoint
+from . import checkpoint, selection
 from .data import make_dataset, sample_number
 from .model import build_meshgraphnet, count_parameters
 from .provenance import atomic_path, device_synchronize, write_json
@@ -139,6 +139,9 @@ def train_data_driven(cfg, run_dir: Path, device: torch.device, resume: bool = F
     restored = checkpoint.load_latest(ckpt_dir, fp, model, optimizer, scheduler, scaler, device, log=log)
     epoch_init = restored["epoch"]
     history = _read_history(restored["history_csv"] or run_dir / "history.csv", epoch_init)
+    select = bool(cfg.training.get("select_checkpoints", False))
+    selected_dir = run_dir / "checkpoints" / "selected"
+    selection_state = selection.resume(selected_dir, epoch_init, log=log) if select else {}
     if len(history) != epoch_init:
         raise RuntimeError(f"history.csv has {len(history)} epochs but the checkpoint is at epoch {epoch_init}")
     if device.type == "cuda":
@@ -180,6 +183,8 @@ def train_data_driven(cfg, run_dir: Path, device: torch.device, resume: bool = F
         })
         log(f"epoch {epoch + 1}/{cfg.epochs} loss {loss_agg:.3e} val u {errors['u']:.3f} v {errors['v']:.3f} "
             f"p {errors['p']:.3f} ({seconds:.1f} s)")
+        if select:
+            selection.update(selected_dir, selection_state, epoch + 1, errors, model)
 
         pause = stop is not None and epoch + 1 < cfg.epochs and stop(epoch + 1)
         if (epoch + 1) % cfg.training.checkpoint_every == 0 or epoch + 1 == cfg.epochs or pause:
