@@ -1,0 +1,14 @@
+# Matched full-budget architecture comparison. See docs/FULL_ARCH_EXPERIMENT.md.
+defaults:
+  - full_select
+  - _self_
+
+name: full_arch_baseline_s0
+model_variant: baseline
+num_test_samples: 100
+
+finetune:
+  samples: []
+
+evaluation:
+  plot_samples: []
