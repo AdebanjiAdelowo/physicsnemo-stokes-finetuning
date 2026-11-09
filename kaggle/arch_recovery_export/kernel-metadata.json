@@ -1,0 +1,15 @@
+{
+  "id": "adebanjiadelowo/stokes-arch-recovery-export-v1",
+  "title": "Stokes Arch Recovery Export V1",
+  "code_file": "recovery.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
