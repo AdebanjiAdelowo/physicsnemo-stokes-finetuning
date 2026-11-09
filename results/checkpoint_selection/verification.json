@@ -1,0 +1,288 @@
+{
+  "training": {
+    "timestamp_utc": "2026-11-09T01:16:45+00:00",
+    "git_commit": "9105b9539ac7ec09ba32cd2bb2ec7bc9b8ee4c77",
+    "git_dirty": false,
+    "device": "cuda",
+    "gpu_name": "Tesla T4",
+    "cuda_version": "13.2",
+    "python_version": "3.13.16",
+    "torch_version": "2.15.0+cu132",
+    "physicsnemo": {
+      "version": "2.3.0a0",
+      "commit": "b45a5c810c741e6b41f8515be24c51121f8fc21f",
+      "url": "https://github.com/NVIDIA/physicsnemo.git"
+    },
+    "torch_geometric_version": "2.8.1",
+    "torch_scatter_version": "2.1.2",
+    "pyvista_version": "0.49.2",
+    "sympy_version": "1.14.0",
+    "numpy_version": "2.5.4",
+    "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+    "processor": "x86_64",
+    "stages": [
+      "train",
+      "predict"
+    ],
+    "evaluate_samples": null
+  },
+  "config": {
+    "input_dim_nodes": 7,
+    "input_dim_edges": 3,
+    "output_dim": 3,
+    "hidden_dim_node_encoder": 256,
+    "hidden_dim_edge_encoder": 256,
+    "hidden_dim_node_decoder": 256,
+    "aggregation": "sum",
+    "batch_size": 1,
+    "epochs": 500,
+    "num_training_samples": 500,
+    "num_validation_samples": 10,
+    "num_test_samples": 10,
+    "lr": 0.0001,
+    "lr_decay_rate": null,
+    "amp": false,
+    "jit": false,
+    "wandb_mode": "disabled",
+    "graph_path": "graph_7.vtp",
+    "mlp_hidden_dim": 256,
+    "mlp_num_layers": 6,
+    "mlp_input_dim": 2,
+    "mlp_output_dim": 3,
+    "pi_iters": 10000,
+    "pi_lr": 0.001,
+    "name": "full_select",
+    "device": "cuda",
+    "seed": 0,
+    "data": {
+      "raw_dir": "data/raw/results",
+      "split_dir": "data/dataset",
+      "split_seed": 0,
+      "train_fraction": 0.8,
+      "validation_fraction": 0.1
+    },
+    "physics": {
+      "nu": 0.01,
+      "u_max": 0.3
+    },
+    "training": {
+      "checkpoint_every": 25,
+      "select_checkpoints": true
+    },
+    "finetune": {
+      "samples": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "log_every": 100
+    },
+    "evaluation": {
+      "plot_samples": [
+        7,
+        0
+      ],
+      "timing_repeats": 20
+    }
+  },
+  "fingerprint": {
+    "config_sha256": "3e3e23e337e9fdf7ac829d58ce45bba41afd340239142ae2fd318a8f1ec40099",
+    "seed": 0,
+    "train_numbers_sha256": "20e90c122a0544ee15f34bb8f7408cbe4ca88fd213d2abf49cc91ad4c4058ffc",
+    "validation_numbers_sha256": "ac25c326cd3591ddac5f651b0a48adf65130a4272fab4efe3d249a32ca72f241",
+    "node_stats_sha256": "63bf6e71b237f476ce943e4cedd9b37859ca2617b99c96052895840ea0788235",
+    "edge_stats_sha256": "1fe78b71c86de425730b66116039146d90884497243a63118cf0fd7374d14f8a",
+    "architecture_sha256": "06b89db0caa486b47a85b0ee070720f06f6a1de4d6eee26b562cb582a6194071",
+    "parameter_count": 2531587
+  },
+  "receptive_field_hops": 15,
+  "dataset_archive_sha256": "5aec06af33158c71be9b0cd6be01392a1e91794070f0fde3a72f796004d696d1",
+  "state_archive_sha256": "06bb24b8b4a647cc57b1704c76146ff2e35dffbdd78f284bc7a235b7a0c69ff1",
+  "archive_files_verified": 41,
+  "evaluation_split_sizes": {
+    "train": 500,
+    "validation": 10,
+    "test": 100
+  },
+  "evaluation_mesh_sources": {
+    "verified_disk": 140,
+    "verified_archive": 470
+  },
+  "regular_checkpoint_manifests": {
+    "manifest.0.500.json": {
+      "MeshGraphNet.0.500.mdlus": "7c2c048172c415247decdc782252bf1838b5860d0363133d5941f17e227089bf",
+      "checkpoint.0.500.pt": "b864bafe5ed1c84e6a8e5326ed6421d2a6f4df819b296cb7d1916b1471fb31a1",
+      "history.0.500.csv": "ef4db1c7b639b1ee18457728304220cbf12704d081d282e89f3405ffbd98f231",
+      "rng.0.500.pt": "6c3f24e41d69898f5bea6a2ea2ab641f439367abb3c9b744ef09e2401f2d1dd2"
+    },
+    "manifest.0.475.json": {
+      "MeshGraphNet.0.475.mdlus": "5dadde6301adba90bbc55d36b03c9966b88ebe0feeb36f956473b0bdb57493fd",
+      "checkpoint.0.475.pt": "38dd8a0cc6a492364f938a4ad25002be23289c69f21aa9f8809259b0c759b7ca",
+      "history.0.475.csv": "c100ebcd5b24236a8cb5419b04baa49add21498df2dabdd01e86465a32630d0c",
+      "rng.0.475.pt": "96d48515a7b4e850fadc3cca1e1f8a48cff34c4871226543877635f8bdda7641"
+    },
+    "manifest.0.450.json": {
+      "MeshGraphNet.0.450.mdlus": "d1e375adefbf45b1a19b06aa01531906cbf60a9eecb4ef630fe5b0439c967391",
+      "checkpoint.0.450.pt": "c091cf2bf1c7cc58eb4d43c7cc8ff9cb8fe9e902d8d0613dd5fb7f1a3907cc59",
+      "history.0.450.csv": "9033e2e874e7e2a7f601558da9880bdc41b9faf2e3556e8a216f4c22eb42bf54",
+      "rng.0.450.pt": "57b4b4cc3c2b490f8e2c60ce7022acbb8fca475d964eb54d7593417e738f7a9d"
+    }
+  },
+  "validation_selections": {
+    "velocity": {
+      "criterion": "velocity",
+      "epoch": 135,
+      "errors": {
+        "u": 0.20050540268421174,
+        "v": 0.28593785911798475,
+        "p": 0.35691459774971007
+      },
+      "score": 0.24322163090109825,
+      "tracked_since": 0,
+      "files": {
+        "MeshGraphNet.0.135.mdlus": "3ea1a0bbc910a5f9e703ae09556aa4284cd2f3b32980520760f87133fef86139",
+        "checkpoint.0.135.pt": "508880eb1d459c874462aacf55e4e2d2147d65644b050c55dd8358eff80eefe3"
+      }
+    },
+    "pressure": {
+      "criterion": "pressure",
+      "epoch": 68,
+      "errors": {
+        "u": 0.2427109882235527,
+        "v": 0.3463579580187798,
+        "p": 0.33748641461133955
+      },
+      "score": 0.33748641461133955,
+      "tracked_since": 0,
+      "files": {
+        "MeshGraphNet.0.68.mdlus": "10bf4d920e1c7728c208085721cd08290c7f13fb87b1055a8b5847cc91b49872",
+        "checkpoint.0.68.pt": "650b8be8e51f09066cf2e43de3dd6a5235c2eaa815532c8c2e4e6c22842fb31e"
+      }
+    },
+    "joint": {
+      "criterion": "joint",
+      "epoch": 148,
+      "errors": {
+        "u": 0.20048065781593322,
+        "v": 0.2931212529540062,
+        "p": 0.3465888395905495
+      },
+      "score": 0.29669489748775957,
+      "tracked_since": 0,
+      "files": {
+        "MeshGraphNet.0.148.mdlus": "92a218763cadb08a2ee8cb7e98bfeb0233e8eaa5fe5f457ddbee1683cbad56b5",
+        "checkpoint.0.148.pt": "4902cd876417debe8fbf9b16602a09fef359b7e071b9fee18863dcfe62067145"
+      }
+    }
+  },
+  "recovered_status": {
+    "state": "complete",
+    "stages_requested": [
+      "train",
+      "predict"
+    ],
+    "written_unix": 1794213715.6377635
+  },
+  "train_metrics": {
+    "stage": "data_driven",
+    "parameter_count": 2531587,
+    "epochs": 500,
+    "iterations": 250000,
+    "train_seconds": 26466.902524515026,
+    "seconds_per_iteration": 0.1058676100980601,
+    "final_train_loss": 0.011176817124709486,
+    "final_val_rel_l2": {
+      "u": 0.2186852440237999,
+      "v": 0.3245441511273384,
+      "p": 0.4486960232257843
+    },
+    "peak_cuda_memory_mb": 1153.443359375,
+    "resumed": false,
+    "resumed_from_epoch": 0,
+    "resumed_from_verified_checkpoint": null,
+    "status": "complete"
+  },
+  "recovered_predictions": {
+    "stage": "data_driven",
+    "checkpoint_epoch": 500,
+    "test_files": [
+      "res_1.vtp",
+      "res_14.vtp",
+      "res_41.vtp",
+      "res_63.vtp",
+      "res_64.vtp",
+      "res_75.vtp",
+      "res_82.vtp",
+      "res_93.vtp",
+      "res_95.vtp",
+      "res_97.vtp"
+    ],
+    "inference_seconds_per_mesh": 0.040600499999709425,
+    "timing_repeats": 20
+  },
+  "cpu_cuda_error_agreement": {
+    "absolute_relative_l2_difference_per_mesh": [
+      {
+        "number": 1,
+        "p": 1.0767139510536872e-07,
+        "velocity": 6.1973486342736805e-09
+      },
+      {
+        "number": 14,
+        "p": 2.5421737714914627e-08,
+        "velocity": 5.732238081423979e-08
+      },
+      {
+        "number": 41,
+        "p": 5.532285389797664e-07,
+        "velocity": 1.0450843246356811e-07
+      },
+      {
+        "number": 63,
+        "p": 1.5072311237984692e-07,
+        "velocity": 1.5512329615274822e-09
+      },
+      {
+        "number": 64,
+        "p": 1.24998223427486e-06,
+        "velocity": 1.450927530621815e-07
+      },
+      {
+        "number": 75,
+        "p": 2.89635151196066e-07,
+        "velocity": 8.294990622159659e-08
+      },
+      {
+        "number": 82,
+        "p": 1.1995400023279146e-07,
+        "velocity": 5.523475724023008e-08
+      },
+      {
+        "number": 93,
+        "p": 5.266231507539132e-07,
+        "velocity": 2.085262210127503e-08
+      },
+      {
+        "number": 95,
+        "p": 2.1375629077891034e-07,
+        "velocity": 1.1022265888893656e-07
+      },
+      {
+        "number": 97,
+        "p": 5.510828667842915e-07,
+        "velocity": 9.200266094799847e-08
+      }
+    ],
+    "max": {
+      "p": 1.24998223427486e-06,
+      "velocity": 1.450927530621815e-07
+    }
+  }
+}
