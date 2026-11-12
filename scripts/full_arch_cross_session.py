@@ -2,12 +2,14 @@
 
 import argparse
 import csv
+import hashlib
 import json
 import math
 import os
 import random
 import shutil
 import subprocess
+import tarfile
 import tempfile
 import time
 from pathlib import Path
@@ -24,7 +26,8 @@ from _bootstrap import ROOT
 from full_arch_probe import ARMS
 from stokes_ft import checkpoint, engine
 from stokes_ft.config import load_config
-from stokes_ft.data import DATASET_ARCHIVE, DATASET_SHA256, prepare_split, sha256_of
+from stokes_ft.engine import lr_decay_rate
+from stokes_ft.data import DATASET_ARCHIVE, DATASET_SHA256, prepare_split, sample_number, sha256_of
 from stokes_ft.model import build_meshgraphnet
 from stokes_ft.provenance import collect_metadata, resolve_device, write_json
 from stokes_ft.selection import CRITERIA
@@ -35,7 +38,8 @@ PAUSE = 1
 EPOCHS = 2
 MESHES = 8
 ENV_KEYS = ("git_commit", "device", "gpu_name", "cuda_version", "python_version", "torch_version",
-            "physicsnemo", "torch_geometric_version", "torch_scatter_version", "pyvista_version", "numpy_version", "driver_version", "compute_capability")
+            "physicsnemo", "torch_geometric_version", "torch_scatter_version", "pyvista_version", "numpy_version", "driver_version", "compute_capability",
+            "cudnn_version", "cublas_workspace_config")
 
 
 def require(condition, message):
@@ -165,6 +169,16 @@ def drills(run, cfg, split, digest, archive, work, cuda_devices):
     os.symlink(archive.resolve(), wrong)
     Path(f"{wrong}.sha256").write_text("0" * 64 + "\n")
     checks["archive_checksum"] = rejection(lambda: unpack(wrong, work / "bad-output"), "does not match")
+    truncated = work / "truncated.tar"
+    with archive.open("rb") as original:
+        truncated.write_bytes(original.read(2048))
+    Path(f"{truncated}.sha256").write_text(sha256_of(truncated) + "\n")
+    try:
+        unpack(truncated, work / "truncated-output")
+    except tarfile.ReadError as exc:
+        checks["truncated"] = f"truncated tar rejected: {exc}"
+    else:
+        raise RuntimeError("truncated tar accepted")
     incomplete = shutil.copytree(run, work / "incomplete")
     (incomplete / "checkpoints/data_driven" / f"rng.0.{PAUSE}.pt").unlink()
     checks["incomplete"] = rejection(lambda: inspect(incomplete), "missing rng")
@@ -199,12 +213,108 @@ def seed_all(seed):
 
 
 def train(cfg, work, **kwargs):
+    trace = []
+    active = {}
     original = engine.make_dataset
+    original_step = torch.optim.Adam.step
+
     def dataset(config, split, *args, **options):
         require(split in {"train", "validation"}, f"unexpected split {split}")
-        return original(config, split, *args, **options)
-    with patch.object(engine, "make_dataset", dataset):
-        return run_study(cfg, stages=["train"], runs_root=work, **kwargs)
+        loaded = original(config, split, *args, **options)
+        if split == "train":
+            active["dataset"] = loaded
+        return loaded
+
+    def optimizer_step(optimizer, *args, **options):
+        result = original_step(optimizer, *args, **options)
+        digest = hashlib.sha256()
+        for group in optimizer.param_groups:
+            for parameter in group["params"]:
+                digest.update(parameter.detach().cpu().contiguous().numpy().tobytes())
+        trace[-1]["parameter_sha256"] = digest.hexdigest()
+        return result
+
+    class RecordedLoader(engine.PyGDataLoader):
+        def __iter__(self):
+            if self.dataset is not active.get("dataset"):
+                yield from super().__iter__()
+                return
+            # Record the indices actually requested by the production sampler.
+            sampler_type = type(self.sampler)
+            original_iter = sampler_type.__iter__
+            indices = []
+
+            def record(sampler):
+                for index in original_iter(sampler):
+                    if sampler is self.sampler:
+                        indices.append(index)
+                    yield index
+
+            with patch.object(sampler_type, "__iter__", record):
+                for graph in super().__iter__():
+                    require(len(indices) == 1, "expected one mesh per update")
+                    trace.append({"mesh": sample_number(self.dataset.data_list[indices.pop()])})
+                    yield graph
+
+    class RecordedLoss(torch.nn.MSELoss):
+        def forward(self, prediction, target):
+            loss = super().forward(prediction, target)
+            trace[-1]["loss_hex"] = loss.detach().item().hex()
+            return loss
+
+    with (patch.object(engine, "make_dataset", dataset),
+          patch.object(engine, "PyGDataLoader", RecordedLoader),
+          patch.object(torch.nn, "MSELoss", RecordedLoss),
+          patch.object(torch.optim.Adam, "step", optimizer_step)):
+        run = run_study(cfg, stages=["train"], runs_root=work, **kwargs)
+    trace_path = run / "update_trace.json"
+    prior = read(trace_path) if kwargs.get("resume") else []
+    write_json(trace_path, prior + trace)
+    return run
+
+
+def experiment_plan(split):
+    cfg = config("baseline", "reference")
+    train_ids = split["train"][:MESHES]
+    batches = []
+    for epoch in range(EPOCHS):
+        generator = torch.Generator().manual_seed(cfg.seed * 100003 + epoch)
+        loader = torch.utils.data.DataLoader(train_ids, batch_size=1, shuffle=True,
+                                             drop_last=True, generator=generator)
+        batches.extend(batch.item() for batch in loader)
+    return {
+        "dataset_sha256": DATASET_SHA256,
+        "training_mesh_ids": train_ids,
+        "validation_mesh_ids": split["validation"][:cfg.num_validation_samples],
+        "batch_order": batches,
+        "pause_after_update": PAUSE * MESHES,
+        "total_updates": EPOCHS * MESHES,
+        "optimizer": {"name": "Adam", "lr": cfg.lr, "betas": [0.9, 0.999],
+                      "eps": 1e-8, "weight_decay": 0, "fused": True},
+        "scheduler": {"name": "StepLR", "step_size": MESHES, "gamma": lr_decay_rate(cfg)},
+        "arms": {arm: OmegaConf.to_container(config(arm, "reference"), resolve=True) for arm in ARMS},
+        "checkpoint_contents": ["model parameters and buffers", "optimizer", "scheduler",
+                                "epoch and update counters", "Python, NumPy, CPU and CUDA RNG",
+                                "normalization", "configuration fingerprint", "training and validation history",
+                                "selection records and weights", "update trace"],
+        "comparison": "Bitwise tensor and numeric history equality, exact batch sequence, per-update loss and parameter hashes",
+    }
+
+
+def check_trace(run, updates, expected=None):
+    trace = read(run / "update_trace.json")
+    require(len(trace) == updates and all({"mesh", "loss_hex", "parameter_sha256"} == row.keys() for row in trace),
+            "update trace length or fields differ")
+    if expected is not None:
+        require([row["mesh"] for row in trace] == expected[:updates], "recorded batch order differs")
+    return trace
+
+
+def first_divergence(reference, actual):
+    for update, (before, after) in enumerate(zip(reference, actual), start=1):
+        if before != after:
+            return {"update": update, "reference": before, "actual": after}
+    return None
 
 
 def replay(paused, cfg, work):
@@ -235,24 +345,35 @@ def config(arm, path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("stage", choices=("export", "restore"))
+    parser.add_argument("stage", choices=("export", "audit", "restore"))
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--source", type=Path)
     args = parser.parse_args()
     start = time.perf_counter()
-    device = resolve_device("cuda")
-    require(torch.cuda.device_count() == 1 and torch.cuda.get_device_name(0) == "Tesla T4", "expected one visible Tesla T4")
+    if args.stage != "export" and args.source is None:
+        parser.error("--source is required for audit or restore")
+    audit = args.stage == "audit"
+    device = resolve_device("cpu" if audit else "cuda")
+    if audit:
+        torch.set_num_threads(1)
+    else:
+        require(torch.cuda.device_count() == 1 and torch.cuda.get_device_name(0) == "Tesla T4", "expected one visible Tesla T4")
     torch.use_deterministic_algorithms(True)
     torch.backends.cudnn.deterministic, torch.backends.cudnn.benchmark = True, False
     env = collect_metadata(device)
-    env["driver_version"] = subprocess.check_output(
-        ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader", "-i", "0"], text=True).strip()
-    env["compute_capability"] = list(torch.cuda.get_device_capability(device))
+    if not audit:
+        env["driver_version"] = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader", "-i", "0"], text=True).strip()
+        env["compute_capability"] = list(torch.cuda.get_device_capability(device))
+        env["cudnn_version"] = torch.backends.cudnn.version()
+        env["cublas_workspace_config"] = os.environ["CUBLAS_WORKSPACE_CONFIG"]
     cfg = config("baseline", "resumed")
     archive = (ROOT / cfg.data.raw_dir).parent / DATASET_ARCHIVE
     require(sha256_of(archive) == DATASET_SHA256, "dataset archive digest differs")
     split = prepare_split(cfg)
-    out = {"stage": args.stage, "environment": env, "dataset_sha256": DATASET_SHA256,
+    plan = experiment_plan(split)
+    require(plan == read(ROOT / "kaggle/recovery_plan.json"), "recovery plan differs from pinned manifest")
+    out = {"plan": plan, "stage": args.stage, "environment": env, "dataset_sha256": DATASET_SHA256,
            "deterministic_algorithms": torch.are_deterministic_algorithms_enabled(),
            "pause_epoch": PAUSE, "updates_per_epoch": MESHES, "total_updates_per_arm": EPOCHS * MESHES, "arms": {}}
     args.output.mkdir(parents=True, exist_ok=True)
@@ -260,10 +381,18 @@ def main():
     runs.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="cross-session-", dir=runs) as tmp:
         work = Path(tmp)
-        if args.stage == "restore":
+        if args.stage != "export":
             source = read(args.source / "recovery-export.json")
+            require(source["plan"] == plan, "export recovery plan differs")
             require(source["dataset_sha256"] == DATASET_SHA256 and source["deterministic_algorithms"], "export provenance differs")
-            require(all(env[k] == source["environment"][k] for k in ENV_KEYS), "export environment or commit differs")
+            if not audit:
+                differences = {k: {"export": source["environment"][k], "restore": env[k]}
+                               for k in ENV_KEYS if env[k] != source["environment"][k]}
+                if differences:
+                    out["environment_differences"] = differences
+                    out["passed"] = False
+                    write_json(args.output / "recovery-restore.json", out)
+                    raise RuntimeError(f"export environment or commit differs: {differences}")
         for arm in ARMS:
             states, archives, restored_dirs = {}, {}, {}
             for path, epoch in (("reference", EPOCHS), ("resumed", PAUSE)):
@@ -276,6 +405,7 @@ def main():
                 else:
                     exported = source["arms"][arm][path]["archive"]
                     tar = args.source / name
+                    require(tar.stat().st_size == exported["bytes"], f"{name} size differs from export manifest")
                     require(sha256_of(tar) == exported["sha256"], f"{name} differs from export manifest")
                     verified = unpack(tar, work)
                     require(Path(verified["run_dir"]).name == cfg.name and all(c["ok"] for c in verified["checkpoints"]),
@@ -283,15 +413,24 @@ def main():
                     archives[path] = exported
                 restored_dirs[path] = work / cfg.name
                 states[path] = inspect_state(restored_dirs[path], cfg, split, DATASET_SHA256, epoch, 1)
+                states[path]["trace"] = check_trace(restored_dirs[path], epoch * MESHES, plan["batch_order"])
             if args.stage == "export":
+                divergence = first_divergence(states["reference"]["trace"], states["resumed"]["trace"])
+                require(divergence is None, f"interrupted prefix diverged: {divergence}")
                 out["arms"][arm] = {path: {"archive": archives[path], "epoch": state["epoch"], "updates": state["updates"],
                                           "manifest": state["manifest"]} for path, state in states.items()}
-            else:
+            elif audit:
                 cfg = config(arm, "resumed")
                 drill_root = work / f"drills-{arm}"
                 drill_root.mkdir()
-                failures = drills(restored_dirs["resumed"], cfg, split, DATASET_SHA256,
-                                  args.source / archives["resumed"]["tar"], drill_root, 1)
+                out["arms"][arm] = {
+                    "verified_archives": archives,
+                    "fingerprints": {path: state["fingerprint"] for path, state in states.items()},
+                    "rejections": drills(restored_dirs["resumed"], cfg, split, DATASET_SHA256,
+                                         args.source / archives["resumed"]["tar"], drill_root, 1),
+                }
+            else:
+                cfg = config(arm, "resumed")
                 final, loaded = replay(states["resumed"], cfg, work)
                 resumed = inspect_state(final, cfg, split, DATASET_SHA256, EPOCHS, 1)
                 record = read(final / "train_metrics.json")
@@ -300,10 +439,13 @@ def main():
                 reference = states["reference"]
                 equivalence = {key: compare(reference[key], resumed[key]) for key in
                                ("model", "optimizer", "scheduler", "rng", "history", "selections")}
-                out["arms"][arm] = {"rejections": failures, "restored_state": loaded, "final_equivalence": equivalence,
+                trace = check_trace(final, EPOCHS * MESHES, plan["batch_order"])
+                divergence = first_divergence(reference["trace"], trace)
+                out["arms"][arm] = {"first_diverging_update": divergence,
+                                    "update_trace": trace, "restored_state": loaded, "final_equivalence": equivalence,
                                     "epochs": resumed["epoch"], "updates": resumed["updates"],
                                     "selected_epochs": {k: v["record"]["epoch"] for k, v in resumed["selections"].items()},
-                                    "archives": archives, "passed": all(x["identical"] for x in equivalence.values())}
+                                    "archives": archives, "passed": divergence is None and all(x["identical"] for x in equivalence.values())}
     out["wall_seconds"] = time.perf_counter() - start
     if args.stage == "restore":
         out["passed"] = all(record["passed"] for record in out["arms"].values())

@@ -1,0 +1,174 @@
+{
+  "dataset_sha256": "5aec06af33158c71be9b0cd6be01392a1e91794070f0fde3a72f796004d696d1",
+  "training_mesh_ids": [
+    0,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "validation_mesh_ids": [
+    16,
+    33
+  ],
+  "batch_order": [
+    6,
+    4,
+    2,
+    8,
+    3,
+    7,
+    5,
+    0,
+    5,
+    0,
+    4,
+    7,
+    8,
+    2,
+    6,
+    3
+  ],
+  "pause_after_update": 8,
+  "total_updates": 16,
+  "optimizer": {
+    "name": "Adam",
+    "lr": 0.0001,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0,
+    "fused": true
+  },
+  "scheduler": {
+    "name": "StepLR",
+    "step_size": 8,
+    "gamma": 0.1
+  },
+  "arms": {
+    "baseline": {
+      "input_dim_nodes": 7,
+      "input_dim_edges": 3,
+      "output_dim": 3,
+      "hidden_dim_node_encoder": 256,
+      "hidden_dim_edge_encoder": 256,
+      "hidden_dim_node_decoder": 256,
+      "aggregation": "sum",
+      "batch_size": 1,
+      "epochs": 2,
+      "num_training_samples": 8,
+      "num_validation_samples": 2,
+      "num_test_samples": 100,
+      "lr": 0.0001,
+      "lr_decay_rate": null,
+      "amp": false,
+      "jit": false,
+      "wandb_mode": "disabled",
+      "graph_path": "graph_7.vtp",
+      "mlp_hidden_dim": 256,
+      "mlp_num_layers": 6,
+      "mlp_input_dim": 2,
+      "mlp_output_dim": 3,
+      "pi_iters": 10000,
+      "pi_lr": 0.001,
+      "name": "recovery_baseline_reference",
+      "device": "cuda",
+      "seed": 0,
+      "data": {
+        "raw_dir": "data/raw/results",
+        "split_dir": "data/dataset",
+        "split_seed": 0,
+        "train_fraction": 0.8,
+        "validation_fraction": 0.1
+      },
+      "physics": {
+        "nu": 0.01,
+        "u_max": 0.3
+      },
+      "training": {
+        "checkpoint_every": 25,
+        "select_checkpoints": true
+      },
+      "finetune": {
+        "samples": [],
+        "log_every": 100
+      },
+      "evaluation": {
+        "plot_samples": [],
+        "timing_repeats": 20
+      },
+      "model_variant": "baseline"
+    },
+    "global_latent": {
+      "input_dim_nodes": 7,
+      "input_dim_edges": 3,
+      "output_dim": 3,
+      "hidden_dim_node_encoder": 256,
+      "hidden_dim_edge_encoder": 256,
+      "hidden_dim_node_decoder": 256,
+      "aggregation": "sum",
+      "batch_size": 1,
+      "epochs": 2,
+      "num_training_samples": 8,
+      "num_validation_samples": 2,
+      "num_test_samples": 100,
+      "lr": 0.0001,
+      "lr_decay_rate": null,
+      "amp": false,
+      "jit": false,
+      "wandb_mode": "disabled",
+      "graph_path": "graph_7.vtp",
+      "mlp_hidden_dim": 256,
+      "mlp_num_layers": 6,
+      "mlp_input_dim": 2,
+      "mlp_output_dim": 3,
+      "pi_iters": 10000,
+      "pi_lr": 0.001,
+      "name": "recovery_global_latent_reference",
+      "device": "cuda",
+      "seed": 0,
+      "data": {
+        "raw_dir": "data/raw/results",
+        "split_dir": "data/dataset",
+        "split_seed": 0,
+        "train_fraction": 0.8,
+        "validation_fraction": 0.1
+      },
+      "physics": {
+        "nu": 0.01,
+        "u_max": 0.3
+      },
+      "training": {
+        "checkpoint_every": 25,
+        "select_checkpoints": true
+      },
+      "finetune": {
+        "samples": [],
+        "log_every": 100
+      },
+      "evaluation": {
+        "plot_samples": [],
+        "timing_repeats": 20
+      },
+      "model_variant": "global_latent"
+    }
+  },
+  "checkpoint_contents": [
+    "model parameters and buffers",
+    "optimizer",
+    "scheduler",
+    "epoch and update counters",
+    "Python, NumPy, CPU and CUDA RNG",
+    "normalization",
+    "configuration fingerprint",
+    "training and validation history",
+    "selection records and weights",
+    "update trace"
+  ],
+  "comparison": "Bitwise tensor and numeric history equality, exact batch sequence, per-update loss and parameter hashes"
+}
